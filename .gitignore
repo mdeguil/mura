@@ -1,0 +1,29 @@
+# ─── Environment ────────────────────────────────────────
+.env
+
+# ─── Java / Spring Boot ─────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# ─── Node / React ───────────────────────────────────────
+node_modules/
+dist/
+.vite/
+*.local
+
+# ─── OS ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Logs ───────────────────────────────────────────────
+*.log
+logs/

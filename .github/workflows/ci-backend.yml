@@ -1,0 +1,48 @@
+name: CI - Backend
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+  pull_request:
+    paths:
+      - 'backend/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: mura_test
+          POSTGRES_USER: mura
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build & test
+        working-directory: backend
+        run: mvn verify
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/mura_test
+          SPRING_DATASOURCE_USERNAME: mura
+          SPRING_DATASOURCE_PASSWORD: test
+          JWT_SECRET: test-secret-key-for-ci-only
+          JWT_EXPIRATION_MS: 86400000
