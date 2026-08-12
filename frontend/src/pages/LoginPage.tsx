@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
+import logo from '../assets/logo-icon.png'
 
 export default function LoginPage() {
     const navigate = useNavigate()
@@ -27,37 +28,35 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#f1efe8] flex items-center justify-center p-4">
+        <div className="min-h-screen bg-app flex items-center justify-center p-4">
             <div className="w-full max-w-sm">
-                <div className="bg-white border border-[#d3d1c7] rounded-2xl p-8 shadow-sm">
+                <div className="bg-surface border border-border rounded-2xl p-8 shadow-sm">
 
                     {/* Logo */}
                     <div className="flex items-center gap-2.5 mb-7">
-                        <div className="w-8 h-8 rounded-xl bg-[#534AB7] flex items-center justify-center">
-                            <span className="text-white font-semibold text-sm">M</span>
-                        </div>
-                        <span className="text-xl font-semibold text-gray-900">Mura</span>
+                        <img src={logo} alt="Mura" className="w-10 h-10 rounded-full" />
+                        <span className="text-xl font-semibold text-slate-800">Mura</span>
                     </div>
 
-                    <h1 className="text-xl font-semibold text-gray-900 mb-1">Bon retour 👋</h1>
-                    <p className="text-sm text-gray-500 mb-6">Connecte-toi à ton espace Mura</p>
+                    <h1 className="text-xl font-semibold text-slate-800 mb-1">Bon retour 👋</h1>
+                    <p className="text-sm text-slate-500 mb-6">Connecte-toi à ton espace Mura</p>
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1.5">Adresse email</label>
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">Adresse email</label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="toi@exemple.com"
                                 required
-                                className="w-full h-9 rounded-lg border border-[#b4b2a9] bg-[#f8f7f3] px-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-[#534AB7] transition"
+                                className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
                             />
                         </div>
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <label className="text-xs font-medium text-gray-600">Mot de passe</label>
-                                <a href="#" className="text-xs text-[#534AB7] hover:text-[#3C3489]">Mot de passe oublié ?</a>
+                                <label className="text-xs font-medium text-slate-600">Mot de passe</label>
+                                <a href="#" className="text-xs text-brand-600 hover:text-brand-700">Mot de passe oublié ?</a>
                             </div>
                             <input
                                 type="password"
@@ -65,7 +64,7 @@ export default function LoginPage() {
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
                                 required
-                                className="w-full h-9 rounded-lg border border-[#b4b2a9] bg-[#f8f7f3] px-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-[#534AB7] transition"
+                                className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
                             />
                         </div>
 
@@ -76,15 +75,15 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="mt-1 h-9 rounded-lg bg-[#534AB7] hover:bg-[#3C3489] text-white text-sm font-medium transition disabled:opacity-60"
+                            className="mt-1 h-9 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                         >
                             {loading ? 'Connexion…' : 'Se connecter'}
                         </button>
                     </form>
 
-                    <p className="text-center text-sm text-gray-500 mt-5">
+                    <p className="text-center text-sm text-slate-500 mt-5">
                         Pas encore de compte ?{' '}
-                        <Link to="/register" className="text-[#534AB7] font-medium hover:text-[#3C3489]">
+                        <Link to="/register" className="text-brand-600 font-medium hover:text-brand-700">
                             Créer un compte
                         </Link>
                     </p>

@@ -5,14 +5,25 @@ export default {
         extend: {
             colors: {
                 brand: {
-                    50:  '#EEEDFE',
-                    100: '#CECBF6',
-                    200: '#AFA9EC',
-                    300: '#8F87E3',
-                    400: '#7F77DD',
-                    500: '#534AB7',
-                    600: '#3C3489',
-                    700: '#2B2562',
+                    50:  '#f0fdfa',
+                    100: '#ccfbf1',
+                    200: '#99f6e4',
+                    300: '#5eead4',
+                    400: '#2dd4bf',
+                    500: '#14b8a6',
+                    600: '#0d9488',
+                    700: '#0f766e',
+                    800: '#115e59',
+                    900: '#134e4a',
+                },
+                app: '#f1f5f9',
+                surface: {
+                    DEFAULT: '#ffffff',
+                    muted: '#f8fafc',
+                },
+                border: {
+                    DEFAULT: '#e2e8f0',
+                    strong: '#cbd5e1',
                 },
             },
         },
