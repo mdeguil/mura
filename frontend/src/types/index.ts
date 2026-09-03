@@ -28,11 +28,18 @@ export interface List {
   cards: Card[]
 }
 
-export interface Board {
+export type ProjectType = 'WEB' | 'MOBILE' | 'MARKETING' | 'EVENEMENT' | 'AUTRE'
+
+export type ProjectStatus = 'A_VENIR' | 'EN_COURS' | 'ACHEVE'
+
+export interface Project {
   id: string
   name: string
   description?: string
   color: string
+  type: ProjectType
+  startDate?: string
+  status: ProjectStatus
   owner: User
   members: User[]
   lists: List[]
