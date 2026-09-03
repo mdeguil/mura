@@ -1,4 +1,4 @@
-package io.mura.auth.dto;
+package io.mura.member.dto;
 
 import io.mura.member.User;
 
