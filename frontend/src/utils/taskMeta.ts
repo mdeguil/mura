@@ -31,3 +31,11 @@ export const TASK_STATUS_ICON_ACTIVE_CLASSES: Record<TaskStatus, string> = {
     EN_COURS: 'bg-amber-500 text-white',
     TERMINE: 'bg-emerald-500 text-white',
 }
+
+// A task can only move forward through the pipeline (À faire -> En cours ->
+// Terminé), never backward and never skipping a stage. Terminé has no next
+// stage: it's final.
+export const NEXT_TASK_STATUS: Partial<Record<TaskStatus, TaskStatus>> = {
+    A_FAIRE: 'EN_COURS',
+    EN_COURS: 'TERMINE',
+}

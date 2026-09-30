@@ -11,12 +11,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class TaskService {
+
+    // A task only moves forward through the pipeline (À faire -> En cours ->
+    // Terminé): never backward, never skipping a stage. Terminé is final.
+    private static final Map<TaskStatus, Set<TaskStatus>> ALLOWED_STATUS_TRANSITIONS = Map.of(
+            TaskStatus.A_FAIRE, EnumSet.of(TaskStatus.A_FAIRE, TaskStatus.EN_COURS),
+            TaskStatus.EN_COURS, EnumSet.of(TaskStatus.EN_COURS, TaskStatus.TERMINE),
+            TaskStatus.TERMINE, EnumSet.of(TaskStatus.TERMINE)
+    );
 
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
@@ -56,8 +67,8 @@ public class TaskService {
         requireOwnedProject(userId, projectId);
         Task task = requireTaskInProject(projectId, taskId);
 
-        if (task.getStatus() == TaskStatus.TERMINE && request.status() != TaskStatus.TERMINE) {
-            throw new ApiException(HttpStatus.CONFLICT, "Une tâche terminée ne peut pas changer de statut.");
+        if (!ALLOWED_STATUS_TRANSITIONS.get(task.getStatus()).contains(request.status())) {
+            throw new ApiException(HttpStatus.CONFLICT, "Cette tâche ne peut pas passer à ce statut.");
         }
 
         task.setName(request.name());
