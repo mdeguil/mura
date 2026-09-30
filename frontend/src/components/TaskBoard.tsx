@@ -79,7 +79,7 @@ export default function TaskBoard({
                                             title="Archiver"
                                             aria-label="Archiver la tâche"
                                         >
-                                            🗄
+                                            ✕
                                         </button>
                                     </div>
                                     <p className="text-xs text-slate-500 mt-1">
