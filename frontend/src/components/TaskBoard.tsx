@@ -86,24 +86,36 @@ export default function TaskBoard({
                                         {format(new Date(task.startDate), 'dd/MM', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
                                     </p>
                                     <div className="flex items-center gap-1.5 mt-2">
-                                        {adjacentTaskStatuses(task.status).map((s) => (
+                                        {status === 'A_FAIRE' ? (
                                             <button
-                                                key={s}
                                                 type="button"
-                                                disabled={s === task.status}
-                                                onClick={() => onStatusChange(task.id, s)}
-                                                title={TASK_STATUS_LABELS[s]}
-                                                aria-label={TASK_STATUS_LABELS[s]}
-                                                aria-pressed={task.status === s}
-                                                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition ${
-                                                    task.status === s
-                                                        ? `${TASK_STATUS_ICON_ACTIVE_CLASSES[s]} cursor-default`
-                                                        : 'bg-surface-muted text-slate-400 hover:text-slate-600'
-                                                }`}
+                                                onClick={() => onStatusChange(task.id, 'EN_COURS')}
+                                                title="Passer en cours"
+                                                aria-label="Passer en cours"
+                                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition bg-surface-muted text-slate-400 hover:text-slate-600"
                                             >
-                                                {TASK_STATUS_ICONS[s]}
+                                                {TASK_STATUS_ICONS.EN_COURS}
                                             </button>
-                                        ))}
+                                        ) : (
+                                            adjacentTaskStatuses(task.status).map((s) => (
+                                                <button
+                                                    key={s}
+                                                    type="button"
+                                                    disabled={s === task.status}
+                                                    onClick={() => onStatusChange(task.id, s)}
+                                                    title={TASK_STATUS_LABELS[s]}
+                                                    aria-label={TASK_STATUS_LABELS[s]}
+                                                    aria-pressed={task.status === s}
+                                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition ${
+                                                        task.status === s
+                                                            ? `${TASK_STATUS_ICON_ACTIVE_CLASSES[s]} cursor-default`
+                                                            : 'bg-surface-muted text-slate-400 hover:text-slate-600'
+                                                    }`}
+                                                >
+                                                    {TASK_STATUS_ICONS[s]}
+                                                </button>
+                                            ))
+                                        )}
                                     </div>
                                 </div>
                             ))}
