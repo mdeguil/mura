@@ -56,6 +56,10 @@ public class TaskService {
         requireOwnedProject(userId, projectId);
         Task task = requireTaskInProject(projectId, taskId);
 
+        if (task.getStatus() == TaskStatus.TERMINE && request.status() != TaskStatus.TERMINE) {
+            throw new ApiException(HttpStatus.CONFLICT, "Une tâche terminée ne peut pas changer de statut.");
+        }
+
         task.setName(request.name());
         task.setDescription(request.description());
         task.setStatus(request.status());

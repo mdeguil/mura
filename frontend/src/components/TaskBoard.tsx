@@ -2,7 +2,6 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import type { Task, TaskStatus } from '../types'
 import {
-    adjacentTaskStatuses,
     TASK_STATUS_ICON_ACTIVE_CLASSES,
     TASK_STATUS_ICONS,
     TASK_STATUS_LABELS,
@@ -97,25 +96,27 @@ export default function TaskBoard({
                                                 >
                                                     {TASK_STATUS_ICONS.EN_COURS}
                                                 </button>
-                                            ) : (
-                                                adjacentTaskStatuses(task.status).map((s) => (
+                                            ) : status === 'EN_COURS' ? (
+                                                ['A_FAIRE', 'TERMINE'].map((s) => (
                                                     <button
                                                         key={s}
                                                         type="button"
-                                                        disabled={s === task.status}
-                                                        onClick={() => onStatusChange(task.id, s)}
-                                                        title={TASK_STATUS_LABELS[s]}
-                                                        aria-label={TASK_STATUS_LABELS[s]}
-                                                        aria-pressed={task.status === s}
-                                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition ${
-                                                            task.status === s
-                                                                ? `${TASK_STATUS_ICON_ACTIVE_CLASSES[s]} cursor-default`
-                                                                : 'bg-surface-muted text-slate-400 hover:text-slate-600'
-                                                        }`}
+                                                        onClick={() => onStatusChange(task.id, s as TaskStatus)}
+                                                        title={TASK_STATUS_LABELS[s as TaskStatus]}
+                                                        aria-label={TASK_STATUS_LABELS[s as TaskStatus]}
+                                                        className="w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition bg-surface-muted text-slate-400 hover:text-slate-600"
                                                     >
-                                                        {TASK_STATUS_ICONS[s]}
+                                                        {TASK_STATUS_ICONS[s as TaskStatus]}
                                                     </button>
                                                 ))
+                                            ) : (
+                                                <span
+                                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none ${TASK_STATUS_ICON_ACTIVE_CLASSES.TERMINE}`}
+                                                    title="Terminé"
+                                                    aria-label="Terminé"
+                                                >
+                                                    {TASK_STATUS_ICONS.TERMINE}
+                                                </span>
                                             )}
                                         </div>
                                     </div>
