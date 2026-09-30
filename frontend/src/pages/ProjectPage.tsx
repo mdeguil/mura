@@ -11,6 +11,13 @@ import type { Project, Task, TaskStatus } from '../types'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 import { projectGlassBackground } from '../utils/color'
 
+type ProjectTab = 'planning' | 'tasks'
+
+const TABS: { key: ProjectTab; label: string }[] = [
+    { key: 'planning', label: 'Planning' },
+    { key: 'tasks', label: 'Tâches' },
+]
+
 export default function ProjectPage() {
     const { id } = useParams<{ id: string }>()
     const [project, setProject] = useState<Project | null>(null)
@@ -19,6 +26,7 @@ export default function ProjectPage() {
 
     const [tasks, setTasks] = useState<Task[]>([])
     const [showCreateTask, setShowCreateTask] = useState(false)
+    const [activeTab, setActiveTab] = useState<ProjectTab>('planning')
 
     useEffect(() => {
         let cancelled = false
@@ -142,22 +150,41 @@ export default function ProjectPage() {
                             </div>
                         </div>
 
-                        <div className="mt-6 bg-surface border border-border rounded-2xl p-6">
-                            <h2 className="text-sm font-semibold text-slate-800 mb-4">Planning</h2>
-                            <GanttChart tasks={tasks} />
+                        <div className="mt-6 flex items-center gap-6 border-b border-border">
+                            {TABS.map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => setActiveTab(tab.key)}
+                                    className={`pb-3 -mb-px text-sm font-medium border-b-2 transition ${
+                                        activeTab === tab.key
+                                            ? 'text-slate-800 border-brand-500'
+                                            : 'text-slate-500 border-transparent hover:text-slate-700'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
                         </div>
 
                         <div className="mt-6 bg-surface border border-border rounded-2xl p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-sm font-semibold text-slate-800">Tâches</h2>
-                                <button
-                                    onClick={() => setShowCreateTask(true)}
-                                    className="h-8 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition"
-                                >
-                                    + Nouvelle tâche
-                                </button>
-                            </div>
-                            <TaskBoard tasks={tasks} onStatusChange={handleStatusChange} onDelete={handleDeleteTask} />
+                            {activeTab === 'planning' ? (
+                                <GanttChart tasks={tasks} />
+                            ) : (
+                                <>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h2 className="text-sm font-semibold text-slate-800">
+                                            Tâches ({tasks.length})
+                                        </h2>
+                                        <button
+                                            onClick={() => setShowCreateTask(true)}
+                                            className="h-8 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition"
+                                        >
+                                            + Nouvelle tâche
+                                        </button>
+                                    </div>
+                                    <TaskBoard tasks={tasks} onStatusChange={handleStatusChange} onDelete={handleDeleteTask} />
+                                </>
+                            )}
                         </div>
                     </>
                 )}
