@@ -45,6 +45,17 @@ export interface Project {
   lists: List[]
 }
 
+export type TaskStatus = 'A_FAIRE' | 'EN_COURS' | 'TERMINE'
+
+export interface Task {
+  id: string
+  name: string
+  description?: string
+  status: TaskStatus
+  startDate: string
+  endDate: string
+}
+
 export interface AuthResponse {
   token: string
   user: User
