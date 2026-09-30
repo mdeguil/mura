@@ -11,9 +11,10 @@ import type { Project, Task, TaskStatus } from '../types'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 import { projectGlassBackground } from '../utils/color'
 
-type ProjectTab = 'planning' | 'tasks'
+type ProjectTab = 'info' | 'planning' | 'tasks'
 
 const TABS: { key: ProjectTab; label: string }[] = [
+    { key: 'info', label: 'Infos' },
     { key: 'planning', label: 'Planning' },
     { key: 'tasks', label: 'Tâches' },
 ]
@@ -26,7 +27,7 @@ export default function ProjectPage() {
 
     const [tasks, setTasks] = useState<Task[]>([])
     const [showCreateTask, setShowCreateTask] = useState(false)
-    const [activeTab, setActiveTab] = useState<ProjectTab>('planning')
+    const [activeTab, setActiveTab] = useState<ProjectTab>('info')
 
     useEffect(() => {
         let cancelled = false
@@ -85,10 +86,10 @@ export default function ProjectPage() {
     }
 
     return (
-        <div className="min-h-screen bg-app">
+        <div className="min-h-screen bg-app flex flex-col">
             <Navbar />
 
-            <main className="max-w-5xl mx-auto px-6 py-10">
+            <main className="flex-1 flex flex-col px-8 py-8 w-full">
                 <Link to="/" className="text-sm text-slate-500 hover:text-slate-700 transition">
                     ← Mes projets
                 </Link>
@@ -101,53 +102,22 @@ export default function ProjectPage() {
                     </div>
                 ) : (
                     <>
-                        <div className="mt-4 bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
-                            <div className="h-2" style={{ background: projectGlassBackground(project.color) }} />
-
-                            <div className="p-6">
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <h1 className="text-xl font-semibold text-slate-800">{project.name}</h1>
-                                        <p className="text-sm text-slate-500 mt-1">{PROJECT_TYPE_LABELS[project.type]}</p>
-                                    </div>
-                                    <span
-                                        className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}
-                                    >
-                                        {PROJECT_STATUS_LABELS[project.status]}
-                                    </span>
-                                </div>
-
-                                {project.startDate && (
-                                    <p className="text-sm text-slate-500 mt-4">
-                                        Date de début : {format(new Date(project.startDate), 'dd/MM/yyyy', { locale: fr })}
-                                    </p>
-                                )}
-
-                                {project.description && (
-                                    <p className="text-sm text-slate-600 mt-4 whitespace-pre-wrap">{project.description}</p>
-                                )}
-
-                                <div className="mt-6 pt-6 border-t border-border">
-                                    <h2 className="text-xs font-medium text-slate-500 mb-3">
-                                        Membres ({project.members.length})
-                                    </h2>
-                                    <div className="flex flex-wrap gap-3">
-                                        {project.members.map((member) => (
-                                            <div key={member.id} className="flex items-center gap-2">
-                                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center text-white text-xs font-semibold">
-                                                    {member.username[0]?.toUpperCase()}
-                                                </div>
-                                                <span className="text-sm text-slate-600">
-                                                    {member.username}
-                                                    {member.id === project.owner.id && (
-                                                        <span className="text-slate-400"> · propriétaire</span>
-                                                    )}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
+                        <div className="mt-4 flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <span
+                                    className="w-2 h-9 rounded-full shrink-0"
+                                    style={{ background: projectGlassBackground(project.color) }}
+                                />
+                                <div>
+                                    <h1 className="text-xl font-semibold text-slate-800">{project.name}</h1>
+                                    <p className="text-sm text-slate-500">{PROJECT_TYPE_LABELS[project.type]}</p>
                                 </div>
                             </div>
+                            <span
+                                className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}
+                            >
+                                {PROJECT_STATUS_LABELS[project.status]}
+                            </span>
                         </div>
 
                         <div className="mt-6 flex items-center gap-6 border-b border-border">
@@ -166,8 +136,41 @@ export default function ProjectPage() {
                             ))}
                         </div>
 
-                        <div className="mt-6 bg-surface border border-border rounded-2xl p-6">
-                            {activeTab === 'planning' ? (
+                        <div className="mt-6 flex-1 bg-surface border border-border rounded-2xl p-6 flex flex-col">
+                            {activeTab === 'info' ? (
+                                <div>
+                                    {project.startDate && (
+                                        <p className="text-sm text-slate-500">
+                                            Date de début : {format(new Date(project.startDate), 'dd/MM/yyyy', { locale: fr })}
+                                        </p>
+                                    )}
+
+                                    {project.description && (
+                                        <p className="text-sm text-slate-600 mt-4 whitespace-pre-wrap">{project.description}</p>
+                                    )}
+
+                                    <div className="mt-6 pt-6 border-t border-border">
+                                        <h2 className="text-xs font-medium text-slate-500 mb-3">
+                                            Membres ({project.members.length})
+                                        </h2>
+                                        <div className="flex flex-wrap gap-3">
+                                            {project.members.map((member) => (
+                                                <div key={member.id} className="flex items-center gap-2">
+                                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center text-white text-xs font-semibold">
+                                                        {member.username[0]?.toUpperCase()}
+                                                    </div>
+                                                    <span className="text-sm text-slate-600">
+                                                        {member.username}
+                                                        {member.id === project.owner.id && (
+                                                            <span className="text-slate-400"> · propriétaire</span>
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : activeTab === 'planning' ? (
                                 <GanttChart tasks={tasks} />
                             ) : (
                                 <>
