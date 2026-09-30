@@ -12,7 +12,8 @@ public record TaskResponse(
         String description,
         TaskStatus status,
         LocalDate startDate,
-        LocalDate endDate
+        LocalDate endDate,
+        boolean archived
 ) {
     public static TaskResponse from(Task task) {
         return new TaskResponse(
@@ -21,7 +22,8 @@ public record TaskResponse(
                 task.getDescription(),
                 task.getStatus(),
                 task.getStartDate(),
-                task.getEndDate()
+                task.getEndDate(),
+                task.isArchived()
         );
     }
 }

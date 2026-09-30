@@ -6,5 +6,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface TaskRepository extends JpaRepository<Task, UUID> {
-    List<Task> findAllByProjectIdOrderByStartDateAsc(UUID projectId);
+    List<Task> findAllByProjectIdAndArchivedOrderByStartDateAsc(UUID projectId, boolean archived);
 }

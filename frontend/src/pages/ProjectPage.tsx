@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar'
 import CreateTaskModal from '../components/CreateTaskModal'
 import GanttChart from '../components/GanttChart'
 import TaskBoard from '../components/TaskBoard'
+import ArchivedTasks from '../components/ArchivedTasks'
 import api from '../services/api'
 import type { Project, Task, TaskStatus } from '../types'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
@@ -26,6 +27,8 @@ export default function ProjectPage() {
     const [error, setError] = useState('')
 
     const [tasks, setTasks] = useState<Task[]>([])
+    const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
+    const [showArchived, setShowArchived] = useState(false)
     const [showCreateTask, setShowCreateTask] = useState(false)
     const [activeTab, setActiveTab] = useState<ProjectTab>('info')
 
@@ -57,6 +60,12 @@ export default function ProjectPage() {
             })
             .catch(() => {})
 
+        api.get<Task[]>(`/projects/${id}/tasks/archived`)
+            .then(({ data }) => {
+                if (!cancelled) setArchivedTasks(data)
+            })
+            .catch(() => {})
+
         return () => {
             cancelled = true
         }
@@ -80,9 +89,25 @@ export default function ProjectPage() {
         setTasks((prev) => prev.map((t) => (t.id === taskId ? data : t)))
     }
 
-    async function handleDeleteTask(taskId: string) {
-        await api.delete(`/projects/${id}/tasks/${taskId}`)
+    async function handleArchiveTask(taskId: string) {
+        const { data } = await api.patch<Task>(`/projects/${id}/tasks/${taskId}/archive`)
         setTasks((prev) => prev.filter((t) => t.id !== taskId))
+        setArchivedTasks((prev) => [...prev, data])
+    }
+
+    async function handleRestoreTask(taskId: string) {
+        const { data } = await api.patch<Task>(`/projects/${id}/tasks/${taskId}/restore`)
+        setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId))
+        setTasks((prev) => [...prev, data].sort((a, b) => a.startDate.localeCompare(b.startDate)))
+    }
+
+    async function handleDeleteTaskPermanently(taskId: string) {
+        const task = archivedTasks.find((t) => t.id === taskId)
+        if (!task) return
+        if (!window.confirm(`Supprimer définitivement « ${task.name} » ? Cette action est irréversible.`)) return
+
+        await api.delete(`/projects/${id}/tasks/${taskId}`)
+        setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId))
     }
 
     return (
@@ -178,14 +203,32 @@ export default function ProjectPage() {
                                         <h2 className="text-sm font-semibold text-slate-800">
                                             Tâches ({tasks.length})
                                         </h2>
-                                        <button
-                                            onClick={() => setShowCreateTask(true)}
-                                            className="h-8 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition"
-                                        >
-                                            + Nouvelle tâche
-                                        </button>
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => setShowArchived((v) => !v)}
+                                                className="text-xs text-slate-500 hover:text-slate-700 transition underline"
+                                            >
+                                                {showArchived ? 'Masquer les archives' : `Archives (${archivedTasks.length})`}
+                                            </button>
+                                            <button
+                                                onClick={() => setShowCreateTask(true)}
+                                                className="h-8 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition"
+                                            >
+                                                + Nouvelle tâche
+                                            </button>
+                                        </div>
                                     </div>
-                                    <TaskBoard tasks={tasks} onStatusChange={handleStatusChange} onDelete={handleDeleteTask} />
+                                    <TaskBoard tasks={tasks} onStatusChange={handleStatusChange} onArchive={handleArchiveTask} />
+
+                                    {showArchived && (
+                                        <div className="mt-6 pt-6 border-t border-border">
+                                            <ArchivedTasks
+                                                tasks={archivedTasks}
+                                                onRestore={handleRestoreTask}
+                                                onDelete={handleDeleteTaskPermanently}
+                                            />
+                                        </div>
+                                    )}
                                 </>
                             )}
                         </div>

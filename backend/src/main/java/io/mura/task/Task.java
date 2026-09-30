@@ -52,6 +52,9 @@ public class Task {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
+    @Column(nullable = false)
+    private boolean archived;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

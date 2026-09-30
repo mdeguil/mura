@@ -23,7 +23,14 @@ public class TaskService {
 
     public List<TaskResponse> listForProject(UUID userId, UUID projectId) {
         requireOwnedProject(userId, projectId);
-        return taskRepository.findAllByProjectIdOrderByStartDateAsc(projectId).stream()
+        return taskRepository.findAllByProjectIdAndArchivedOrderByStartDateAsc(projectId, false).stream()
+                .map(TaskResponse::from)
+                .toList();
+    }
+
+    public List<TaskResponse> listArchivedForProject(UUID userId, UUID projectId) {
+        requireOwnedProject(userId, projectId);
+        return taskRepository.findAllByProjectIdAndArchivedOrderByStartDateAsc(projectId, true).stream()
                 .map(TaskResponse::from)
                 .toList();
     }
@@ -59,9 +66,30 @@ public class TaskService {
     }
 
     @Transactional
+    public TaskResponse archive(UUID userId, UUID projectId, UUID taskId) {
+        requireOwnedProject(userId, projectId);
+        Task task = requireTaskInProject(projectId, taskId);
+        task.setArchived(true);
+        return TaskResponse.from(task);
+    }
+
+    @Transactional
+    public TaskResponse restore(UUID userId, UUID projectId, UUID taskId) {
+        requireOwnedProject(userId, projectId);
+        Task task = requireTaskInProject(projectId, taskId);
+        task.setArchived(false);
+        return TaskResponse.from(task);
+    }
+
+    @Transactional
     public void delete(UUID userId, UUID projectId, UUID taskId) {
         requireOwnedProject(userId, projectId);
         Task task = requireTaskInProject(projectId, taskId);
+
+        if (!task.isArchived()) {
+            throw new ApiException(HttpStatus.CONFLICT, "La tâche doit être archivée avant d'être supprimée.");
+        }
+
         taskRepository.delete(task);
     }
 

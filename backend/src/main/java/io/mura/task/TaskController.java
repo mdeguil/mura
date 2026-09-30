@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,6 +36,14 @@ public class TaskController {
         return ResponseEntity.ok(taskService.listForProject(userId, projectId));
     }
 
+    @GetMapping("/archived")
+    public ResponseEntity<List<TaskResponse>> listArchived(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID projectId
+    ) {
+        return ResponseEntity.ok(taskService.listArchivedForProject(userId, projectId));
+    }
+
     @PostMapping
     public ResponseEntity<TaskResponse> create(
             @AuthenticationPrincipal UUID userId,
@@ -52,6 +61,24 @@ public class TaskController {
             @Valid @RequestBody UpdateTaskRequest request
     ) {
         return ResponseEntity.ok(taskService.update(userId, projectId, taskId, request));
+    }
+
+    @PatchMapping("/{taskId}/archive")
+    public ResponseEntity<TaskResponse> archive(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID projectId,
+            @PathVariable UUID taskId
+    ) {
+        return ResponseEntity.ok(taskService.archive(userId, projectId, taskId));
+    }
+
+    @PatchMapping("/{taskId}/restore")
+    public ResponseEntity<TaskResponse> restore(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID projectId,
+            @PathVariable UUID taskId
+    ) {
+        return ResponseEntity.ok(taskService.restore(userId, projectId, taskId));
     }
 
     @DeleteMapping("/{taskId}")

@@ -12,11 +12,11 @@ import {
 export default function TaskBoard({
     tasks,
     onStatusChange,
-    onDelete,
+    onArchive,
 }: {
     tasks: Task[]
     onStatusChange: (taskId: string, status: TaskStatus) => void
-    onDelete: (taskId: string) => void
+    onArchive: (taskId: string) => void
 }) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -33,11 +33,12 @@ export default function TaskBoard({
                                     <div className="flex items-start justify-between gap-2">
                                         <p className="text-sm text-slate-800 font-medium">{task.name}</p>
                                         <button
-                                            onClick={() => onDelete(task.id)}
-                                            className="text-slate-400 hover:text-red-500 transition text-xs leading-none shrink-0"
-                                            aria-label="Supprimer la tâche"
+                                            onClick={() => onArchive(task.id)}
+                                            className="text-slate-400 hover:text-amber-600 transition text-xs leading-none shrink-0"
+                                            title="Archiver"
+                                            aria-label="Archiver la tâche"
                                         >
-                                            ✕
+                                            🗄
                                         </button>
                                     </div>
                                     <p className="text-xs text-slate-500 mt-1">

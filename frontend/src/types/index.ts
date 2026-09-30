@@ -54,6 +54,7 @@ export interface Task {
   status: TaskStatus
   startDate: string
   endDate: string
+  archived: boolean
 }
 
 export interface AuthResponse {
