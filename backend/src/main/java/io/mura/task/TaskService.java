@@ -71,6 +71,10 @@ public class TaskService {
             throw new ApiException(HttpStatus.CONFLICT, "Cette tâche ne peut pas passer à ce statut.");
         }
 
+        if (request.status() == TaskStatus.TERMINE && task.getSubtasks().stream().anyMatch(s -> !s.isDone())) {
+            throw new ApiException(HttpStatus.CONFLICT, "Toutes les sous-tâches doivent être terminées avant de valider cette tâche.");
+        }
+
         task.setName(request.name());
         task.setDescription(request.description());
         task.setStatus(request.status());

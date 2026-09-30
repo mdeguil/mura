@@ -4,6 +4,7 @@ import io.mura.task.Task;
 import io.mura.task.TaskStatus;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public record TaskResponse(
@@ -13,7 +14,8 @@ public record TaskResponse(
         TaskStatus status,
         LocalDate startDate,
         LocalDate endDate,
-        boolean archived
+        boolean archived,
+        List<SubtaskResponse> subtasks
 ) {
     public static TaskResponse from(Task task) {
         return new TaskResponse(
@@ -23,7 +25,8 @@ public record TaskResponse(
                 task.getStatus(),
                 task.getStartDate(),
                 task.getEndDate(),
-                task.isArchived()
+                task.isArchived(),
+                task.getSubtasks().stream().map(SubtaskResponse::from).toList()
         );
     }
 }

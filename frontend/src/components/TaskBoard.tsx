@@ -16,6 +16,7 @@ export default function TaskBoard({
     onArchive,
     onRestore,
     onDeletePermanently,
+    onOpenTask,
 }: {
     tasks: Task[]
     archivedTasks: Task[]
@@ -23,6 +24,7 @@ export default function TaskBoard({
     onArchive: (taskId: string) => void
     onRestore: (taskId: string) => void
     onDeletePermanently: (taskId: string) => void
+    onOpenTask: (task: Task) => void
 }) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -69,47 +71,75 @@ export default function TaskBoard({
                             {TASK_STATUS_LABELS[status]} ({columnTasks.length})
                         </h3>
                         <div className="flex flex-col gap-2">
-                            {columnTasks.map((task) => (
-                                <div key={task.id} className="bg-surface border border-border rounded-lg p-3 flex items-stretch gap-2">
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm text-slate-800 font-medium">{task.name}</p>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                            {format(new Date(task.startDate), 'dd/MM', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
-                                        </p>
-                                    </div>
-                                    <div className="flex flex-col items-center gap-1 shrink-0">
-                                        <button
-                                            onClick={() => onArchive(task.id)}
-                                            className="w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-600 transition text-xs leading-none"
-                                            title="Archiver"
-                                            aria-label="Archiver la tâche"
-                                        >
-                                            ✕
-                                        </button>
-                                        <div className="flex items-center gap-1.5">
-                                            {NEXT_TASK_STATUS[status] ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => onStatusChange(task.id, NEXT_TASK_STATUS[status]!)}
-                                                    title={`Passer ${TASK_STATUS_LABELS[NEXT_TASK_STATUS[status]!].toLowerCase()}`}
-                                                    aria-label={`Passer ${TASK_STATUS_LABELS[NEXT_TASK_STATUS[status]!].toLowerCase()}`}
-                                                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition bg-surface-muted text-slate-400 hover:text-slate-600"
-                                                >
-                                                    {TASK_STATUS_ICONS[NEXT_TASK_STATUS[status]!]}
-                                                </button>
-                                            ) : (
-                                                <span
-                                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none ${TASK_STATUS_ICON_ACTIVE_CLASSES.TERMINE}`}
-                                                    title="Terminé"
-                                                    aria-label="Terminé"
-                                                >
-                                                    {TASK_STATUS_ICONS.TERMINE}
-                                                </span>
+                            {columnTasks.map((task) => {
+                                const doneCount = task.subtasks.filter((s) => s.done).length
+                                const hasIncompleteSubtasks = task.subtasks.length > 0 && doneCount < task.subtasks.length
+                                const next = NEXT_TASK_STATUS[status]
+                                const blockedByStatus = next === 'TERMINE' && hasIncompleteSubtasks
+
+                                return (
+                                    <div
+                                        key={task.id}
+                                        onClick={() => onOpenTask(task)}
+                                        className="bg-surface border border-border rounded-lg p-3 flex items-stretch gap-2 cursor-pointer hover:border-brand-500 transition"
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-slate-800 font-medium">{task.name}</p>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                {format(new Date(task.startDate), 'dd/MM', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
+                                            </p>
+                                            {task.subtasks.length > 0 && (
+                                                <p className="text-xs text-slate-400 mt-1">
+                                                    ☑ {doneCount}/{task.subtasks.length} sous-tâches
+                                                </p>
                                             )}
                                         </div>
+                                        <div
+                                            className="flex flex-col items-center gap-1 shrink-0"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <button
+                                                onClick={() => onArchive(task.id)}
+                                                className="w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-600 transition text-xs leading-none"
+                                                title="Archiver"
+                                                aria-label="Archiver la tâche"
+                                            >
+                                                ✕
+                                            </button>
+                                            <div className="flex items-center gap-1.5">
+                                                {next ? (
+                                                    <button
+                                                        type="button"
+                                                        disabled={blockedByStatus}
+                                                        onClick={() => onStatusChange(task.id, next)}
+                                                        title={
+                                                            blockedByStatus
+                                                                ? 'Termine toutes les sous-tâches avant de valider'
+                                                                : `Passer ${TASK_STATUS_LABELS[next].toLowerCase()}`
+                                                        }
+                                                        aria-label={`Passer ${TASK_STATUS_LABELS[next].toLowerCase()}`}
+                                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition ${
+                                                            blockedByStatus
+                                                                ? 'bg-surface-muted text-slate-300 cursor-not-allowed'
+                                                                : 'bg-surface-muted text-slate-400 hover:text-slate-600'
+                                                        }`}
+                                                    >
+                                                        {TASK_STATUS_ICONS[next]}
+                                                    </button>
+                                                ) : (
+                                                    <span
+                                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none ${TASK_STATUS_ICON_ACTIVE_CLASSES.TERMINE}`}
+                                                        title="Terminé"
+                                                        aria-label="Terminé"
+                                                    >
+                                                        {TASK_STATUS_ICONS.TERMINE}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                )
+                            })}
                             {columnTasks.length === 0 && (
                                 <p className="text-xs text-slate-400 italic">Aucune tâche</p>
                             )}

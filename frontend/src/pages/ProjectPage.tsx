@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import axios from 'axios'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import Navbar from '../components/Navbar'
 import CreateTaskModal from '../components/CreateTaskModal'
 import GanttChart from '../components/GanttChart'
 import TaskBoard from '../components/TaskBoard'
+import TaskDetailModal from '../components/TaskDetailModal'
 import api from '../services/api'
-import type { Project, Task, TaskStatus } from '../types'
+import type { Project, Subtask, Task, TaskStatus } from '../types'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 import { projectGlassBackground } from '../utils/color'
 
@@ -29,6 +31,8 @@ export default function ProjectPage() {
     const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
     const [showCreateTask, setShowCreateTask] = useState(false)
     const [activeTab, setActiveTab] = useState<ProjectTab>('info')
+    const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+    const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
 
     useEffect(() => {
         let cancelled = false
@@ -77,14 +81,45 @@ export default function ProjectPage() {
         const task = tasks.find((t) => t.id === taskId)
         if (!task) return
 
-        const { data } = await api.put<Task>(`/projects/${id}/tasks/${taskId}`, {
-            name: task.name,
-            description: task.description,
-            status,
-            startDate: task.startDate,
-            endDate: task.endDate,
-        })
-        setTasks((prev) => prev.map((t) => (t.id === taskId ? data : t)))
+        try {
+            const { data } = await api.put<Task>(`/projects/${id}/tasks/${taskId}`, {
+                name: task.name,
+                description: task.description,
+                status,
+                startDate: task.startDate,
+                endDate: task.endDate,
+            })
+            setTasks((prev) => prev.map((t) => (t.id === taskId ? data : t)))
+        } catch (err) {
+            const message =
+                (axios.isAxiosError(err) && (err.response?.data as { message?: string })?.message) ||
+                'Impossible de changer le statut de cette tâche.'
+            window.alert(message)
+        }
+    }
+
+    function handleSubtaskAdded(taskId: string, subtask: Subtask) {
+        setTasks((prev) =>
+            prev.map((t) => (t.id === taskId ? { ...t, subtasks: [...t.subtasks, subtask] } : t))
+        )
+    }
+
+    function handleSubtaskToggled(taskId: string, subtask: Subtask) {
+        setTasks((prev) =>
+            prev.map((t) =>
+                t.id === taskId
+                    ? { ...t, subtasks: t.subtasks.map((s) => (s.id === subtask.id ? subtask : s)) }
+                    : t
+            )
+        )
+    }
+
+    function handleSubtaskDeleted(taskId: string, subtaskId: string) {
+        setTasks((prev) =>
+            prev.map((t) =>
+                t.id === taskId ? { ...t, subtasks: t.subtasks.filter((s) => s.id !== subtaskId) } : t
+            )
+        )
     }
 
     async function handleArchiveTask(taskId: string) {
@@ -215,6 +250,7 @@ export default function ProjectPage() {
                                         onArchive={handleArchiveTask}
                                         onRestore={handleRestoreTask}
                                         onDeletePermanently={handleDeleteTaskPermanently}
+                                        onOpenTask={(task) => setSelectedTaskId(task.id)}
                                     />
                                 </>
                             )}
@@ -228,6 +264,17 @@ export default function ProjectPage() {
                     projectId={id}
                     onClose={() => setShowCreateTask(false)}
                     onCreated={handleTaskCreated}
+                />
+            )}
+
+            {selectedTask && id && (
+                <TaskDetailModal
+                    task={selectedTask}
+                    projectId={id}
+                    onClose={() => setSelectedTaskId(null)}
+                    onSubtaskAdded={handleSubtaskAdded}
+                    onSubtaskToggled={handleSubtaskToggled}
+                    onSubtaskDeleted={handleSubtaskDeleted}
                 />
             )}
         </div>

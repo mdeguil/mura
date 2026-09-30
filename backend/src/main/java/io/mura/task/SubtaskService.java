@@ -1,0 +1,78 @@
+package io.mura.task;
+
+import io.mura.common.exception.ApiException;
+import io.mura.project.Project;
+import io.mura.project.ProjectRepository;
+import io.mura.task.dto.CreateSubtaskRequest;
+import io.mura.task.dto.SubtaskResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class SubtaskService {
+
+    private final SubtaskRepository subtaskRepository;
+    private final TaskRepository taskRepository;
+    private final ProjectRepository projectRepository;
+
+    @Transactional
+    public SubtaskResponse create(UUID userId, UUID projectId, UUID taskId, CreateSubtaskRequest request) {
+        Task task = requireOwnedTask(userId, projectId, taskId);
+
+        Subtask subtask = new Subtask();
+        subtask.setTask(task);
+        subtask.setName(request.name());
+        subtaskRepository.save(subtask);
+
+        return SubtaskResponse.from(subtask);
+    }
+
+    @Transactional
+    public SubtaskResponse toggle(UUID userId, UUID projectId, UUID taskId, UUID subtaskId) {
+        requireOwnedTask(userId, projectId, taskId);
+        Subtask subtask = requireSubtaskInTask(taskId, subtaskId);
+        subtask.setDone(!subtask.isDone());
+        return SubtaskResponse.from(subtask);
+    }
+
+    @Transactional
+    public void delete(UUID userId, UUID projectId, UUID taskId, UUID subtaskId) {
+        requireOwnedTask(userId, projectId, taskId);
+        Subtask subtask = requireSubtaskInTask(taskId, subtaskId);
+        subtaskRepository.delete(subtask);
+    }
+
+    private Task requireOwnedTask(UUID userId, UUID projectId, UUID taskId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+
+        if (!project.getOwner().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
+        }
+
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Tâche introuvable."));
+
+        if (!task.getProject().getId().equals(projectId)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Tâche introuvable.");
+        }
+
+        return task;
+    }
+
+    private Subtask requireSubtaskInTask(UUID taskId, UUID subtaskId) {
+        Subtask subtask = subtaskRepository.findById(subtaskId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Sous-tâche introuvable."));
+
+        if (!subtask.getTask().getId().equals(taskId)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Sous-tâche introuvable.");
+        }
+
+        return subtask;
+    }
+}

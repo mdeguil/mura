@@ -47,6 +47,12 @@ export interface Project {
 
 export type TaskStatus = 'A_FAIRE' | 'EN_COURS' | 'TERMINE'
 
+export interface Subtask {
+  id: string
+  name: string
+  done: boolean
+}
+
 export interface Task {
   id: string
   name: string
@@ -55,6 +61,7 @@ export interface Task {
   startDate: string
   endDate: string
   archived: boolean
+  subtasks: Subtask[]
 }
 
 export interface AuthResponse {
