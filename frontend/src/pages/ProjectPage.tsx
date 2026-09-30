@@ -1,4 +1,104 @@
-// Placeholder — to be implemented
+import { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { format } from 'date-fns'
+import { fr } from 'date-fns/locale'
+import Navbar from '../components/Navbar'
+import api from '../services/api'
+import type { Project } from '../types'
+import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
+import { projectGlassBackground } from '../utils/color'
+
 export default function ProjectPage() {
-  return <div className="p-8"><h1 className="text-2xl font-bold">Project</h1></div>
+    const { id } = useParams<{ id: string }>()
+    const [project, setProject] = useState<Project | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
+
+    useEffect(() => {
+        let cancelled = false
+
+        api.get<Project>(`/projects/${id}`)
+            .then(({ data }) => {
+                if (!cancelled) setProject(data)
+            })
+            .catch(() => {
+                if (!cancelled) setError('Impossible de charger ce projet.')
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [id])
+
+    return (
+        <div className="min-h-screen bg-app">
+            <Navbar />
+
+            <main className="max-w-3xl mx-auto px-6 py-10">
+                <Link to="/" className="text-sm text-slate-500 hover:text-slate-700 transition">
+                    ← Mes projets
+                </Link>
+
+                {loading ? (
+                    <div className="text-sm text-slate-500 mt-6">Chargement…</div>
+                ) : error || !project ? (
+                    <div className="mt-6 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+                        {error || 'Projet introuvable.'}
+                    </div>
+                ) : (
+                    <div className="mt-4 bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
+                        <div className="h-2" style={{ background: projectGlassBackground(project.color) }} />
+
+                        <div className="p-6">
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <h1 className="text-xl font-semibold text-slate-800">{project.name}</h1>
+                                    <p className="text-sm text-slate-500 mt-1">{PROJECT_TYPE_LABELS[project.type]}</p>
+                                </div>
+                                <span
+                                    className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}
+                                >
+                                    {PROJECT_STATUS_LABELS[project.status]}
+                                </span>
+                            </div>
+
+                            {project.startDate && (
+                                <p className="text-sm text-slate-500 mt-4">
+                                    Date de début : {format(new Date(project.startDate), 'dd/MM/yyyy', { locale: fr })}
+                                </p>
+                            )}
+
+                            {project.description && (
+                                <p className="text-sm text-slate-600 mt-4 whitespace-pre-wrap">{project.description}</p>
+                            )}
+
+                            <div className="mt-6 pt-6 border-t border-border">
+                                <h2 className="text-xs font-medium text-slate-500 mb-3">
+                                    Membres ({project.members.length})
+                                </h2>
+                                <div className="flex flex-wrap gap-3">
+                                    {project.members.map((member) => (
+                                        <div key={member.id} className="flex items-center gap-2">
+                                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center text-white text-xs font-semibold">
+                                                {member.username[0]?.toUpperCase()}
+                                            </div>
+                                            <span className="text-sm text-slate-600">
+                                                {member.username}
+                                                {member.id === project.owner.id && (
+                                                    <span className="text-slate-400"> · propriétaire</span>
+                                                )}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </main>
+        </div>
+    )
 }

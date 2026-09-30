@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +27,14 @@ public class ProjectController {
     @GetMapping
     public ResponseEntity<List<ProjectResponse>> list(@AuthenticationPrincipal UUID userId) {
         return ResponseEntity.ok(projectService.listForUser(userId));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProjectResponse> get(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(projectService.getForUser(userId, id));
     }
 
     @PostMapping

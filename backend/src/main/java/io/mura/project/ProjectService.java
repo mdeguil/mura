@@ -30,6 +30,17 @@ public class ProjectService {
                 .toList();
     }
 
+    public ProjectResponse getForUser(UUID userId, UUID projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+
+        if (!project.getOwner().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
+        }
+
+        return ProjectResponse.from(project);
+    }
+
     @Transactional
     public ProjectResponse create(UUID ownerId, CreateProjectRequest request) {
         User owner = userRepository.findById(ownerId)
