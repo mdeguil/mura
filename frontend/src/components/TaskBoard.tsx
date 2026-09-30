@@ -70,52 +70,54 @@ export default function TaskBoard({
                         </h3>
                         <div className="flex flex-col gap-2">
                             {columnTasks.map((task) => (
-                                <div key={task.id} className="bg-surface border border-border rounded-lg p-3">
-                                    <div className="flex items-start justify-between gap-2">
+                                <div key={task.id} className="bg-surface border border-border rounded-lg p-3 flex items-stretch gap-2">
+                                    <div className="flex-1 min-w-0">
                                         <p className="text-sm text-slate-800 font-medium">{task.name}</p>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            {format(new Date(task.startDate), 'dd/MM', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col items-end justify-between shrink-0">
                                         <button
                                             onClick={() => onArchive(task.id)}
-                                            className="text-slate-400 hover:text-amber-600 transition text-xs leading-none shrink-0"
+                                            className="text-slate-400 hover:text-amber-600 transition text-xs leading-none"
                                             title="Archiver"
                                             aria-label="Archiver la tâche"
                                         >
                                             ✕
                                         </button>
-                                    </div>
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        {format(new Date(task.startDate), 'dd/MM', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
-                                    </p>
-                                    <div className="flex items-center gap-1.5 mt-2">
-                                        {status === 'A_FAIRE' ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => onStatusChange(task.id, 'EN_COURS')}
-                                                title="Passer en cours"
-                                                aria-label="Passer en cours"
-                                                className="w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition bg-surface-muted text-slate-400 hover:text-slate-600"
-                                            >
-                                                {TASK_STATUS_ICONS.EN_COURS}
-                                            </button>
-                                        ) : (
-                                            adjacentTaskStatuses(task.status).map((s) => (
+                                        <div className="flex items-center gap-1.5">
+                                            {status === 'A_FAIRE' ? (
                                                 <button
-                                                    key={s}
                                                     type="button"
-                                                    disabled={s === task.status}
-                                                    onClick={() => onStatusChange(task.id, s)}
-                                                    title={TASK_STATUS_LABELS[s]}
-                                                    aria-label={TASK_STATUS_LABELS[s]}
-                                                    aria-pressed={task.status === s}
-                                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition ${
-                                                        task.status === s
-                                                            ? `${TASK_STATUS_ICON_ACTIVE_CLASSES[s]} cursor-default`
-                                                            : 'bg-surface-muted text-slate-400 hover:text-slate-600'
-                                                    }`}
+                                                    onClick={() => onStatusChange(task.id, 'EN_COURS')}
+                                                    title="Passer en cours"
+                                                    aria-label="Passer en cours"
+                                                    className="w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition bg-surface-muted text-slate-400 hover:text-slate-600"
                                                 >
-                                                    {TASK_STATUS_ICONS[s]}
+                                                    {TASK_STATUS_ICONS.EN_COURS}
                                                 </button>
-                                            ))
-                                        )}
+                                            ) : (
+                                                adjacentTaskStatuses(task.status).map((s) => (
+                                                    <button
+                                                        key={s}
+                                                        type="button"
+                                                        disabled={s === task.status}
+                                                        onClick={() => onStatusChange(task.id, s)}
+                                                        title={TASK_STATUS_LABELS[s]}
+                                                        aria-label={TASK_STATUS_LABELS[s]}
+                                                        aria-pressed={task.status === s}
+                                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition ${
+                                                            task.status === s
+                                                                ? `${TASK_STATUS_ICON_ACTIVE_CLASSES[s]} cursor-default`
+                                                                : 'bg-surface-muted text-slate-400 hover:text-slate-600'
+                                                        }`}
+                                                    >
+                                                        {TASK_STATUS_ICONS[s]}
+                                                    </button>
+                                                ))
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
