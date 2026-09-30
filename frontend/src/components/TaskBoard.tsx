@@ -90,7 +90,7 @@ export default function TaskBoard({
                                             </p>
                                             {task.subtasks.length > 0 && (
                                                 <p className="text-xs text-slate-400 mt-1">
-                                                    ☑ {doneCount}/{task.subtasks.length} sous-tâches
+                                                    📋 {doneCount}/{task.subtasks.length} sous-tâches
                                                 </p>
                                             )}
                                         </div>
