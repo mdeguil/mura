@@ -19,3 +19,15 @@ export const TASK_STATUS_BAR_CLASSES: Record<TaskStatus, string> = {
     EN_COURS: 'bg-amber-500',
     TERMINE: 'bg-emerald-500',
 }
+
+export const TASK_STATUS_ICONS: Record<TaskStatus, string> = {
+    A_FAIRE: '○',
+    EN_COURS: '▶',
+    TERMINE: '✓',
+}
+
+export const TASK_STATUS_ICON_ACTIVE_CLASSES: Record<TaskStatus, string> = {
+    A_FAIRE: 'bg-slate-400 text-white',
+    EN_COURS: 'bg-amber-500 text-white',
+    TERMINE: 'bg-emerald-500 text-white',
+}
