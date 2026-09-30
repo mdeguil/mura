@@ -31,3 +31,14 @@ export const TASK_STATUS_ICON_ACTIVE_CLASSES: Record<TaskStatus, string> = {
     EN_COURS: 'bg-amber-500 text-white',
     TERMINE: 'bg-emerald-500 text-white',
 }
+
+// A task can only move to an adjacent stage (À faire <-> En cours <-> Terminé),
+// never jump straight from À faire to Terminé. At the two ends of the
+// pipeline the current stage itself fills the second slot since there is
+// no stage on that side.
+export function adjacentTaskStatuses(current: TaskStatus): TaskStatus[] {
+    const index = TASK_STATUSES.indexOf(current)
+    if (index === 0) return [TASK_STATUSES[0], TASK_STATUSES[1]]
+    if (index === TASK_STATUSES.length - 1) return [TASK_STATUSES[index - 1], TASK_STATUSES[index]]
+    return [TASK_STATUSES[index - 1], TASK_STATUSES[index + 1]]
+}

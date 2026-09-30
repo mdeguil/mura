@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import type { Task, TaskStatus } from '../types'
 import {
+    adjacentTaskStatuses,
     TASK_STATUS_ICON_ACTIVE_CLASSES,
     TASK_STATUS_ICONS,
     TASK_STATUS_LABELS,
@@ -43,17 +44,18 @@ export default function TaskBoard({
                                         {format(new Date(task.startDate), 'dd/MM', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
                                     </p>
                                     <div className="flex items-center gap-1.5 mt-2">
-                                        {TASK_STATUSES.map((s) => (
+                                        {adjacentTaskStatuses(task.status).map((s) => (
                                             <button
                                                 key={s}
                                                 type="button"
+                                                disabled={s === task.status}
                                                 onClick={() => onStatusChange(task.id, s)}
                                                 title={TASK_STATUS_LABELS[s]}
                                                 aria-label={TASK_STATUS_LABELS[s]}
                                                 aria-pressed={task.status === s}
                                                 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition ${
                                                     task.status === s
-                                                        ? TASK_STATUS_ICON_ACTIVE_CLASSES[s]
+                                                        ? `${TASK_STATUS_ICON_ACTIVE_CLASSES[s]} cursor-default`
                                                         : 'bg-surface-muted text-slate-400 hover:text-slate-600'
                                                 }`}
                                             >
