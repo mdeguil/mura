@@ -6,7 +6,6 @@ import Navbar from '../components/Navbar'
 import CreateTaskModal from '../components/CreateTaskModal'
 import GanttChart from '../components/GanttChart'
 import TaskBoard from '../components/TaskBoard'
-import ArchivedTasks from '../components/ArchivedTasks'
 import api from '../services/api'
 import type { Project, Task, TaskStatus } from '../types'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
@@ -28,7 +27,6 @@ export default function ProjectPage() {
 
     const [tasks, setTasks] = useState<Task[]>([])
     const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
-    const [showArchived, setShowArchived] = useState(false)
     const [showCreateTask, setShowCreateTask] = useState(false)
     const [activeTab, setActiveTab] = useState<ProjectTab>('info')
 
@@ -203,32 +201,21 @@ export default function ProjectPage() {
                                         <h2 className="text-sm font-semibold text-slate-800">
                                             Tâches ({tasks.length})
                                         </h2>
-                                        <div className="flex items-center gap-3">
-                                            <button
-                                                onClick={() => setShowArchived((v) => !v)}
-                                                className="text-xs text-slate-500 hover:text-slate-700 transition underline"
-                                            >
-                                                {showArchived ? 'Masquer les archives' : `Archives (${archivedTasks.length})`}
-                                            </button>
-                                            <button
-                                                onClick={() => setShowCreateTask(true)}
-                                                className="h-8 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition"
-                                            >
-                                                + Nouvelle tâche
-                                            </button>
-                                        </div>
+                                        <button
+                                            onClick={() => setShowCreateTask(true)}
+                                            className="h-8 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition"
+                                        >
+                                            + Nouvelle tâche
+                                        </button>
                                     </div>
-                                    <TaskBoard tasks={tasks} onStatusChange={handleStatusChange} onArchive={handleArchiveTask} />
-
-                                    {showArchived && (
-                                        <div className="mt-6 pt-6 border-t border-border">
-                                            <ArchivedTasks
-                                                tasks={archivedTasks}
-                                                onRestore={handleRestoreTask}
-                                                onDelete={handleDeleteTaskPermanently}
-                                            />
-                                        </div>
-                                    )}
+                                    <TaskBoard
+                                        tasks={tasks}
+                                        archivedTasks={archivedTasks}
+                                        onStatusChange={handleStatusChange}
+                                        onArchive={handleArchiveTask}
+                                        onRestore={handleRestoreTask}
+                                        onDeletePermanently={handleDeleteTaskPermanently}
+                                    />
                                 </>
                             )}
                         </div>
