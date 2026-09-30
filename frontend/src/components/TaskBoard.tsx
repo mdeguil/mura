@@ -77,10 +77,10 @@ export default function TaskBoard({
                                             {format(new Date(task.startDate), 'dd/MM', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
                                         </p>
                                     </div>
-                                    <div className="flex flex-col items-end justify-between shrink-0">
+                                    <div className="flex flex-col items-center gap-1 shrink-0">
                                         <button
                                             onClick={() => onArchive(task.id)}
-                                            className="text-slate-400 hover:text-amber-600 transition text-xs leading-none"
+                                            className="w-6 h-6 rounded-full flex items-center justify-center text-slate-400 hover:text-amber-600 transition text-xs leading-none"
                                             title="Archiver"
                                             aria-label="Archiver la tâche"
                                         >
