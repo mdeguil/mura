@@ -39,7 +39,7 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
             <div className="overflow-x-auto">
                 <div style={{ width: range.days * DAY_WIDTH + LABEL_WIDTH }}>
                     <div className="flex">
-                        <div className="shrink-0" style={{ width: LABEL_WIDTH }} />
+                        <div className="shrink-0 sticky left-0 bg-surface z-20" style={{ width: LABEL_WIDTH }} />
                         {months.map((m, i) => (
                             <div
                                 key={i}
@@ -66,7 +66,7 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
                             return (
                                 <div key={task.id} className="flex items-center h-10 border-t border-border">
                                     <div
-                                        className="shrink-0 pr-3 text-sm text-slate-700 truncate"
+                                        className="shrink-0 sticky left-0 bg-surface z-20 pr-3 text-sm text-slate-700 truncate"
                                         style={{ width: LABEL_WIDTH }}
                                         title={task.name}
                                     >
