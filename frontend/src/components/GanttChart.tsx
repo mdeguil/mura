@@ -7,6 +7,12 @@ import { TASK_STATUS_BAR_CLASSES, TASK_STATUS_LABELS, TASK_STATUSES } from '../u
 const DAY_WIDTH = 26
 const LABEL_WIDTH = 180
 
+// Crisp line plus a soft drop shadow on the right edge of the sticky name
+// column, so it reads as a separate pane the timeline scrolls under. Done
+// with a shadow rather than a border to keep the column exactly
+// LABEL_WIDTH wide — a border would shift the bars off the month header.
+const LABEL_SEPARATOR = '1px 0 0 0 rgb(203 213 225), 6px 0 8px -6px rgb(15 23 42 / 0.18)'
+
 export default function GanttChart({ tasks }: { tasks: Task[] }) {
     const range = useMemo(() => {
         if (tasks.length === 0) return null
@@ -39,7 +45,10 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
             <div className="overflow-x-auto">
                 <div style={{ width: range.days * DAY_WIDTH + LABEL_WIDTH }}>
                     <div className="flex">
-                        <div className="shrink-0 sticky left-0 bg-surface z-20" style={{ width: LABEL_WIDTH }} />
+                        <div
+                            className="shrink-0 sticky left-0 bg-surface z-20"
+                            style={{ width: LABEL_WIDTH, boxShadow: LABEL_SEPARATOR }}
+                        />
                         {months.map((m, i) => (
                             <div
                                 key={i}
@@ -70,7 +79,7 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
                                         above and below the text when scrolled. */}
                                     <div
                                         className="shrink-0 sticky left-0 z-20 h-full bg-surface pr-3 text-sm leading-10 text-slate-700 truncate"
-                                        style={{ width: LABEL_WIDTH }}
+                                        style={{ width: LABEL_WIDTH, boxShadow: LABEL_SEPARATOR }}
                                         title={task.name}
                                     >
                                         {task.name}
