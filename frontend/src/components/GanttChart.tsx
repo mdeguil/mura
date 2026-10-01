@@ -65,8 +65,11 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
                             const span = differenceInCalendarDays(end, start) + 1
                             return (
                                 <div key={task.id} className="flex items-center h-10 border-t border-border">
+                                    {/* h-full + leading-10 so the sticky background covers the whole
+                                        row height: a shorter label would let the bars show through
+                                        above and below the text when scrolled. */}
                                     <div
-                                        className="shrink-0 sticky left-0 bg-surface z-20 pr-3 text-sm text-slate-700 truncate"
+                                        className="shrink-0 sticky left-0 z-20 h-full bg-surface pr-3 text-sm leading-10 text-slate-700 truncate"
                                         style={{ width: LABEL_WIDTH }}
                                         title={task.name}
                                     >
