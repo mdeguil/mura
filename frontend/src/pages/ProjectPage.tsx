@@ -274,7 +274,10 @@ export default function ProjectPage() {
                                             onOpenTask={(task) => setSelectedTaskId(task.id)}
                                         />
                                     ) : (
-                                        <GanttChart tasks={tasks} />
+                                        <GanttChart
+                                            tasks={tasks}
+                                            onOpenTask={(task) => setSelectedTaskId(task.id)}
+                                        />
                                     )}
                                 </>
                             ) : (

@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import {
-    addMonths,
     differenceInCalendarDays,
     eachDayOfInterval,
     endOfMonth,
@@ -11,9 +10,10 @@ import {
     startOfDay,
     startOfMonth,
     startOfWeek,
-    subMonths,
 } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import MonthNav from './MonthNav'
+import { initialPlanningMonth } from '../utils/planning'
 import type { Task } from '../types'
 import {
     TASK_STATUS_BAR_CLASSES,
@@ -87,24 +87,7 @@ export default function MonthCalendar({
     tasks: Task[]
     onOpenTask: (task: Task) => void
 }) {
-    // Open on the current month, unless nothing is planned there — then on
-    // the month of the earliest task, so the calendar never opens empty.
-    const [month, setMonth] = useState(() => {
-        const thisMonth = startOfMonth(new Date())
-        if (tasks.length === 0) return thisMonth
-
-        const monthEnd = endOfMonth(thisMonth)
-        const hasTaskThisMonth = tasks.some(
-            (t) => startOfDay(new Date(t.startDate)) <= monthEnd && startOfDay(new Date(t.endDate)) >= thisMonth
-        )
-        if (hasTaskThisMonth) return thisMonth
-
-        const earliest = tasks.reduce(
-            (min, t) => (t.startDate < min ? t.startDate : min),
-            tasks[0].startDate
-        )
-        return startOfMonth(new Date(earliest))
-    })
+    const [month, setMonth] = useState(() => initialPlanningMonth(tasks))
 
     const lanes = useMemo(() => assignLanes(tasks), [tasks])
 
@@ -121,31 +104,7 @@ export default function MonthCalendar({
     return (
         <div>
             <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-1">
-                    <button
-                        onClick={() => setMonth((m) => subMonths(m, 1))}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-surface-muted transition"
-                        aria-label="Mois précédent"
-                    >
-                        ‹
-                    </button>
-                    <span className="text-sm font-semibold text-slate-800 capitalize min-w-[9rem] text-center">
-                        {format(month, 'MMMM yyyy', { locale: fr })}
-                    </span>
-                    <button
-                        onClick={() => setMonth((m) => addMonths(m, 1))}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-surface-muted transition"
-                        aria-label="Mois suivant"
-                    >
-                        ›
-                    </button>
-                    <button
-                        onClick={() => setMonth(startOfMonth(new Date()))}
-                        className="ml-2 h-7 px-2.5 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-brand-500 transition"
-                    >
-                        Aujourd'hui
-                    </button>
-                </div>
+                <MonthNav month={month} onChange={setMonth} />
 
                 <div className="flex items-center gap-4">
                     {TASK_STATUSES.map((status) => (
