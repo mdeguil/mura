@@ -86,8 +86,11 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
                         ))}
                     </div>
 
-                    <div className="relative">
-                        <div className="absolute inset-0 pointer-events-none">
+                    {/* isolate + a negative z-index on the guides layer keeps the
+                        current-month band behind the rows: positioned elements
+                        otherwise paint over the rows' horizontal borders. */}
+                    <div className="relative isolate">
+                        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: -1 }}>
                             {currentMonth && (
                                 <div
                                     className="absolute top-0 bottom-0 bg-brand-50"
