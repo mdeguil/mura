@@ -15,7 +15,12 @@ import {
 } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import type { Task } from '../types'
-import { TASK_STATUS_BAR_CLASSES, TASK_STATUS_LABELS, TASK_STATUSES } from '../utils/taskMeta'
+import {
+    TASK_STATUS_BAR_CLASSES,
+    TASK_STATUS_CLASSES,
+    TASK_STATUS_LABELS,
+    TASK_STATUSES,
+} from '../utils/taskMeta'
 
 const WEEK_OPTIONS = { weekStartsOn: 1 } as const
 
@@ -212,13 +217,18 @@ export default function MonthCalendar({
                                                 gridRow: bar.lane + 1,
                                             }}
                                             title={`${bar.task.name} · ${TASK_STATUS_LABELS[bar.task.status]}`}
-                                            className={`${TASK_STATUS_BAR_CLASSES[bar.task.status]} ${
+                                            className={`${TASK_STATUS_CLASSES[bar.task.status]} ${
                                                 bar.startsHere ? 'rounded-l-md' : ''
                                             } ${
                                                 bar.endsHere ? 'rounded-r-md' : ''
-                                            } px-1.5 text-[11px] leading-5 text-white text-left truncate hover:opacity-90 transition`}
+                                            } flex items-center gap-1.5 overflow-hidden px-1.5 text-[11px] leading-5 text-left hover:brightness-95 transition`}
                                         >
-                                            {bar.startsHere ? bar.task.name : `… ${bar.task.name}`}
+                                            <span
+                                                className={`w-1 h-3 rounded-full shrink-0 ${TASK_STATUS_BAR_CLASSES[bar.task.status]}`}
+                                            />
+                                            <span className="truncate">
+                                                {bar.startsHere ? bar.task.name : `… ${bar.task.name}`}
+                                            </span>
                                         </button>
                                     ))}
                                 </div>
