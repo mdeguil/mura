@@ -6,6 +6,7 @@ import { fr } from 'date-fns/locale'
 import Navbar from '../components/Navbar'
 import CreateTaskModal from '../components/CreateTaskModal'
 import GanttChart from '../components/GanttChart'
+import MonthCalendar from '../components/MonthCalendar'
 import TaskBoard from '../components/TaskBoard'
 import TaskDetailModal from '../components/TaskDetailModal'
 import api from '../services/api'
@@ -23,6 +24,13 @@ const TABS: { key: ProjectTab; label: string }[] = [
 
 const DEFAULT_TAB: ProjectTab = 'info'
 
+type PlanningView = 'calendar' | 'gantt'
+
+const PLANNING_VIEWS: { key: PlanningView; label: string }[] = [
+    { key: 'calendar', label: '📅 Calendrier' },
+    { key: 'gantt', label: '📊 Gantt' },
+]
+
 export default function ProjectPage() {
     const { id } = useParams<{ id: string }>()
     const [searchParams, setSearchParams] = useSearchParams()
@@ -34,6 +42,7 @@ export default function ProjectPage() {
     const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
     const [showCreateTask, setShowCreateTask] = useState(false)
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+    const [planningView, setPlanningView] = useState<PlanningView>('calendar')
     const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
 
     // The active tab lives in the URL (?tab=…) so a refresh — or a shared
@@ -242,7 +251,32 @@ export default function ProjectPage() {
                                     </div>
                                 </div>
                             ) : activeTab === 'planning' ? (
-                                <GanttChart tasks={tasks} />
+                                <>
+                                    <div className="flex items-center gap-1 mb-4 self-start bg-surface-muted border border-border rounded-lg p-0.5">
+                                        {PLANNING_VIEWS.map((view) => (
+                                            <button
+                                                key={view.key}
+                                                onClick={() => setPlanningView(view.key)}
+                                                className={`h-7 px-3 rounded-md text-xs font-medium transition ${
+                                                    planningView === view.key
+                                                        ? 'bg-surface text-slate-800 shadow-sm'
+                                                        : 'text-slate-500 hover:text-slate-700'
+                                                }`}
+                                            >
+                                                {view.label}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {planningView === 'calendar' ? (
+                                        <MonthCalendar
+                                            tasks={tasks}
+                                            onOpenTask={(task) => setSelectedTaskId(task.id)}
+                                        />
+                                    ) : (
+                                        <GanttChart tasks={tasks} />
+                                    )}
+                                </>
                             ) : (
                                 <>
                                     <div className="flex items-center justify-between mb-4">
