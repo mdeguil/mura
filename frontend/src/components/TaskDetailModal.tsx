@@ -146,15 +146,17 @@ export default function TaskDetailModal({
                             { label: 'Créée', date: createdAt, dotClass: TASK_STATUS_BAR_CLASSES.A_FAIRE },
                             { label: 'En cours', date: startedAt, dotClass: TASK_STATUS_BAR_CLASSES.EN_COURS },
                             { label: 'Terminé', date: finishedAt, dotClass: TASK_STATUS_BAR_CLASSES.TERMINE },
-                        ].map(({ label, date, dotClass }) => (
-                            <div key={label} className="flex items-center gap-2 text-xs">
-                                <span className={`w-2 h-2 rounded-full shrink-0 ${date ? dotClass : 'bg-slate-200'}`} />
-                                <span className={date ? 'text-slate-600' : 'text-slate-400'}>{label}</span>
-                                <span className="text-slate-400 ml-auto shrink-0">
-                                    {date ? format(new Date(date), 'dd/MM/yyyy', { locale: fr }) : '—'}
-                                </span>
-                            </div>
-                        ))}
+                        ]
+                            .filter(({ date }) => date)
+                            .map(({ label, date, dotClass }) => (
+                                <div key={label} className="flex items-center gap-2 text-xs">
+                                    <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
+                                    <span className="text-slate-600">{label}</span>
+                                    <span className="text-slate-400 ml-auto shrink-0">
+                                        {format(new Date(date!), 'dd/MM/yyyy', { locale: fr })}
+                                    </span>
+                                </div>
+                            ))}
                     </div>
                 </div>
             </div>
