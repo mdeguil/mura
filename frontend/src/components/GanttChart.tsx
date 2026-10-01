@@ -27,14 +27,23 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
         return <p className="text-sm text-slate-500">Aucune tâche à planifier pour l'instant.</p>
     }
 
-    const months: { label: string; days: number }[] = []
+    const today = startOfDay(new Date())
+
+    const months: { label: string; days: number; offset: number; isCurrent: boolean }[] = []
     for (let i = 0; i < range.days; ) {
         const day = addDays(range.min, i)
         let span = 0
         while (i + span < range.days && isSameMonth(addDays(range.min, i + span), day)) span++
-        months.push({ label: format(day, 'MMMM yyyy', { locale: fr }), days: span })
+        months.push({
+            label: format(day, 'MMMM yyyy', { locale: fr }),
+            days: span,
+            offset: i,
+            isCurrent: isSameMonth(day, today),
+        })
         i += span
     }
+
+    const currentMonth = months.find((m) => m.isCurrent)
 
     // Vertical guides: one per week (subtle) plus one per month boundary
     // (stronger), so weeks stay readable without drowning the month breaks.
@@ -48,13 +57,8 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
         if (offset > 0) weekOffsets.push(offset)
     }
 
-    const monthOffsets: number[] = []
-    months.reduce((offset, m) => {
-        if (offset > 0) monthOffsets.push(offset)
-        return offset + m.days
-    }, 0)
+    const monthOffsets = months.map((m) => m.offset).filter((offset) => offset > 0)
 
-    const today = startOfDay(new Date())
     const todayOffset = differenceInCalendarDays(today, range.min)
     const showToday = todayOffset >= 0 && todayOffset < range.days
 
@@ -73,9 +77,9 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
                                 style={{ width: m.days * DAY_WIDTH }}
                                 // The first month needs no divider: the sticky name column
                                 // already draws one right there.
-                                className={`text-xs font-semibold text-slate-600 px-2 py-1 capitalize truncate ${
+                                className={`text-xs font-semibold px-2 py-1 capitalize truncate ${
                                     i === 0 ? '' : 'border-l-2 border-slate-400'
-                                }`}
+                                } ${m.isCurrent ? 'bg-brand-50 text-brand-700' : 'text-slate-600'}`}
                             >
                                 {m.label}
                             </div>
@@ -84,6 +88,15 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
 
                     <div className="relative">
                         <div className="absolute inset-0 pointer-events-none">
+                            {currentMonth && (
+                                <div
+                                    className="absolute top-0 bottom-0 bg-brand-50"
+                                    style={{
+                                        left: LABEL_WIDTH + currentMonth.offset * DAY_WIDTH,
+                                        width: currentMonth.days * DAY_WIDTH,
+                                    }}
+                                />
+                            )}
                             {weekOffsets.map((offset) => (
                                 <div
                                     key={`week-${offset}`}
@@ -102,7 +115,7 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
 
                         {showToday && (
                             <div
-                                className="absolute top-0 bottom-0 w-px bg-red-400 z-10"
+                                className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10"
                                 style={{ left: LABEL_WIDTH + todayOffset * DAY_WIDTH }}
                             />
                         )}
