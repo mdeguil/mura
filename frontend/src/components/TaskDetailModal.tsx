@@ -24,6 +24,9 @@ export default function TaskDetailModal({
     const [loading, setLoading] = useState(false)
 
     const doneCount = task.subtasks.filter((s) => s.done).length
+    const createdAt = task.statusHistory.find((c) => c.fromStatus === null)?.changedAt
+    const startedAt = task.statusHistory.find((c) => c.toStatus === 'EN_COURS')?.changedAt
+    const finishedAt = task.statusHistory.find((c) => c.toStatus === 'TERMINE')?.changedAt
 
     async function handleAddSubtask(e: React.FormEvent) {
         e.preventDefault()
@@ -139,22 +142,19 @@ export default function TaskDetailModal({
                 <div className="mt-6 pt-6 border-t border-border">
                     <h3 className="text-xs font-medium text-slate-500 mb-3">Historique</h3>
                     <div className="flex flex-col gap-2">
-                        {task.statusHistory.map((change) => (
-                            <div key={change.id} className="flex items-center gap-2 text-xs">
-                                <span className={`w-2 h-2 rounded-full shrink-0 ${TASK_STATUS_BAR_CLASSES[change.toStatus]}`} />
-                                <span className="text-slate-600">
-                                    {change.fromStatus
-                                        ? `${TASK_STATUS_LABELS[change.fromStatus]} → ${TASK_STATUS_LABELS[change.toStatus]}`
-                                        : `Créée · ${TASK_STATUS_LABELS[change.toStatus]}`}
-                                </span>
+                        {[
+                            { label: 'Créée', date: createdAt, dotClass: TASK_STATUS_BAR_CLASSES.A_FAIRE },
+                            { label: 'En cours', date: startedAt, dotClass: TASK_STATUS_BAR_CLASSES.EN_COURS },
+                            { label: 'Terminé', date: finishedAt, dotClass: TASK_STATUS_BAR_CLASSES.TERMINE },
+                        ].map(({ label, date, dotClass }) => (
+                            <div key={label} className="flex items-center gap-2 text-xs">
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${date ? dotClass : 'bg-slate-200'}`} />
+                                <span className={date ? 'text-slate-600' : 'text-slate-400'}>{label}</span>
                                 <span className="text-slate-400 ml-auto shrink-0">
-                                    {format(new Date(change.changedAt), 'dd/MM/yyyy', { locale: fr })}
+                                    {date ? format(new Date(date), 'dd/MM/yyyy', { locale: fr }) : '—'}
                                 </span>
                             </div>
                         ))}
-                        {task.statusHistory.length === 0 && (
-                            <p className="text-xs text-slate-400 italic">Aucun historique</p>
-                        )}
                     </div>
                 </div>
             </div>
