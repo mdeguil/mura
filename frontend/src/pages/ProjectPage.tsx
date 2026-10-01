@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -21,8 +21,11 @@ const TABS: { key: ProjectTab; label: string }[] = [
     { key: 'tasks', label: 'Tâches' },
 ]
 
+const DEFAULT_TAB: ProjectTab = 'info'
+
 export default function ProjectPage() {
     const { id } = useParams<{ id: string }>()
+    const [searchParams, setSearchParams] = useSearchParams()
     const [project, setProject] = useState<Project | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -30,9 +33,19 @@ export default function ProjectPage() {
     const [tasks, setTasks] = useState<Task[]>([])
     const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
     const [showCreateTask, setShowCreateTask] = useState(false)
-    const [activeTab, setActiveTab] = useState<ProjectTab>('info')
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
     const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
+
+    // The active tab lives in the URL (?tab=…) so a refresh — or a shared
+    // link — lands back on the same view instead of resetting to Infos.
+    const tabParam = searchParams.get('tab')
+    const activeTab: ProjectTab = TABS.some((t) => t.key === tabParam)
+        ? (tabParam as ProjectTab)
+        : DEFAULT_TAB
+
+    function selectTab(tab: ProjectTab) {
+        setSearchParams(tab === DEFAULT_TAB ? {} : { tab }, { replace: true })
+    }
 
     useEffect(() => {
         let cancelled = false
@@ -182,7 +195,7 @@ export default function ProjectPage() {
                             {TABS.map((tab) => (
                                 <button
                                     key={tab.key}
-                                    onClick={() => setActiveTab(tab.key)}
+                                    onClick={() => selectTab(tab.key)}
                                     className={`pb-3 -mb-px text-sm font-medium border-b-2 transition ${
                                         activeTab === tab.key
                                             ? 'text-slate-800 border-brand-500'
