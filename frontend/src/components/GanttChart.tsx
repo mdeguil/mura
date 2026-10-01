@@ -71,7 +71,11 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
                             <div
                                 key={i}
                                 style={{ width: m.days * DAY_WIDTH }}
-                                className="text-xs font-medium text-slate-500 border-l border-border px-2 py-1 capitalize truncate"
+                                // The first month needs no divider: the sticky name column
+                                // already draws one right there.
+                                className={`text-xs font-semibold text-slate-600 px-2 py-1 capitalize truncate ${
+                                    i === 0 ? '' : 'border-l-2 border-slate-400'
+                                }`}
                             >
                                 {m.label}
                             </div>
@@ -90,7 +94,7 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
                             {monthOffsets.map((offset) => (
                                 <div
                                     key={`month-${offset}`}
-                                    className="absolute top-0 bottom-0 w-px bg-border-strong"
+                                    className="absolute top-0 bottom-0 w-0.5 bg-slate-400"
                                     style={{ left: LABEL_WIDTH + offset * DAY_WIDTH }}
                                 />
                             ))}
