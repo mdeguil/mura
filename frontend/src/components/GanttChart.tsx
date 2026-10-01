@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { addDays, differenceInCalendarDays, format, isSameMonth, startOfDay } from 'date-fns'
+import { addDays, differenceInCalendarDays, format, isSameMonth, startOfDay, startOfWeek } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import type { Task } from '../types'
 import { TASK_STATUS_BAR_CLASSES, TASK_STATUS_LABELS, TASK_STATUSES } from '../utils/taskMeta'
@@ -36,6 +36,24 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
         i += span
     }
 
+    // Vertical guides: one per week (subtle) plus one per month boundary
+    // (stronger), so weeks stay readable without drowning the month breaks.
+    const weekOffsets: number[] = []
+    for (
+        let cursor = startOfWeek(range.min, { weekStartsOn: 1 });
+        differenceInCalendarDays(cursor, range.min) < range.days;
+        cursor = addDays(cursor, 7)
+    ) {
+        const offset = differenceInCalendarDays(cursor, range.min)
+        if (offset > 0) weekOffsets.push(offset)
+    }
+
+    const monthOffsets: number[] = []
+    months.reduce((offset, m) => {
+        if (offset > 0) monthOffsets.push(offset)
+        return offset + m.days
+    }, 0)
+
     const today = startOfDay(new Date())
     const todayOffset = differenceInCalendarDays(today, range.min)
     const showToday = todayOffset >= 0 && todayOffset < range.days
@@ -61,6 +79,23 @@ export default function GanttChart({ tasks }: { tasks: Task[] }) {
                     </div>
 
                     <div className="relative">
+                        <div className="absolute inset-0 pointer-events-none">
+                            {weekOffsets.map((offset) => (
+                                <div
+                                    key={`week-${offset}`}
+                                    className="absolute top-0 bottom-0 w-px bg-border"
+                                    style={{ left: LABEL_WIDTH + offset * DAY_WIDTH }}
+                                />
+                            ))}
+                            {monthOffsets.map((offset) => (
+                                <div
+                                    key={`month-${offset}`}
+                                    className="absolute top-0 bottom-0 w-px bg-border-strong"
+                                    style={{ left: LABEL_WIDTH + offset * DAY_WIDTH }}
+                                />
+                            ))}
+                        </div>
+
                         {showToday && (
                             <div
                                 className="absolute top-0 bottom-0 w-px bg-red-400 z-10"
