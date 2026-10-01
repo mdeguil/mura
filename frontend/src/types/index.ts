@@ -53,6 +53,13 @@ export interface Subtask {
   done: boolean
 }
 
+export interface StatusChange {
+  id: string
+  fromStatus: TaskStatus | null
+  toStatus: TaskStatus
+  changedAt: string
+}
+
 export interface Task {
   id: string
   name: string
@@ -62,6 +69,7 @@ export interface Task {
   endDate: string
   archived: boolean
   subtasks: Subtask[]
+  statusHistory: StatusChange[]
 }
 
 export interface AuthResponse {

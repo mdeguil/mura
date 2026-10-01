@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import api from '../services/api'
 import type { Subtask, Task } from '../types'
-import { TASK_STATUS_CLASSES, TASK_STATUS_LABELS } from '../utils/taskMeta'
+import { TASK_STATUS_BAR_CLASSES, TASK_STATUS_CLASSES, TASK_STATUS_LABELS } from '../utils/taskMeta'
 
 export default function TaskDetailModal({
     task,
@@ -53,7 +53,7 @@ export default function TaskDetailModal({
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
-            <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-lg">
+            <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-lg max-h-[85vh] overflow-y-auto">
                 <div className="flex items-start justify-between gap-4">
                     <h2 className="text-base font-semibold text-slate-800">{task.name}</h2>
                     <button
@@ -134,6 +134,28 @@ export default function TaskDetailModal({
                             Toutes les sous-tâches doivent être cochées avant de pouvoir valider cette tâche.
                         </p>
                     )}
+                </div>
+
+                <div className="mt-6 pt-6 border-t border-border">
+                    <h3 className="text-xs font-medium text-slate-500 mb-3">Historique</h3>
+                    <div className="flex flex-col gap-2">
+                        {task.statusHistory.map((change) => (
+                            <div key={change.id} className="flex items-center gap-2 text-xs">
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${TASK_STATUS_BAR_CLASSES[change.toStatus]}`} />
+                                <span className="text-slate-600">
+                                    {change.fromStatus
+                                        ? `${TASK_STATUS_LABELS[change.fromStatus]} → ${TASK_STATUS_LABELS[change.toStatus]}`
+                                        : `Créée · ${TASK_STATUS_LABELS[change.toStatus]}`}
+                                </span>
+                                <span className="text-slate-400 ml-auto shrink-0">
+                                    {format(new Date(change.changedAt), 'dd/MM/yyyy', { locale: fr })}
+                                </span>
+                            </div>
+                        ))}
+                        {task.statusHistory.length === 0 && (
+                            <p className="text-xs text-slate-400 italic">Aucun historique</p>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

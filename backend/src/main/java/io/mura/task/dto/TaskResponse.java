@@ -15,7 +15,8 @@ public record TaskResponse(
         LocalDate startDate,
         LocalDate endDate,
         boolean archived,
-        List<SubtaskResponse> subtasks
+        List<SubtaskResponse> subtasks,
+        List<TaskStatusChangeResponse> statusHistory
 ) {
     public static TaskResponse from(Task task) {
         return new TaskResponse(
@@ -26,7 +27,8 @@ public record TaskResponse(
                 task.getStartDate(),
                 task.getEndDate(),
                 task.isArchived(),
-                task.getSubtasks().stream().map(SubtaskResponse::from).toList()
+                task.getSubtasks().stream().map(SubtaskResponse::from).toList(),
+                task.getStatusHistory().stream().map(TaskStatusChangeResponse::from).toList()
         );
     }
 }

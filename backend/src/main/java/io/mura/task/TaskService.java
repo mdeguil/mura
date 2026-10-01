@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,7 @@ public class TaskService {
         task.setStatus(request.status() != null ? request.status() : TaskStatus.A_FAIRE);
         task.setStartDate(request.startDate());
         task.setEndDate(request.endDate());
+        task.getStatusHistory().add(statusChange(task, null, task.getStatus()));
         taskRepository.save(task);
 
         return TaskResponse.from(task);
@@ -73,6 +75,10 @@ public class TaskService {
 
         if (request.status() == TaskStatus.TERMINE && task.getSubtasks().stream().anyMatch(s -> !s.isDone())) {
             throw new ApiException(HttpStatus.CONFLICT, "Toutes les sous-tâches doivent être terminées avant de valider cette tâche.");
+        }
+
+        if (request.status() != task.getStatus()) {
+            task.getStatusHistory().add(statusChange(task, task.getStatus(), request.status()));
         }
 
         task.setName(request.name());
@@ -110,6 +116,18 @@ public class TaskService {
         }
 
         taskRepository.delete(task);
+    }
+
+    private TaskStatusChange statusChange(Task task, TaskStatus from, TaskStatus to) {
+        TaskStatusChange change = new TaskStatusChange();
+        change.setTask(task);
+        change.setFromStatus(from);
+        change.setToStatus(to);
+        // Set eagerly rather than relying on @PrePersist: the response is
+        // built from this in-memory object before Hibernate flushes the
+        // insert, so the lifecycle callback would run too late.
+        change.setChangedAt(Instant.now());
+        return change;
     }
 
     private Project requireOwnedProject(UUID userId, UUID projectId) {

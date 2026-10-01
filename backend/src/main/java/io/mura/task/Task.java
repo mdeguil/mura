@@ -64,6 +64,10 @@ public class Task {
     @OrderBy("createdAt ASC")
     private List<Subtask> subtasks = new ArrayList<>();
 
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("changedAt ASC")
+    private List<TaskStatusChange> statusHistory = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
