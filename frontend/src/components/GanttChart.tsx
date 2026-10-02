@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
     addDays,
+    addMonths,
     differenceInCalendarDays,
     eachDayOfInterval,
     endOfMonth,
@@ -8,6 +9,7 @@ import {
     getDaysInMonth,
     isSameDay,
     isSameMonth,
+    isSameYear,
     startOfDay,
     startOfMonth,
 } from 'date-fns'
@@ -30,36 +32,61 @@ export default function GanttChart({
     tasks: Task[]
     onOpenTask: (task: Task) => void
 }) {
+    // A two-month window sliding one month at a time, so consecutive views
+    // overlap and a task straddling a month break stays readable.
     const [month, setMonth] = useState(() => initialPlanningMonth(tasks))
 
-    const monthStart = startOfMonth(month)
-    const monthEnd = endOfMonth(month)
-    const dayCount = getDaysInMonth(month)
+    const secondMonth = addMonths(month, 1)
+    const windowStart = startOfMonth(month)
+    const windowEnd = endOfMonth(secondMonth)
+    const dayCount = differenceInCalendarDays(windowEnd, windowStart) + 1
 
-    // One month always fits the available width, so positions are percentages
+    // Two months always fit the available width, so positions are percentages
     // of the timeline rather than fixed pixels per day — no horizontal scroll.
     const percent = (days: number) => (days / dayCount) * 100
+
+    const today = startOfDay(new Date())
+
+    const monthSegments = [month, secondMonth].map((m) => ({
+        date: m,
+        offset: differenceInCalendarDays(startOfMonth(m), windowStart),
+        days: getDaysInMonth(m),
+        isCurrent: isSameMonth(m, today),
+    }))
 
     const visibleTasks = tasks
         .filter(
             (t) =>
-                startOfDay(new Date(t.startDate)) <= monthEnd && startOfDay(new Date(t.endDate)) >= monthStart
+                startOfDay(new Date(t.startDate)) <= windowEnd &&
+                startOfDay(new Date(t.endDate)) >= windowStart
         )
         .sort((a, b) => a.startDate.localeCompare(b.startDate))
 
-    const weekOffsets = eachDayOfInterval({ start: monthStart, end: monthEnd })
+    const weekOffsets = eachDayOfInterval({ start: windowStart, end: windowEnd })
         .filter((day) => day.getDay() === 1)
-        .map((day) => differenceInCalendarDays(day, monthStart))
+        .map((day) => differenceInCalendarDays(day, windowStart))
         .filter((offset) => offset > 0)
 
-    const today = startOfDay(new Date())
-    const showToday = isSameMonth(today, month)
-    const todayOffset = differenceInCalendarDays(today, monthStart)
+    // A Monday landing on a month label would collide with it, and one in the
+    // last days of the window would overflow the right edge — both keep their
+    // guide but lose their number.
+    const labelledWeekOffsets = weekOffsets.filter(
+        (offset) =>
+            dayCount - offset > 2 &&
+            monthSegments.every((segment) => Math.abs(offset - segment.offset) > 2)
+    )
+
+    const showToday = today >= windowStart && today <= windowEnd
+    const todayOffset = differenceInCalendarDays(today, windowStart)
+
+    const rangeLabel = isSameYear(month, secondMonth)
+        ? `${format(month, 'MMMM', { locale: fr })} – ${format(secondMonth, 'MMMM yyyy', { locale: fr })}`
+        : `${format(month, 'MMM yyyy', { locale: fr })} – ${format(secondMonth, 'MMM yyyy', { locale: fr })}`
 
     return (
         <div>
             <div className="flex items-center justify-between mb-4">
-                <MonthNav month={month} onChange={setMonth} />
+                <MonthNav month={month} onChange={setMonth} label={rangeLabel} />
 
                 <div className="flex items-center gap-4">
                     {TASK_STATUSES.map((status) => (
@@ -72,28 +99,36 @@ export default function GanttChart({
             </div>
 
             {visibleTasks.length === 0 ? (
-                <p className="text-sm text-slate-500">Aucune tâche sur ce mois.</p>
+                <p className="text-sm text-slate-500">Aucune tâche sur cette période.</p>
             ) : (
                 <div className="border border-border rounded-xl overflow-hidden">
                     <div className="flex bg-surface-muted">
                         <div className="shrink-0" style={{ width: LABEL_WIDTH, boxShadow: LABEL_SEPARATOR }} />
-                        <div className="relative flex-1 h-7">
-                            <span className="absolute left-0 px-1.5 text-[11px] leading-7 text-slate-500">
-                                {format(monthStart, 'd MMM', { locale: fr })}
-                            </span>
-                            {/* A Monday falling on the 2nd or 3rd would collide with the
-                                month-start label, so it keeps its guide but loses its number. */}
-                            {weekOffsets
-                                .filter((offset) => offset > 2)
-                                .map((offset) => (
+                        <div className="relative flex-1">
+                            <div className="relative h-6 border-b border-border">
+                                {monthSegments.map((segment) => (
                                     <span
-                                        key={offset}
-                                        className="absolute px-1.5 text-[11px] leading-7 text-slate-500"
-                                        style={{ left: `${percent(offset)}%` }}
+                                        key={segment.offset}
+                                        className={`absolute px-2 text-[11px] font-semibold leading-6 capitalize ${
+                                            segment.isCurrent ? 'text-brand-700' : 'text-slate-600'
+                                        }`}
+                                        style={{ left: `${percent(segment.offset)}%` }}
                                     >
-                                        {format(addDays(monthStart, offset), 'd')}
+                                        {format(segment.date, 'MMMM yyyy', { locale: fr })}
                                     </span>
                                 ))}
+                            </div>
+                            <div className="relative h-6">
+                                {labelledWeekOffsets.map((offset) => (
+                                    <span
+                                        key={offset}
+                                        className="absolute px-1.5 text-[11px] leading-6 text-slate-400"
+                                        style={{ left: `${percent(offset)}%` }}
+                                    >
+                                        {format(addDays(windowStart, offset), 'd')}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
@@ -104,6 +139,18 @@ export default function GanttChart({
                             className="absolute inset-y-0 pointer-events-none"
                             style={{ left: LABEL_WIDTH, right: 0, zIndex: -1 }}
                         >
+                            {monthSegments
+                                .filter((segment) => segment.isCurrent)
+                                .map((segment) => (
+                                    <div
+                                        key={`current-${segment.offset}`}
+                                        className="absolute top-0 bottom-0 bg-brand-50"
+                                        style={{
+                                            left: `${percent(segment.offset)}%`,
+                                            width: `${percent(segment.days)}%`,
+                                        }}
+                                    />
+                                ))}
                             {weekOffsets.map((offset) => (
                                 <div
                                     key={offset}
@@ -111,6 +158,10 @@ export default function GanttChart({
                                     style={{ left: `${percent(offset)}%` }}
                                 />
                             ))}
+                            <div
+                                className="absolute top-0 bottom-0 w-0.5 bg-slate-400"
+                                style={{ left: `${percent(monthSegments[1].offset)}%` }}
+                            />
                         </div>
 
                         {showToday && (
@@ -128,9 +179,9 @@ export default function GanttChart({
                         {visibleTasks.map((task) => {
                             const start = startOfDay(new Date(task.startDate))
                             const end = startOfDay(new Date(task.endDate))
-                            const from = start < monthStart ? monthStart : start
-                            const to = end > monthEnd ? monthEnd : end
-                            const offset = differenceInCalendarDays(from, monthStart)
+                            const from = start < windowStart ? windowStart : start
+                            const to = end > windowEnd ? windowEnd : end
+                            const offset = differenceInCalendarDays(from, windowStart)
                             const span = differenceInCalendarDays(to, from) + 1
 
                             return (
@@ -143,7 +194,7 @@ export default function GanttChart({
                                         {task.name}
                                     </div>
                                     <div className="relative flex-1 h-full">
-                                        {/* Square edges where the task runs past this month. */}
+                                        {/* Square edges where the task runs past the window. */}
                                         <button
                                             onClick={() => onOpenTask(task)}
                                             className={`absolute top-1.5 h-6 transition hover:opacity-90 ${
