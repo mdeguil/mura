@@ -58,6 +58,12 @@ public class ProjectInvitation {
     @Column(name = "read_at")
     private Instant readAt;
 
+    // Set when the invitee clears the notification. The invitation stays
+    // pending and keeps showing in their projects list; only the bell
+    // forgets about it.
+    @Column(name = "dismissed_at")
+    private Instant dismissedAt;
+
     @PrePersist
     void onCreate() {
         createdAt = Instant.now();

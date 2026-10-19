@@ -150,7 +150,9 @@ export default function MemberList({
                                 {member.username}
                                 {member.id === currentUserId && <span className="text-slate-400"> · toi</span>}
                             </p>
-                            <p className="text-xs text-slate-400 truncate">{member.email}</p>
+                            {member.email && (
+                                <p className="text-xs text-slate-400 truncate">{member.email}</p>
+                            )}
                         </div>
                         {member.role === 'OWNER' ? (
                             <span className="text-xs font-medium text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full shrink-0">
@@ -187,7 +189,7 @@ export default function MemberList({
                                     {invitation.invitedUser.username[0]?.toUpperCase()}
                                 </span>
                                 <p className="text-sm text-slate-500 min-w-0 flex-1 truncate">
-                                    {invitation.invitedUser.email}
+                                    {invitation.invitedUser.email ?? invitation.invitedUser.username}
                                 </p>
                                 {canManage && (
                                     <button

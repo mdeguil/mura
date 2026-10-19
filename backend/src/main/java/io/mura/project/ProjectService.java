@@ -67,12 +67,17 @@ public class ProjectService {
         }
 
         // Someone holding a live invitation may read what they are being
-        // invited to before deciding: the description and the facts, nothing
-        // the team is working on. The member list is withheld too: their
-        // addresses are not this person's to read yet.
+        // invited to before deciding: the facts, the description and who is
+        // already on the team. Not what the team is working on, and not
+        // their email addresses: ProjectResponse drops those for anyone
+        // who is not a member yet.
         if (invitationRepository.existsByProjectIdAndInvitedUserIdAndStatus(
                 projectId, userId, InvitationStatus.PENDING)) {
-            return ProjectResponse.from(project, ProjectAccess.INVITED, List.of());
+            return ProjectResponse.from(
+                    project,
+                    ProjectAccess.INVITED,
+                    projectMemberRepository.findAllForProject(projectId)
+            );
         }
 
         throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");

@@ -16,10 +16,21 @@ public record MemberResponse(
         ProjectRole role
 ) {
     public static MemberResponse from(ProjectMember member) {
+        return build(member, true);
+    }
+
+    // Someone deciding whether to join may see who is already on the team —
+    // that is part of the decision — but their addresses are not this
+    // person's to read until they are on it too.
+    public static MemberResponse withoutEmail(ProjectMember member) {
+        return build(member, false);
+    }
+
+    private static MemberResponse build(ProjectMember member, boolean withEmail) {
         User user = member.getUser();
         return new MemberResponse(
                 user.getId(),
-                user.getEmail(),
+                withEmail ? user.getEmail() : null,
                 user.getUsername(),
                 user.getAvatarUrl(),
                 member.getRole()

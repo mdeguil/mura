@@ -18,7 +18,9 @@ export default function NotificationBell() {
 
         api.get<Invitation[]>('/invitations')
             .then(({ data }) => {
-                if (!cancelled) setInvitations(data)
+                // Dismissed ones are gone from the bell for good; they are still
+                // reachable from the projects list until answered.
+                if (!cancelled) setInvitations(data.filter((i) => !i.dismissed))
             })
             .catch(() => {})
 
@@ -59,6 +61,19 @@ export default function NotificationBell() {
             // Put the dot back rather than claiming it was read.
             setInvitations((prev) =>
                 prev.map((i) => (i.id === invitation.id ? { ...i, read: false } : i))
+            )
+        }
+    }
+
+    // Clearing the notification is not answering the invitation: it leaves
+    // the bell, and the projects list still offers it under « À rejoindre ».
+    async function dismiss(invitation: Invitation) {
+        setInvitations((prev) => prev.filter((i) => i.id !== invitation.id))
+        try {
+            await api.post(`/invitations/${invitation.id}/dismiss`)
+        } catch {
+            setInvitations((prev) =>
+                [...prev, invitation].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
             )
         }
     }
@@ -116,13 +131,16 @@ export default function NotificationBell() {
                     ) : (
                         <ul className="max-h-80 overflow-y-auto">
                             {invitations.map((invitation) => (
-                                <li key={invitation.id}>
+                                <li
+                                    key={invitation.id}
+                                    className={`flex items-stretch border-b border-border last:border-b-0 ${
+                                        invitation.read ? '' : 'bg-rose-50/40'
+                                    }`}
+                                >
                                     <button
                                         onClick={() => markRead(invitation)}
                                         onDoubleClick={() => openProject(invitation)}
-                                        className={`w-full text-left px-4 py-3 flex gap-3 border-b border-border last:border-b-0 hover:bg-surface-muted transition ${
-                                            invitation.read ? '' : 'bg-rose-50/40'
-                                        }`}
+                                        className="flex-1 min-w-0 text-left px-4 py-3 flex gap-3 hover:bg-surface-muted transition"
                                         title="Clic pour marquer comme lu, double-clic pour ouvrir le projet"
                                     >
                                         <span
@@ -146,6 +164,14 @@ export default function NotificationBell() {
                                                 {' · double-clic pour voir le projet'}
                                             </span>
                                         </span>
+                                    </button>
+                                    <button
+                                        onClick={() => dismiss(invitation)}
+                                        className="px-3 text-slate-300 hover:text-red-500 transition text-xs leading-none shrink-0"
+                                        title="Supprimer la notification (l'invitation reste dans tes projets)"
+                                        aria-label="Supprimer la notification"
+                                    >
+                                        ✕
                                     </button>
                                 </li>
                             ))}

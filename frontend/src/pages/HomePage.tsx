@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import Navbar from '../components/Navbar'
 import ProjectCard from '../components/ProjectCard'
 import CreateProjectModal from '../components/CreateProjectModal'
+import InvitedProjectCard from '../components/InvitedProjectCard'
 import api from '../services/api'
-import type { Project, ProjectType } from '../types'
+import type { Invitation, Project, ProjectType } from '../types'
 import { PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 import { apiErrorMessage } from '../utils/apiError'
 
@@ -11,6 +12,7 @@ const TYPE_FILTERS = Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]
 
 export default function HomePage() {
     const [projects, setProjects] = useState<Project[]>([])
+    const [invitations, setInvitations] = useState<Invitation[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
@@ -36,6 +38,22 @@ export default function HomePage() {
         }
     }, [])
 
+
+    // Pending invitations, dismissed from the bell or not: this list is
+    // where someone comes back to find a project they were invited to.
+    useEffect(() => {
+        let cancelled = false
+
+        api.get<Invitation[]>('/invitations')
+            .then(({ data }) => {
+                if (!cancelled) setInvitations(data)
+            })
+            .catch(() => {})
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
     const filteredProjects = useMemo(() => {
         const q = query.trim().toLowerCase()
         return projects
@@ -67,6 +85,22 @@ export default function HomePage() {
                     </div>
                 )}
 
+                {invitations.length > 0 && (
+                    <section className="mb-8">
+                        <h2 className="text-sm font-semibold text-slate-800 mb-1">
+                            À rejoindre <span className="text-slate-400 font-normal">{invitations.length}</span>
+                        </h2>
+                        <p className="text-xs text-slate-500 mb-3">
+                            Des projets t'attendent. Ouvre-les pour voir qui en fait partie, puis accepte ou refuse.
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {invitations.map((invitation) => (
+                                <InvitedProjectCard key={invitation.id} invitation={invitation} />
+                            ))}
+                        </div>
+                    </section>
+                )}
+
                 <div className="relative mb-3 max-w-sm">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
                     <input
@@ -77,6 +111,7 @@ export default function HomePage() {
                         className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
                     />
                 </div>
+
 
                 <div className="flex flex-wrap gap-2 mb-6">
                     <button

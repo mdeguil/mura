@@ -124,12 +124,7 @@ public class InvitationService {
     // while the invitation itself stays pending until it is answered.
     @Transactional
     public InvitationResponse markRead(UUID userId, UUID invitationId) {
-        ProjectInvitation invitation = invitationRepository.findById(invitationId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invitation introuvable."));
-
-        if (!invitation.getInvitedUser().getId().equals(userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Cette invitation ne t'est pas adressée.");
-        }
+        ProjectInvitation invitation = requireAddressedTo(userId, invitationId);
 
         // Clicking the same notification twice is normal, so re-reading is a
         // no-op rather than an error.
@@ -138,6 +133,37 @@ public class InvitationService {
         }
 
         return InvitationResponse.from(invitation);
+    }
+
+    // Clearing the notification, not the invitation: the bell forgets it,
+    // the projects list still offers it. Answering stays a separate act.
+    @Transactional
+    public InvitationResponse dismiss(UUID userId, UUID invitationId) {
+        ProjectInvitation invitation = requireAddressedTo(userId, invitationId);
+
+        if (invitation.getDismissedAt() == null) {
+            invitation.setDismissedAt(Instant.now());
+        }
+        // Clearing it counts as having seen it.
+        if (invitation.getReadAt() == null) {
+            invitation.setReadAt(Instant.now());
+        }
+
+        return InvitationResponse.from(invitation);
+    }
+
+    // Read and dismiss both act on a notification rather than on the
+    // invitation's outcome, so they accept it whatever its status: only the
+    // person it was sent to may touch it.
+    private ProjectInvitation requireAddressedTo(UUID userId, UUID invitationId) {
+        ProjectInvitation invitation = invitationRepository.findById(invitationId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invitation introuvable."));
+
+        if (!invitation.getInvitedUser().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Cette invitation ne t'est pas adressée.");
+        }
+
+        return invitation;
     }
 
     private ProjectInvitation requireOwnInvitation(UUID userId, UUID invitationId) {

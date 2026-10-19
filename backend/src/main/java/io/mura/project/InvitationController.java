@@ -68,6 +68,14 @@ public class InvitationController {
     ) {
         return ResponseEntity.ok(invitationService.markRead(userId, invitationId));
     }
+
+    @PostMapping("/invitations/{invitationId}/dismiss")
+    public ResponseEntity<InvitationResponse> dismiss(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID invitationId
+    ) {
+        return ResponseEntity.ok(invitationService.dismiss(userId, invitationId));
+    }
     @PostMapping("/invitations/{invitationId}/accept")
     public ResponseEntity<InvitationResponse> accept(
             @AuthenticationPrincipal UUID userId,

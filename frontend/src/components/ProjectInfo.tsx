@@ -54,8 +54,8 @@ export default function ProjectInfo({
                             : 'Tu es invité sur ce projet'}
                     </h2>
                     <p className="text-sm text-slate-500">
-                        Tu vois sa description. Le planning, les tâches et l'équipe s'ouvrent une
-                        fois l'invitation acceptée.
+                        Tu vois sa description et son équipe. Le planning et les tâches s'ouvrent
+                        une fois l'invitation acceptée.
                     </p>
                     <div className="flex gap-2 mt-4">
                         <button
@@ -103,6 +103,19 @@ export default function ProjectInfo({
                         <p className="text-sm text-slate-400">Ce projet n'a pas encore de description.</p>
                     )}
                 </section>
+
+                {/* Who is already on it is part of deciding whether to join.
+                    Read-only here, and the server withholds their emails. */}
+                <MemberList
+                    projectId={project.id}
+                    members={members}
+                    invitations={[]}
+                    canManage={false}
+                    currentUserId={currentUserId}
+                    onInvited={() => {}}
+                    onInvitationCancelled={() => {}}
+                    onRemoved={() => {}}
+                />
             </div>
         )
     }

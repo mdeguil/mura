@@ -1,6 +1,8 @@
 export interface User {
   id: string
-  email: string
+  // Null for a team member seen by someone who only holds an invitation:
+  // the server withholds addresses until they join.
+  email: string | null
   username: string
   avatarUrl?: string
 }
@@ -43,6 +45,9 @@ export interface Invitation {
   invitedBy: User
   status: InvitationStatus
   read: boolean
+  // Cleared from the bell. The invitation is still pending: it keeps
+  // showing in the projects list until it is answered.
+  dismissed: boolean
   createdAt: string
 }
 

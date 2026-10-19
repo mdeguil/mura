@@ -39,7 +39,11 @@ public record ProjectResponse(
                 project.getStatus(),
                 UserResponse.from(project.getOwner()),
                 access,
-                members.stream().map(MemberResponse::from).toList(),
+                members.stream()
+                        .map(access == ProjectAccess.MEMBER
+                                ? MemberResponse::from
+                                : MemberResponse::withoutEmail)
+                        .toList(),
                 List.of()
         );
     }
