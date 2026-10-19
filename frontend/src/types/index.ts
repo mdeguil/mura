@@ -30,6 +30,19 @@ export interface List {
 
 export type ProjectRole = 'OWNER' | 'MEMBER'
 
+export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED'
+
+export interface Invitation {
+  id: string
+  projectId: string
+  projectName: string
+  projectColor: string
+  invitedUser: User
+  invitedBy: User
+  status: InvitationStatus
+  createdAt: string
+}
+
 // A user plus the role they hold on one project, flattened so a member row
 // renders from a single object.
 export interface Member extends User {

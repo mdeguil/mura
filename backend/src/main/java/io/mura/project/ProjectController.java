@@ -1,6 +1,5 @@
 package io.mura.project;
 
-import io.mura.project.dto.AddMemberRequest;
 import io.mura.project.dto.CreateProjectRequest;
 import io.mura.project.dto.MemberResponse;
 import io.mura.project.dto.ProjectResponse;
@@ -54,15 +53,6 @@ public class ProjectController {
             @PathVariable UUID id
     ) {
         return ResponseEntity.ok(projectService.listMembers(userId, id));
-    }
-
-    @PostMapping("/{id}/members")
-    public ResponseEntity<MemberResponse> addMember(
-            @AuthenticationPrincipal UUID userId,
-            @PathVariable UUID id,
-            @Valid @RequestBody AddMemberRequest request
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(projectService.addMember(userId, id, request));
     }
 
     @DeleteMapping("/{id}/members/{memberId}")

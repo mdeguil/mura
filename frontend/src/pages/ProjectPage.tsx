@@ -12,7 +12,7 @@ import TaskDetailModal from '../components/TaskDetailModal'
 import MemberList from '../components/MemberList'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
-import type { Member, Project, Subtask, Task, TaskStatus } from '../types'
+import type { Invitation, Member, Project, Subtask, Task, TaskStatus } from '../types'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 import { projectGlassBackground } from '../utils/color'
 import { taskPayload } from '../utils/taskPayload'
@@ -39,6 +39,7 @@ export default function ProjectPage() {
     const [searchParams, setSearchParams] = useSearchParams()
     const [project, setProject] = useState<Project | null>(null)
     const [members, setMembers] = useState<Member[]>([])
+    const [invitations, setInvitations] = useState<Invitation[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -95,6 +96,14 @@ export default function ProjectPage() {
         api.get<Task[]>(`/projects/${id}/tasks/archived`)
             .then(({ data }) => {
                 if (!cancelled) setArchivedTasks(data)
+            })
+            .catch(() => {})
+
+        // Only members may read this, and a plain member still sees who else
+        // has been invited, and only loses the ability to cancel one.
+        api.get<Invitation[]>(`/projects/${id}/invitations`)
+            .then(({ data }) => {
+                if (!cancelled) setInvitations(data)
             })
             .catch(() => {})
 
@@ -254,8 +263,14 @@ export default function ProjectPage() {
                                             members={members}
                                             canManage={isOwner}
                                             currentUserId={currentUserId}
-                                            onAdded={(member) =>
-                                                setMembers((prev) => [...prev, member])
+                                            invitations={invitations}
+                                            onInvited={(invitation) =>
+                                                setInvitations((prev) => [...prev, invitation])
+                                            }
+                                            onInvitationCancelled={(invitationId) =>
+                                                setInvitations((prev) =>
+                                                    prev.filter((i) => i.id !== invitationId)
+                                                )
                                             }
                                             onRemoved={(memberId) => {
                                                 setMembers((prev) => prev.filter((m) => m.id !== memberId))

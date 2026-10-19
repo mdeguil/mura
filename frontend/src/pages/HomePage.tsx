@@ -2,14 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import Navbar from '../components/Navbar'
 import ProjectCard from '../components/ProjectCard'
 import CreateProjectModal from '../components/CreateProjectModal'
+import InvitationInbox from '../components/InvitationInbox'
 import api from '../services/api'
-import type { Project, ProjectType } from '../types'
+import type { Invitation, Project, ProjectType } from '../types'
 import { PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 
 const TYPE_FILTERS = Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]
 
 export default function HomePage() {
     const [projects, setProjects] = useState<Project[]>([])
+    const [invitations, setInvitations] = useState<Invitation[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
@@ -34,6 +36,30 @@ export default function HomePage() {
             cancelled = true
         }
     }, [])
+
+    useEffect(() => {
+        let cancelled = false
+
+        api.get<Invitation[]>('/invitations')
+            .then(({ data }) => {
+                if (!cancelled) setInvitations(data)
+            })
+            .catch(() => {})
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
+    async function handleInvitationAnswered(invitationId: string, accepted: boolean) {
+        setInvitations((prev) => prev.filter((i) => i.id !== invitationId))
+        // Accepting makes the caller a member, so the project list has one
+        // more entry to show.
+        if (accepted) {
+            const { data } = await api.get<Project[]>('/projects')
+            setProjects(data)
+        }
+    }
 
     const filteredProjects = useMemo(() => {
         const q = query.trim().toLowerCase()
@@ -65,6 +91,8 @@ export default function HomePage() {
                         {error}
                     </div>
                 )}
+
+                <InvitationInbox invitations={invitations} onAnswered={handleInvitationAnswered} />
 
                 <div className="relative mb-3 max-w-sm">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>

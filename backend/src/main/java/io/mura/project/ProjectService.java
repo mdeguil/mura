@@ -3,7 +3,6 @@ package io.mura.project;
 import io.mura.common.exception.ApiException;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
-import io.mura.project.dto.AddMemberRequest;
 import io.mura.project.dto.CreateProjectRequest;
 import io.mura.project.dto.MemberResponse;
 import io.mura.project.dto.ProjectResponse;
@@ -89,26 +88,6 @@ public class ProjectService {
         );
 
         return ProjectResponse.from(project, List.of(membership));
-    }
-
-    @Transactional
-    public MemberResponse addMember(UUID actorId, UUID projectId, AddMemberRequest request) {
-        Project project = requireOwner(actorId, projectId);
-
-        String identifier = request.identifier().trim();
-        User user = userRepository.findByEmailOrUsername(identifier)
-                .orElseThrow(() -> new ApiException(
-                        HttpStatus.NOT_FOUND,
-                        "Aucun compte ne correspond à « " + identifier + " »."
-                ));
-
-        if (projectMemberRepository.existsByProjectIdAndUserId(projectId, user.getId())) {
-            throw new ApiException(HttpStatus.CONFLICT, user.getUsername() + " fait déjà partie du projet.");
-        }
-
-        return MemberResponse.from(
-                projectMemberRepository.save(new ProjectMember(project, user, ProjectRole.MEMBER))
-        );
     }
 
     @Transactional
