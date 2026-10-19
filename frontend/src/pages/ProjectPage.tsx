@@ -9,10 +9,13 @@ import GanttChart from '../components/GanttChart'
 import MonthCalendar from '../components/MonthCalendar'
 import TaskBoard from '../components/TaskBoard'
 import TaskDetailModal from '../components/TaskDetailModal'
+import MemberList from '../components/MemberList'
 import api from '../services/api'
-import type { Project, Subtask, Task, TaskStatus } from '../types'
+import { useAuthStore } from '../store/authStore'
+import type { Member, Project, Subtask, Task, TaskStatus } from '../types'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 import { projectGlassBackground } from '../utils/color'
+import { taskPayload } from '../utils/taskPayload'
 
 type ProjectTab = 'info' | 'planning' | 'tasks'
 
@@ -35,6 +38,7 @@ export default function ProjectPage() {
     const { id } = useParams<{ id: string }>()
     const [searchParams, setSearchParams] = useSearchParams()
     const [project, setProject] = useState<Project | null>(null)
+    const [members, setMembers] = useState<Member[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -44,6 +48,8 @@ export default function ProjectPage() {
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
     const [planningView, setPlanningView] = useState<PlanningView>('calendar')
     const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
+    const currentUserId = useAuthStore((s) => s.user?.id) ?? ''
+    const isOwner = project?.owner.id === currentUserId
 
     // The active tab lives in the URL (?tab=…) so a refresh — or a shared
     // link — lands back on the same view instead of resetting to Infos.
@@ -61,7 +67,9 @@ export default function ProjectPage() {
 
         api.get<Project>(`/projects/${id}`)
             .then(({ data }) => {
-                if (!cancelled) setProject(data)
+                if (cancelled) return
+                setProject(data)
+                setMembers(data.members)
             })
             .catch(() => {
                 if (!cancelled) setError('Impossible de charger ce projet.')
@@ -99,23 +107,34 @@ export default function ProjectPage() {
         setTasks((prev) => [...prev, task].sort((a, b) => a.startDate.localeCompare(b.startDate)))
     }
 
-    async function handleStatusChange(taskId: string, status: TaskStatus) {
+    function handleStatusChange(taskId: string, status: TaskStatus) {
+        void saveTask(taskId, { status }, "Impossible de changer le statut de cette tâche.")
+    }
+
+    function handleAssigneeChange(taskId: string, assigneeId: string | null) {
+        void saveTask(taskId, { assigneeId }, "Impossible de changer le responsable de cette tâche.")
+    }
+
+    // Both edits go through the same PUT, which replaces the whole task:
+    // taskPayload resends the fields this change does not touch.
+    async function saveTask(
+        taskId: string,
+        changes: { status?: TaskStatus; assigneeId?: string | null },
+        fallbackMessage: string
+    ) {
         const task = tasks.find((t) => t.id === taskId)
         if (!task) return
 
         try {
-            const { data } = await api.put<Task>(`/projects/${id}/tasks/${taskId}`, {
-                name: task.name,
-                description: task.description,
-                status,
-                startDate: task.startDate,
-                endDate: task.endDate,
-            })
+            const { data } = await api.put<Task>(
+                `/projects/${id}/tasks/${taskId}`,
+                taskPayload(task, changes)
+            )
             setTasks((prev) => prev.map((t) => (t.id === taskId ? data : t)))
         } catch (err) {
             const message =
                 (axios.isAxiosError(err) && (err.response?.data as { message?: string })?.message) ||
-                'Impossible de changer le statut de cette tâche.'
+                fallbackMessage
             window.alert(message)
         }
     }
@@ -230,24 +249,25 @@ export default function ProjectPage() {
                                     )}
 
                                     <div className="mt-6 pt-6 border-t border-border">
-                                        <h2 className="text-xs font-medium text-slate-500 mb-3">
-                                            Membres ({project.members.length})
-                                        </h2>
-                                        <div className="flex flex-wrap gap-3">
-                                            {project.members.map((member) => (
-                                                <div key={member.id} className="flex items-center gap-2">
-                                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center text-white text-xs font-semibold">
-                                                        {member.username[0]?.toUpperCase()}
-                                                    </div>
-                                                    <span className="text-sm text-slate-600">
-                                                        {member.username}
-                                                        {member.id === project.owner.id && (
-                                                            <span className="text-slate-400"> · propriétaire</span>
-                                                        )}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <MemberList
+                                            projectId={project.id}
+                                            members={members}
+                                            canManage={isOwner}
+                                            currentUserId={currentUserId}
+                                            onAdded={(member) =>
+                                                setMembers((prev) => [...prev, member])
+                                            }
+                                            onRemoved={(memberId) => {
+                                                setMembers((prev) => prev.filter((m) => m.id !== memberId))
+                                                // Their tasks stay, but the server has just cleared
+                                                // the assignee on them.
+                                                setTasks((prev) =>
+                                                    prev.map((t) =>
+                                                        t.assignee?.id === memberId ? { ...t, assignee: null } : t
+                                                    )
+                                                )
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             ) : activeTab === 'planning' ? (
@@ -312,6 +332,7 @@ export default function ProjectPage() {
             {showCreateTask && id && (
                 <CreateTaskModal
                     projectId={id}
+                    members={members}
                     onClose={() => setShowCreateTask(false)}
                     onCreated={handleTaskCreated}
                 />
@@ -321,6 +342,8 @@ export default function ProjectPage() {
                 <TaskDetailModal
                     task={selectedTask}
                     projectId={id}
+                    members={members}
+                    onAssigneeChange={handleAssigneeChange}
                     onClose={() => setSelectedTaskId(null)}
                     onSubtaskAdded={handleSubtaskAdded}
                     onSubtaskToggled={handleSubtaskToggled}

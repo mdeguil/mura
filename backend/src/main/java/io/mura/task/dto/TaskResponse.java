@@ -1,5 +1,6 @@
 package io.mura.task.dto;
 
+import io.mura.member.dto.UserResponse;
 import io.mura.task.Task;
 import io.mura.task.TaskStatus;
 
@@ -15,6 +16,7 @@ public record TaskResponse(
         LocalDate startDate,
         LocalDate endDate,
         boolean archived,
+        UserResponse assignee,
         List<SubtaskResponse> subtasks,
         List<TaskStatusChangeResponse> statusHistory
 ) {
@@ -27,6 +29,7 @@ public record TaskResponse(
                 task.getStartDate(),
                 task.getEndDate(),
                 task.isArchived(),
+                task.getAssignee() == null ? null : UserResponse.from(task.getAssignee()),
                 task.getSubtasks().stream().map(SubtaskResponse::from).toList(),
                 task.getStatusHistory().stream().map(TaskStatusChangeResponse::from).toList()
         );

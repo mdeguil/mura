@@ -2,6 +2,8 @@ package io.mura.project.dto;
 
 import io.mura.member.dto.UserResponse;
 import io.mura.project.Project;
+import io.mura.project.ProjectMember;
+
 import io.mura.project.ProjectStatus;
 import io.mura.project.ProjectType;
 
@@ -21,11 +23,10 @@ public record ProjectResponse(
         LocalDate startDate,
         ProjectStatus status,
         UserResponse owner,
-        List<UserResponse> members,
+        List<MemberResponse> members,
         List<Object> lists
 ) {
-    public static ProjectResponse from(Project project) {
-        UserResponse owner = UserResponse.from(project.getOwner());
+    public static ProjectResponse from(Project project, List<ProjectMember> members) {
         return new ProjectResponse(
                 project.getId(),
                 project.getName(),
@@ -34,8 +35,8 @@ public record ProjectResponse(
                 project.getType(),
                 project.getStartDate(),
                 project.getStatus(),
-                owner,
-                List.of(owner),
+                UserResponse.from(project.getOwner()),
+                members.stream().map(MemberResponse::from).toList(),
                 List.of()
         );
     }

@@ -2,20 +2,25 @@ import { useState } from 'react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import api from '../services/api'
-import type { Subtask, Task } from '../types'
+import AssigneeSelect from './AssigneeSelect'
+import type { Member, Subtask, Task } from '../types'
 import { TASK_STATUS_BAR_CLASSES, TASK_STATUS_CLASSES, TASK_STATUS_LABELS } from '../utils/taskMeta'
 
 export default function TaskDetailModal({
     task,
     projectId,
+    members,
     onClose,
+    onAssigneeChange,
     onSubtaskAdded,
     onSubtaskToggled,
     onSubtaskDeleted,
 }: {
     task: Task
     projectId: string
+    members: Member[]
     onClose: () => void
+    onAssigneeChange: (taskId: string, assigneeId: string | null) => void
     onSubtaskAdded: (taskId: string, subtask: Subtask) => void
     onSubtaskToggled: (taskId: string, subtask: Subtask) => void
     onSubtaskDeleted: (taskId: string, subtaskId: string) => void
@@ -75,6 +80,15 @@ export default function TaskDetailModal({
                     <span className="text-xs text-slate-500">
                         {format(new Date(task.startDate), 'dd/MM/yyyy', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
                     </span>
+                </div>
+
+                <div className="flex items-center gap-2 mt-3">
+                    <span className="text-xs font-medium text-slate-500">Responsable</span>
+                    <AssigneeSelect
+                        members={members}
+                        value={task.assignee?.id ?? null}
+                        onChange={(assigneeId) => onAssigneeChange(task.id, assigneeId)}
+                    />
                 </div>
 
                 {task.description && (

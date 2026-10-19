@@ -4,6 +4,8 @@ import io.mura.member.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.JoinColumn;
@@ -36,13 +38,14 @@ public class ProjectMember {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role;
+    private ProjectRole role;
 
     @Column(name = "joined_at", nullable = false, updatable = false)
     private Instant joinedAt;
 
-    public ProjectMember(Project project, User user, String role) {
+    public ProjectMember(Project project, User user, ProjectRole role) {
         this.project = project;
         this.user = user;
         this.id = new ProjectMemberId(project.getId(), user.getId());

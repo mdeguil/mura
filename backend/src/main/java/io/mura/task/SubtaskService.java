@@ -1,7 +1,7 @@
 package io.mura.task;
 
 import io.mura.common.exception.ApiException;
-import io.mura.project.Project;
+import io.mura.project.ProjectMemberRepository;
 import io.mura.project.ProjectRepository;
 import io.mura.task.dto.CreateSubtaskRequest;
 import io.mura.task.dto.SubtaskResponse;
@@ -19,10 +19,11 @@ public class SubtaskService {
     private final SubtaskRepository subtaskRepository;
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
+    private final ProjectMemberRepository projectMemberRepository;
 
     @Transactional
     public SubtaskResponse create(UUID userId, UUID projectId, UUID taskId, CreateSubtaskRequest request) {
-        Task task = requireOwnedTask(userId, projectId, taskId);
+        Task task = requireAccessibleTask(userId, projectId, taskId);
 
         Subtask subtask = new Subtask();
         subtask.setTask(task);
@@ -34,7 +35,7 @@ public class SubtaskService {
 
     @Transactional
     public SubtaskResponse toggle(UUID userId, UUID projectId, UUID taskId, UUID subtaskId) {
-        requireOwnedTask(userId, projectId, taskId);
+        requireAccessibleTask(userId, projectId, taskId);
         Subtask subtask = requireSubtaskInTask(taskId, subtaskId);
         subtask.setDone(!subtask.isDone());
         return SubtaskResponse.from(subtask);
@@ -42,16 +43,18 @@ public class SubtaskService {
 
     @Transactional
     public void delete(UUID userId, UUID projectId, UUID taskId, UUID subtaskId) {
-        requireOwnedTask(userId, projectId, taskId);
+        requireAccessibleTask(userId, projectId, taskId);
         Subtask subtask = requireSubtaskInTask(taskId, subtaskId);
         subtaskRepository.delete(subtask);
     }
 
-    private Task requireOwnedTask(UUID userId, UUID projectId, UUID taskId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+    // Any member of the project can tick off subtasks, not just its owner.
+    private Task requireAccessibleTask(UUID userId, UUID projectId, UUID taskId) {
+        if (!projectRepository.existsById(projectId)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable.");
+        }
 
-        if (!project.getOwner().getId().equals(userId)) {
+        if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
         }
 

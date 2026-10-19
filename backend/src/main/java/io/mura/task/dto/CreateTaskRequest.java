@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record CreateTaskRequest(
         @NotBlank(message = "Le nom de la tâche est requis.")
@@ -21,5 +22,9 @@ public record CreateTaskRequest(
         LocalDate startDate,
 
         @NotNull(message = "La date de fin est requise.")
-        LocalDate endDate
+        LocalDate endDate,
+
+        // Null means nobody is in charge yet. The service checks that anyone
+        // named here is actually a member of the project.
+        UUID assigneeId
 ) {}

@@ -1,5 +1,6 @@
 package io.mura.task;
 
+import io.mura.member.User;
 import io.mura.project.Project;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -59,6 +60,11 @@ public class Task {
 
     @Column(nullable = false)
     private boolean archived;
+
+    // Optional: a task can sit in the backlog with nobody in charge yet.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
+    private User assignee;
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdAt ASC")

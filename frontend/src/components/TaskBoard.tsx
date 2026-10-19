@@ -1,5 +1,6 @@
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import UserAvatar from './UserAvatar'
 import type { Task, TaskStatus } from '../types'
 import {
     NEXT_TASK_STATUS,
@@ -93,6 +94,18 @@ export default function TaskBoard({
                                                     📋 {doneCount}/{task.subtasks.length} sous-tâches
                                                 </p>
                                             )}
+                                            <div className="flex items-center gap-1.5 mt-2">
+                                                {task.assignee ? (
+                                                    <>
+                                                        <UserAvatar user={task.assignee} size="sm" />
+                                                        <span className="text-xs text-slate-500 truncate">
+                                                            {task.assignee.username}
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-xs text-slate-300 italic">Non assignée</span>
+                                                )}
+                                            </div>
                                         </div>
                                         <div
                                             className="flex flex-col items-center gap-1 shrink-0"

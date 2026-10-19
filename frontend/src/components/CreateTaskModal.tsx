@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import api from '../services/api'
-import type { Task } from '../types'
+import AssigneeSelect from './AssigneeSelect'
+import type { Member, Task } from '../types'
 
 export default function CreateTaskModal({
     projectId,
+    members,
     onClose,
     onCreated,
 }: {
     projectId: string
+    members: Member[]
     onClose: () => void
     onCreated: (task: Task) => void
 }) {
@@ -15,6 +18,7 @@ export default function CreateTaskModal({
     const [description, setDescription] = useState('')
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
+    const [assigneeId, setAssigneeId] = useState<string | null>(null)
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
@@ -34,6 +38,7 @@ export default function CreateTaskModal({
                 description,
                 startDate,
                 endDate,
+                assigneeId,
             })
             onCreated(data)
             onClose()
@@ -85,6 +90,11 @@ export default function CreateTaskModal({
                                 className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 outline-none focus:border-brand-500 transition"
                             />
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Responsable (optionnel)</label>
+                        <AssigneeSelect members={members} value={assigneeId} onChange={setAssigneeId} fullWidth />
                     </div>
 
                     <div>

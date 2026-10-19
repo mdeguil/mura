@@ -28,6 +28,14 @@ export interface List {
   cards: Card[]
 }
 
+export type ProjectRole = 'OWNER' | 'MEMBER'
+
+// A user plus the role they hold on one project, flattened so a member row
+// renders from a single object.
+export interface Member extends User {
+  role: ProjectRole
+}
+
 export type ProjectType = 'WEB' | 'MOBILE' | 'MARKETING' | 'EVENEMENT' | 'AUTRE'
 
 export type ProjectStatus = 'A_VENIR' | 'EN_COURS' | 'ACHEVE'
@@ -41,7 +49,7 @@ export interface Project {
   startDate?: string
   status: ProjectStatus
   owner: User
-  members: User[]
+  members: Member[]
   lists: List[]
 }
 
@@ -68,6 +76,7 @@ export interface Task {
   startDate: string
   endDate: string
   archived: boolean
+  assignee: User | null
   subtasks: Subtask[]
   statusHistory: StatusChange[]
 }
