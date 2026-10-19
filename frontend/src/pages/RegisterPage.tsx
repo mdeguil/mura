@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
+import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import logo from '../assets/logo-icon.png'
 
@@ -28,8 +29,8 @@ export default function RegisterPage() {
             const { data } = await api.post('/auth/register', { username, email, password })
             setAuth(data.token, data.user)
             navigate('/')
-        } catch {
-            setError('Impossible de créer le compte. Vérifie tes informations.')
+        } catch (err) {
+            setError(apiErrorMessage(err, 'Impossible de créer le compte. Vérifie tes informations.'))
         } finally {
             setLoading(false)
         }

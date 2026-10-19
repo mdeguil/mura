@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
+import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import logo from '../assets/logo-icon.png'
 
@@ -20,8 +21,8 @@ export default function LoginPage() {
             const { data } = await api.post('/auth/login', { email, password })
             setAuth(data.token, data.user)
             navigate('/')
-        } catch {
-            setError('Email ou mot de passe incorrect.')
+        } catch (err) {
+            setError(apiErrorMessage(err, 'Email ou mot de passe incorrect.'))
         } finally {
             setLoading(false)
         }

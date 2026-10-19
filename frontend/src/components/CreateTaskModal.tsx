@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import api from '../services/api'
+import { apiErrorMessage } from '../utils/apiError'
 import AssigneeSelect from './AssigneeSelect'
 import type { Member, Task } from '../types'
 
@@ -42,8 +43,8 @@ export default function CreateTaskModal({
             })
             onCreated(data)
             onClose()
-        } catch {
-            setError('Impossible de créer la tâche. Réessaie.')
+        } catch (err) {
+            setError(apiErrorMessage(err, 'Impossible de créer la tâche. Réessaie.'))
         } finally {
             setLoading(false)
         }

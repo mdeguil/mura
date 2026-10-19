@@ -6,6 +6,7 @@ import InvitationInbox from '../components/InvitationInbox'
 import api from '../services/api'
 import type { Invitation, Project, ProjectType } from '../types'
 import { PROJECT_TYPE_LABELS } from '../utils/projectMeta'
+import { apiErrorMessage } from '../utils/apiError'
 
 const TYPE_FILTERS = Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]
 
@@ -25,8 +26,8 @@ export default function HomePage() {
             .then(({ data }) => {
                 if (!cancelled) setProjects(data)
             })
-            .catch(() => {
-                if (!cancelled) setError('Impossible de charger tes projets.')
+            .catch((err) => {
+                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger tes projets.'))
             })
             .finally(() => {
                 if (!cancelled) setLoading(false)

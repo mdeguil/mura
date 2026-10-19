@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import axios from 'axios'
 import api from '../services/api'
 import UserAvatar from './UserAvatar'
 import type { Invitation, Member } from '../types'
+import { apiErrorMessage } from '../utils/apiError'
 
 export default function MemberList({
     projectId,
@@ -27,14 +27,6 @@ export default function MemberList({
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
-    // The server says exactly what went wrong (no such account, already a
-    // member, already invited), and that is more useful than a generic line.
-    function messageFrom(err: unknown, fallback: string) {
-        return (
-            (axios.isAxiosError(err) && (err.response?.data as { message?: string })?.message) || fallback
-        )
-    }
-
     async function handleInvite(e: React.FormEvent) {
         e.preventDefault()
         if (!identifier.trim()) return
@@ -48,7 +40,7 @@ export default function MemberList({
             onInvited(data)
             setIdentifier('')
         } catch (err) {
-            setError(messageFrom(err, "Impossible d'inviter cette personne."))
+            setError(apiErrorMessage(err, "Impossible d'inviter cette personne."))
         } finally {
             setLoading(false)
         }
@@ -59,7 +51,7 @@ export default function MemberList({
             await api.delete(`/projects/${projectId}/invitations/${invitation.id}`)
             onInvitationCancelled(invitation.id)
         } catch (err) {
-            setError(messageFrom(err, "Impossible d'annuler cette invitation."))
+            setError(apiErrorMessage(err, "Impossible d'annuler cette invitation."))
         }
     }
 
@@ -72,7 +64,7 @@ export default function MemberList({
             await api.delete(`/projects/${projectId}/members/${member.id}`)
             onRemoved(member.id)
         } catch (err) {
-            setError(messageFrom(err, 'Impossible de retirer ce membre.'))
+            setError(apiErrorMessage(err, 'Impossible de retirer ce membre.'))
         }
     }
 

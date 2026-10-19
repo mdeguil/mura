@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import axios from 'axios'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import Navbar from '../components/Navbar'
@@ -16,6 +15,7 @@ import type { Invitation, Member, Project, Subtask, Task, TaskStatus } from '../
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 import { projectGlassBackground } from '../utils/color'
 import { taskPayload } from '../utils/taskPayload'
+import { apiErrorMessage } from '../utils/apiError'
 
 type ProjectTab = 'info' | 'planning' | 'tasks'
 
@@ -72,8 +72,8 @@ export default function ProjectPage() {
                 setProject(data)
                 setMembers(data.members)
             })
-            .catch(() => {
-                if (!cancelled) setError('Impossible de charger ce projet.')
+            .catch((err) => {
+                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger ce projet.'))
             })
             .finally(() => {
                 if (!cancelled) setLoading(false)
@@ -141,10 +141,7 @@ export default function ProjectPage() {
             )
             setTasks((prev) => prev.map((t) => (t.id === taskId ? data : t)))
         } catch (err) {
-            const message =
-                (axios.isAxiosError(err) && (err.response?.data as { message?: string })?.message) ||
-                fallbackMessage
-            window.alert(message)
+            window.alert(apiErrorMessage(err, fallbackMessage))
         }
     }
 

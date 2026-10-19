@@ -16,7 +16,15 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // A 401 on /auth/login or /auth/register is the answer to the form —
+    // wrong password, not an expired session. Redirecting there reloads the
+    // page and wipes the error message before it can be shown, which is why
+    // a failed sign-in used to look like nothing happened at all.
+    const url = error.config?.url ?? ''
+    const isSignInAttempt = url.startsWith('/auth/')
+    const alreadyOnLogin = window.location.pathname === '/login'
+
+    if (error.response?.status === 401 && !isSignInAttempt && !alreadyOnLogin) {
       useAuthStore.getState().logout()
       window.location.href = '/login'
     }
