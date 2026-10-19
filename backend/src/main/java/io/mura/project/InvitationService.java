@@ -27,11 +27,11 @@ public class InvitationService {
     public InvitationResponse invite(UUID actorId, UUID projectId, CreateInvitationRequest request) {
         Project project = requireOwner(actorId, projectId);
 
-        String identifier = request.identifier().trim();
-        User user = userRepository.findByEmailOrUsername(identifier)
+        String email = request.email().trim();
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
-                        "Aucun compte ne correspond à « " + identifier + " »."
+                        "Aucun compte Mura n'utilise l'email " + email + "."
                 ));
 
         if (projectMemberRepository.existsByProjectIdAndUserId(projectId, user.getId())) {

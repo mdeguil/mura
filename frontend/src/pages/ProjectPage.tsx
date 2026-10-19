@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
 import Navbar from '../components/Navbar'
 import CreateTaskModal from '../components/CreateTaskModal'
 import GanttChart from '../components/GanttChart'
 import MonthCalendar from '../components/MonthCalendar'
 import TaskBoard from '../components/TaskBoard'
 import TaskDetailModal from '../components/TaskDetailModal'
-import MemberList from '../components/MemberList'
+import ProjectInfo from '../components/ProjectInfo'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import type { Invitation, Member, Project, Subtask, Task, TaskStatus } from '../types'
@@ -241,48 +239,37 @@ export default function ProjectPage() {
                             ))}
                         </div>
 
+                        {activeTab === 'info' ? (
+                            <div className="mt-6">
+                                <ProjectInfo
+                                    project={project}
+                                    tasks={tasks}
+                                    archivedCount={archivedTasks.length}
+                                    members={members}
+                                    invitations={invitations}
+                                    canManage={isOwner}
+                                    currentUserId={currentUserId}
+                                    onInvited={(invitation) =>
+                                        setInvitations((prev) => [...prev, invitation])
+                                    }
+                                    onInvitationCancelled={(invitationId) =>
+                                        setInvitations((prev) => prev.filter((i) => i.id !== invitationId))
+                                    }
+                                    onMemberRemoved={(memberId) => {
+                                        setMembers((prev) => prev.filter((m) => m.id !== memberId))
+                                        // Their tasks stay, but the server has just cleared
+                                        // the assignee on them.
+                                        setTasks((prev) =>
+                                            prev.map((t) =>
+                                                t.assignee?.id === memberId ? { ...t, assignee: null } : t
+                                            )
+                                        )
+                                    }}
+                                />
+                            </div>
+                        ) : (
                         <div className="mt-6 flex-1 bg-surface border border-border rounded-2xl p-6 flex flex-col">
-                            {activeTab === 'info' ? (
-                                <div>
-                                    {project.startDate && (
-                                        <p className="text-sm text-slate-500">
-                                            Date de début : {format(new Date(project.startDate), 'dd/MM/yyyy', { locale: fr })}
-                                        </p>
-                                    )}
-
-                                    {project.description && (
-                                        <p className="text-sm text-slate-600 mt-4 whitespace-pre-wrap">{project.description}</p>
-                                    )}
-
-                                    <div className="mt-6 pt-6 border-t border-border">
-                                        <MemberList
-                                            projectId={project.id}
-                                            members={members}
-                                            canManage={isOwner}
-                                            currentUserId={currentUserId}
-                                            invitations={invitations}
-                                            onInvited={(invitation) =>
-                                                setInvitations((prev) => [...prev, invitation])
-                                            }
-                                            onInvitationCancelled={(invitationId) =>
-                                                setInvitations((prev) =>
-                                                    prev.filter((i) => i.id !== invitationId)
-                                                )
-                                            }
-                                            onRemoved={(memberId) => {
-                                                setMembers((prev) => prev.filter((m) => m.id !== memberId))
-                                                // Their tasks stay, but the server has just cleared
-                                                // the assignee on them.
-                                                setTasks((prev) =>
-                                                    prev.map((t) =>
-                                                        t.assignee?.id === memberId ? { ...t, assignee: null } : t
-                                                    )
-                                                )
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            ) : activeTab === 'planning' ? (
+                            {activeTab === 'planning' ? (
                                 <>
                                     <div className="flex items-center gap-1 mb-4 self-start bg-surface-muted border border-border rounded-lg p-0.5">
                                         {PLANNING_VIEWS.map((view) => (
@@ -337,6 +324,7 @@ export default function ProjectPage() {
                                 </>
                             )}
                         </div>
+                        )}
                     </>
                 )}
             </main>
