@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import NotificationBell from './NotificationBell'
 import logo from '../assets/logo-icon.png'
 
 export default function Navbar() {
@@ -20,6 +21,8 @@ export default function Navbar() {
             </div>
 
             <div className="flex items-center gap-3">
+                <NotificationBell />
+
                 <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center text-white text-xs font-semibold">
                         {user?.username?.[0]?.toUpperCase() ?? '?'}

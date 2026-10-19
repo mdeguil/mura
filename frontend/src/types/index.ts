@@ -32,6 +32,8 @@ export type ProjectRole = 'OWNER' | 'MEMBER'
 
 export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED'
 
+export type ProjectAccess = 'MEMBER' | 'INVITED'
+
 export interface Invitation {
   id: string
   projectId: string
@@ -40,6 +42,7 @@ export interface Invitation {
   invitedUser: User
   invitedBy: User
   status: InvitationStatus
+  read: boolean
   createdAt: string
 }
 
@@ -62,6 +65,9 @@ export interface Project {
   startDate?: string
   status: ProjectStatus
   owner: User
+  // INVITED means the caller only holds an invitation: the project answers
+  // with its description and nothing the team is working on.
+  access: ProjectAccess
   members: Member[]
   lists: List[]
 }

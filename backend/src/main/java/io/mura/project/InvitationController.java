@@ -60,6 +60,14 @@ public class InvitationController {
         return ResponseEntity.ok(invitationService.listPendingForUser(userId));
     }
 
+
+    @PostMapping("/invitations/{invitationId}/read")
+    public ResponseEntity<InvitationResponse> markRead(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID invitationId
+    ) {
+        return ResponseEntity.ok(invitationService.markRead(userId, invitationId));
+    }
     @PostMapping("/invitations/{invitationId}/accept")
     public ResponseEntity<InvitationResponse> accept(
             @AuthenticationPrincipal UUID userId,

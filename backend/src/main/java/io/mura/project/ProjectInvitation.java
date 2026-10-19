@@ -53,6 +53,11 @@ public class ProjectInvitation {
     @Column(name = "responded_at")
     private Instant respondedAt;
 
+    // Null until the invitee opens their notifications: it drives the
+    // unread count on the bell, not whether the invitation is still live.
+    @Column(name = "read_at")
+    private Instant readAt;
+
     @PrePersist
     void onCreate() {
         createdAt = Instant.now();

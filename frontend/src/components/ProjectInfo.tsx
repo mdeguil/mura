@@ -16,6 +16,8 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 
 export default function ProjectInfo({
     project,
+    invitation,
+    onAnswerInvitation,
     tasks,
     archivedCount,
     members,
@@ -27,6 +29,9 @@ export default function ProjectInfo({
     onMemberRemoved,
 }: {
     project: Project
+    // Set only when the viewer holds a live invitation to this project.
+    invitation: Invitation | null
+    onAnswerInvitation: (accepted: boolean) => void
     tasks: Task[]
     archivedCount: number
     members: Member[]
@@ -37,6 +42,71 @@ export default function ProjectInfo({
     onInvitationCancelled: (invitationId: string) => void
     onMemberRemoved: (memberId: string) => void
 }) {
+    const invitedOnly = project.access === 'INVITED'
+
+    if (invitedOnly) {
+        return (
+            <div className="flex flex-col gap-4">
+                <section className="bg-surface border border-brand-500/40 rounded-xl p-5">
+                    <h2 className="text-sm font-semibold text-slate-800 mb-1">
+                        {invitation
+                            ? `${invitation.invitedBy.username} t'invite à rejoindre ce projet`
+                            : 'Tu es invité sur ce projet'}
+                    </h2>
+                    <p className="text-sm text-slate-500">
+                        Tu vois sa description. Le planning, les tâches et l'équipe s'ouvrent une
+                        fois l'invitation acceptée.
+                    </p>
+                    <div className="flex gap-2 mt-4">
+                        <button
+                            onClick={() => onAnswerInvitation(true)}
+                            disabled={!invitation}
+                            className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
+                        >
+                            Rejoindre le projet
+                        </button>
+                        <button
+                            onClick={() => onAnswerInvitation(false)}
+                            disabled={!invitation}
+                            className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface-muted transition disabled:opacity-60"
+                        >
+                            Refuser
+                        </button>
+                    </div>
+                </section>
+
+                <section className="bg-surface border border-border rounded-xl p-5">
+                    <dl className="grid grid-cols-2 sm:grid-cols-3 gap-5">
+                        <Fact label="Type">{PROJECT_TYPE_LABELS[project.type]}</Fact>
+                        <Fact label="Statut">
+                            <span
+                                className={`text-xs font-medium px-2 py-0.5 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}
+                            >
+                                {PROJECT_STATUS_LABELS[project.status]}
+                            </span>
+                        </Fact>
+                        <Fact label="Début">
+                            {project.startDate
+                                ? format(new Date(project.startDate), 'dd MMMM yyyy', { locale: fr })
+                                : <span className="text-slate-400">Non définie</span>}
+                        </Fact>
+                    </dl>
+                </section>
+
+                <section className="bg-surface border border-border rounded-xl p-5">
+                    <h2 className="text-sm font-semibold text-slate-800 mb-3">À propos</h2>
+                    {project.description ? (
+                        <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
+                            {project.description}
+                        </p>
+                    ) : (
+                        <p className="text-sm text-slate-400">Ce projet n'a pas encore de description.</p>
+                    )}
+                </section>
+            </div>
+        )
+    }
+
     const counts = TASK_STATUSES.map((status) => ({
         status,
         count: tasks.filter((t) => t.status === status).length,

@@ -17,6 +17,7 @@ public record InvitationResponse(
         UserResponse invitedUser,
         UserResponse invitedBy,
         InvitationStatus status,
+        boolean read,
         Instant createdAt
 ) {
     public static InvitationResponse from(ProjectInvitation invitation) {
@@ -28,6 +29,7 @@ public record InvitationResponse(
                 UserResponse.from(invitation.getInvitedUser()),
                 UserResponse.from(invitation.getInvitedBy()),
                 invitation.getStatus(),
+                invitation.getReadAt() != null,
                 invitation.getCreatedAt()
         );
     }

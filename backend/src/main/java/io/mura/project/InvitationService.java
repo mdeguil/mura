@@ -119,6 +119,27 @@ public class InvitationService {
         return InvitationResponse.from(invitation);
     }
 
+
+    // Opening the notification is all it takes: the bell stops counting it,
+    // while the invitation itself stays pending until it is answered.
+    @Transactional
+    public InvitationResponse markRead(UUID userId, UUID invitationId) {
+        ProjectInvitation invitation = invitationRepository.findById(invitationId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invitation introuvable."));
+
+        if (!invitation.getInvitedUser().getId().equals(userId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Cette invitation ne t'est pas adressée.");
+        }
+
+        // Clicking the same notification twice is normal, so re-reading is a
+        // no-op rather than an error.
+        if (invitation.getReadAt() == null) {
+            invitation.setReadAt(Instant.now());
+        }
+
+        return InvitationResponse.from(invitation);
+    }
+
     private ProjectInvitation requireOwnInvitation(UUID userId, UUID invitationId) {
         ProjectInvitation invitation = requirePendingInvitation(invitationId);
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import CreateTaskModal from '../components/CreateTaskModal'
 import GanttChart from '../components/GanttChart'
@@ -34,10 +34,12 @@ const PLANNING_VIEWS: { key: PlanningView; label: string }[] = [
 
 export default function ProjectPage() {
     const { id } = useParams<{ id: string }>()
+    const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
     const [project, setProject] = useState<Project | null>(null)
     const [members, setMembers] = useState<Member[]>([])
     const [invitations, setInvitations] = useState<Invitation[]>([])
+    const [ownInvitation, setOwnInvitation] = useState<Invitation | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -49,13 +51,18 @@ export default function ProjectPage() {
     const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
     const currentUserId = useAuthStore((s) => s.user?.id) ?? ''
     const isOwner = project?.owner.id === currentUserId
+    // Holding an invitation buys a look at the project, not a seat on it:
+    // the other tabs stay shut until it is accepted.
+    const invitedOnly = project?.access === 'INVITED'
 
     // The active tab lives in the URL (?tab=…) so a refresh — or a shared
     // link — lands back on the same view instead of resetting to Infos.
     const tabParam = searchParams.get('tab')
-    const activeTab: ProjectTab = TABS.some((t) => t.key === tabParam)
-        ? (tabParam as ProjectTab)
-        : DEFAULT_TAB
+    const activeTab: ProjectTab = invitedOnly
+        ? 'info'
+        : TABS.some((t) => t.key === tabParam)
+          ? (tabParam as ProjectTab)
+          : DEFAULT_TAB
 
     function selectTab(tab: ProjectTab) {
         setSearchParams(tab === DEFAULT_TAB ? {} : { tab }, { replace: true })
@@ -82,7 +89,11 @@ export default function ProjectPage() {
         }
     }, [id])
 
+    // Everything below is members-only. Someone who merely holds an
+    // invitation gets the project's description and nothing else, so these
+    // wait until the project says which of the two the caller is.
     useEffect(() => {
+        if (project?.access !== 'MEMBER') return
         let cancelled = false
 
         api.get<Task[]>(`/projects/${id}/tasks`)
@@ -97,8 +108,8 @@ export default function ProjectPage() {
             })
             .catch(() => {})
 
-        // Only members may read this, and a plain member still sees who else
-        // has been invited, and only loses the ability to cancel one.
+        // A plain member still sees who else has been invited, and only
+        // loses the ability to cancel one.
         api.get<Invitation[]>(`/projects/${id}/invitations`)
             .then(({ data }) => {
                 if (!cancelled) setInvitations(data)
@@ -108,7 +119,42 @@ export default function ProjectPage() {
         return () => {
             cancelled = true
         }
-    }, [id])
+    }, [id, project?.access])
+
+    // The invitation this page is asking the viewer to answer.
+    useEffect(() => {
+        if (project?.access !== 'INVITED') return
+        let cancelled = false
+
+        api.get<Invitation[]>('/invitations')
+            .then(({ data }) => {
+                if (!cancelled) setOwnInvitation(data.find((i) => i.projectId === id) ?? null)
+            })
+            .catch(() => {})
+
+        return () => {
+            cancelled = true
+        }
+    }, [id, project?.access])
+
+
+    async function handleAnswerInvitation(accepted: boolean) {
+        if (!ownInvitation) return
+
+        await api.post(`/invitations/${ownInvitation.id}/${accepted ? 'accept' : 'decline'}`)
+        setOwnInvitation(null)
+
+        if (!accepted) {
+            navigate('/')
+            return
+        }
+
+        // Accepting changes what the server will hand back, so the project is
+        // read again — this time as a member, with the team and the tasks.
+        const { data } = await api.get<Project>(`/projects/${id}`)
+        setProject(data)
+        setMembers(data.members)
+    }
 
     function handleTaskCreated(task: Task) {
         setTasks((prev) => [...prev, task].sort((a, b) => a.startDate.localeCompare(b.startDate)))
@@ -224,25 +270,39 @@ export default function ProjectPage() {
                         </div>
 
                         <div className="mt-6 flex items-center gap-6 border-b border-border">
-                            {TABS.map((tab) => (
-                                <button
-                                    key={tab.key}
-                                    onClick={() => selectTab(tab.key)}
-                                    className={`pb-3 -mb-px text-sm font-medium border-b-2 transition ${
-                                        activeTab === tab.key
-                                            ? 'text-slate-800 border-brand-500'
-                                            : 'text-slate-500 border-transparent hover:text-slate-700'
-                                    }`}
-                                >
-                                    {tab.label}
-                                </button>
-                            ))}
+                            {TABS.map((tab) => {
+                                const locked = invitedOnly && tab.key !== 'info'
+                                return (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => !locked && selectTab(tab.key)}
+                                        disabled={locked}
+                                        title={
+                                            locked
+                                                ? "Accepte l'invitation pour accéder à cette vue"
+                                                : undefined
+                                        }
+                                        className={`pb-3 -mb-px text-sm font-medium border-b-2 transition ${
+                                            locked
+                                                ? 'text-slate-300 border-transparent cursor-not-allowed'
+                                                : activeTab === tab.key
+                                                  ? 'text-slate-800 border-brand-500'
+                                                  : 'text-slate-500 border-transparent hover:text-slate-700'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                        {locked && ' 🔒'}
+                                    </button>
+                                )
+                            })}
                         </div>
 
                         {activeTab === 'info' ? (
                             <div className="mt-6">
                                 <ProjectInfo
                                     project={project}
+                                    invitation={ownInvitation}
+                                    onAnswerInvitation={handleAnswerInvitation}
                                     tasks={tasks}
                                     archivedCount={archivedTasks.length}
                                     members={members}

@@ -26,6 +26,7 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectInvitationRepository invitationRepository;
     private final UserRepository userRepository;
     private final TaskService taskService;
 
@@ -46,6 +47,7 @@ public class ProjectService {
         return projects.stream()
                 .map(project -> ProjectResponse.from(
                         project,
+                        ProjectAccess.MEMBER,
                         membersByProject.getOrDefault(project.getId(), List.of())
                 ))
                 .toList();
@@ -55,9 +57,25 @@ public class ProjectService {
     public ProjectResponse getForUser(UUID userId, UUID projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
-        requireMembership(userId, projectId);
 
-        return ProjectResponse.from(project, projectMemberRepository.findAllForProject(projectId));
+        if (projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            return ProjectResponse.from(
+                    project,
+                    ProjectAccess.MEMBER,
+                    projectMemberRepository.findAllForProject(projectId)
+            );
+        }
+
+        // Someone holding a live invitation may read what they are being
+        // invited to before deciding: the description and the facts, nothing
+        // the team is working on. The member list is withheld too: their
+        // addresses are not this person's to read yet.
+        if (invitationRepository.existsByProjectIdAndInvitedUserIdAndStatus(
+                projectId, userId, InvitationStatus.PENDING)) {
+            return ProjectResponse.from(project, ProjectAccess.INVITED, List.of());
+        }
+
+        throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
     }
 
     @Transactional(readOnly = true)
@@ -87,7 +105,7 @@ public class ProjectService {
                 new ProjectMember(project, owner, ProjectRole.OWNER)
         );
 
-        return ProjectResponse.from(project, List.of(membership));
+        return ProjectResponse.from(project, ProjectAccess.MEMBER, List.of(membership));
     }
 
     @Transactional
