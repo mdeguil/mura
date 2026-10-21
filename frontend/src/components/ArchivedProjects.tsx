@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import api from '../services/api'
+import DeleteProjectDialog from './DeleteProjectDialog'
 import { apiErrorMessage } from '../utils/apiError'
 import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
@@ -19,6 +20,7 @@ export default function ArchivedProjects({
     const [open, setOpen] = useState(false)
     const [error, setError] = useState('')
     const [busy, setBusy] = useState<string | null>(null)
+    const [deleting, setDeleting] = useState<Project | null>(null)
 
     if (projects.length === 0) return null
 
@@ -30,29 +32,6 @@ export default function ArchivedProjects({
             onRestored(data)
         } catch (err) {
             setError(apiErrorMessage(err, 'Impossible de restaurer ce projet.'))
-        } finally {
-            setBusy(null)
-        }
-    }
-
-    async function remove(project: Project) {
-        // Everything inside goes with it, so the name has to be typed out.
-        const typed = window.prompt(
-            `Supprimer définitivement « ${project.name} » ?\n\nSes tâches, leur historique, son équipe et ses invitations seront effacés. Cette action est irréversible.\n\nTape le nom du projet pour confirmer :`
-        )
-        if (typed === null) return
-        if (typed.trim() !== project.name) {
-            setError('Le nom saisi ne correspond pas : rien n’a été supprimé.')
-            return
-        }
-
-        setError('')
-        setBusy(project.id)
-        try {
-            await api.delete(`/projects/${project.id}`)
-            onDeleted(project.id)
-        } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible de supprimer ce projet.'))
         } finally {
             setBusy(null)
         }
@@ -97,7 +76,7 @@ export default function ArchivedProjects({
                                     Restaurer
                                 </button>
                                 <button
-                                    onClick={() => remove(project)}
+                                    onClick={() => setDeleting(project)}
                                     disabled={busy === project.id}
                                     className="h-8 px-3 rounded-lg text-xs text-red-500 hover:bg-red-50 transition disabled:opacity-60 shrink-0"
                                 >
@@ -107,6 +86,17 @@ export default function ArchivedProjects({
                         ))}
                     </ul>
                 </>
+            )}
+
+            {deleting && (
+                <DeleteProjectDialog
+                    project={deleting}
+                    onClose={() => setDeleting(null)}
+                    onDeleted={() => {
+                        onDeleted(deleting.id)
+                        setDeleting(null)
+                    }}
+                />
             )}
         </section>
     )

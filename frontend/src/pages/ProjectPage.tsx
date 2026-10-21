@@ -8,6 +8,7 @@ import TaskBoard from '../components/TaskBoard'
 import TaskDetailModal from '../components/TaskDetailModal'
 import ProjectInfo from '../components/ProjectInfo'
 import EditProjectModal from '../components/EditProjectModal'
+import ArchiveProjectDialog from '../components/ArchiveProjectDialog'
 import ProjectStatusPicker from '../components/ProjectStatusPicker'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
@@ -49,6 +50,7 @@ export default function ProjectPage() {
     const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
     const [showCreateTask, setShowCreateTask] = useState(false)
     const [editingProject, setEditingProject] = useState(false)
+    const [archiving, setArchiving] = useState(false)
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
     const [planningView, setPlanningView] = useState<PlanningView>('calendar')
     const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
@@ -184,23 +186,7 @@ export default function ProjectPage() {
             window.alert(apiErrorMessage(err, 'Impossible de changer le statut du projet.'))
         }
     }
-    async function handleArchiveProject() {
-        if (
-            !window.confirm(
-                `Archiver « ${project?.name} » ? Il quittera la liste de toute l’équipe. Tu pourras le restaurer, ou le supprimer définitivement, depuis les projets archivés.`
-            )
-        ) {
-            return
-        }
 
-        try {
-            await api.patch(`/projects/${id}/archive`)
-            // It just left everyone's list, this page included.
-            navigate('/')
-        } catch (err) {
-            window.alert(apiErrorMessage(err, 'Impossible d’archiver ce projet.'))
-        }
-    }
     function handleTaskCreated(task: Task) {
         setTasks((prev) => [...prev, task].sort((a, b) => a.startDate.localeCompare(b.startDate)))
     }
@@ -335,7 +321,7 @@ export default function ProjectPage() {
                                 )}
                                 {isOwner && (
                                     <button
-                                        onClick={handleArchiveProject}
+                                        onClick={() => setArchiving(true)}
                                         className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition flex items-center gap-1.5"
                                         title="Le projet quitte la liste de l'équipe, rien n'est perdu"
                                     >
@@ -489,6 +475,18 @@ export default function ProjectPage() {
             </main>
 
 
+
+            {archiving && project && (
+                <ArchiveProjectDialog
+                    project={project}
+                    onClose={() => setArchiving(false)}
+                    onArchived={() => {
+                        setArchiving(false)
+                        // It just left everyone's list, this page included.
+                        navigate('/')
+                    }}
+                />
+            )}
             {editingProject && project && (
                 <EditProjectModal
                     project={project}
