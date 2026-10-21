@@ -8,10 +8,11 @@ import TaskBoard from '../components/TaskBoard'
 import TaskDetailModal from '../components/TaskDetailModal'
 import ProjectInfo from '../components/ProjectInfo'
 import EditProjectModal from '../components/EditProjectModal'
+import ProjectStatusPicker from '../components/ProjectStatusPicker'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
-import type { Invitation, Member, Project, Subtask, Task, TaskStatus } from '../types'
-import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
+import type { Invitation, Member, Project, ProjectStatus, Subtask, Task, TaskStatus } from '../types'
+import { PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 import { projectGlassBackground } from '../utils/color'
 import { taskPayload } from '../utils/taskPayload'
 import { apiErrorMessage } from '../utils/apiError'
@@ -163,6 +164,26 @@ export default function ProjectPage() {
     }
 
 
+
+    // Same endpoint the edit dialog uses: it replaces the whole project, so
+    // the untouched fields are resent alongside the new status.
+    async function handleProjectStatusChange(status: ProjectStatus) {
+        if (!project) return
+
+        try {
+            const { data } = await api.put<Project>(`/projects/${id}`, {
+                name: project.name,
+                description: project.description,
+                color: project.color,
+                type: project.type,
+                startDate: project.startDate ?? null,
+                status,
+            })
+            setProject(data)
+        } catch (err) {
+            window.alert(apiErrorMessage(err, 'Impossible de changer le statut du projet.'))
+        }
+    }
     async function handleArchiveProject() {
         if (
             !window.confirm(
@@ -287,11 +308,11 @@ export default function ProjectPage() {
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 shrink-0">
-                                <span
-                                    className={`text-xs font-medium px-2.5 py-1 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}
-                                >
-                                    {PROJECT_STATUS_LABELS[project.status]}
-                                </span>
+                                <ProjectStatusPicker
+                                    status={project.status}
+                                    canEdit={canManage}
+                                    onChange={handleProjectStatusChange}
+                                />
                                 {canManage && (
                                     <button
                                         onClick={() => setEditingProject(true)}
