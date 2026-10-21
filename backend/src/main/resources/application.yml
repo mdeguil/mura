@@ -25,6 +25,10 @@ server:
   port: ${BACKEND_PORT:8080}
 
 mura:
+  invitations:
+    # How long an invitation stays answerable. Past this it expires and the
+    # project can invite the person again.
+    lifetime-days: ${INVITATION_LIFETIME_DAYS:14}
   jwt:
     secret: ${JWT_SECRET:local-dev-secret-please-change-in-production}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}

@@ -4,6 +4,8 @@ import UserAvatar from './UserAvatar'
 import MemberDepartureDialog, { type Departure } from './MemberDepartureDialog'
 import type { Invitation, Member, ProjectRole } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
+import { formatDistanceToNow } from 'date-fns'
+import { fr } from 'date-fns/locale'
 
 const ROLE_LABELS: Record<ProjectRole, string> = {
     OWNER: 'Propriétaire',
@@ -45,7 +47,9 @@ export default function MemberList({
     const emailField = useRef<HTMLInputElement>(null)
 
     const pending = invitations.filter((i) => i.status === 'PENDING')
-    const declined = invitations.filter((i) => i.status === 'DECLINED')
+    // Refused or lapsed: either way nobody is coming, and either way the
+    // answer is to ask again.
+    const closed = invitations.filter((i) => i.status === 'DECLINED' || i.status === 'EXPIRED')
     const others = members.filter((m) => m.id !== currentUserId)
     const me = members.find((m) => m.id === currentUserId)
 
@@ -247,9 +251,18 @@ export default function MemberList({
                                 <span className="w-7 h-7 rounded-full border border-dashed border-border-strong flex items-center justify-center text-xs text-slate-400 shrink-0">
                                     {invitation.invitedUser.username[0]?.toUpperCase()}
                                 </span>
-                                <p className="text-sm text-slate-500 min-w-0 flex-1 truncate">
-                                    {invitation.invitedUser.email ?? invitation.invitedUser.username}
-                                </p>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm text-slate-500 truncate">
+                                        {invitation.invitedUser.email ?? invitation.invitedUser.username}
+                                    </p>
+                                    <p className="text-xs text-slate-400">
+                                        Expire{' '}
+                                        {formatDistanceToNow(new Date(invitation.expiresAt), {
+                                            addSuffix: true,
+                                            locale: fr,
+                                        })}
+                                    </p>
+                                </div>
                                 {canManage && (
                                     <button
                                         onClick={() => handleCancel(invitation)}
@@ -265,22 +278,27 @@ export default function MemberList({
                     </ul>
                 </div>
             )}
-
-            {/* A refusal is not a dead end: asking again replaces it. */}
-            {declined.length > 0 && canManage && (
+            {/* Neither a refusal nor a lapse is a dead end: asking again
+                replaces the old invitation. */}
+            {closed.length > 0 && canManage && (
                 <div className="mt-5 pt-4 border-t border-dashed border-border-strong">
                     <h3 className="text-xs font-medium text-slate-500 mb-2">
-                        Ont refusé ({declined.length})
+                        Restées sans suite ({closed.length})
                     </h3>
                     <ul className="flex flex-col gap-2">
-                        {declined.map((invitation) => (
+                        {closed.map((invitation) => (
                             <li key={invitation.id} className="flex items-center gap-3">
                                 <span className="w-7 h-7 rounded-full bg-surface-muted flex items-center justify-center text-xs text-slate-400 shrink-0">
                                     {invitation.invitedUser.username[0]?.toUpperCase()}
                                 </span>
-                                <p className="text-sm text-slate-400 min-w-0 flex-1 truncate line-through">
-                                    {invitation.invitedUser.email ?? invitation.invitedUser.username}
-                                </p>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm text-slate-400 truncate">
+                                        {invitation.invitedUser.email ?? invitation.invitedUser.username}
+                                    </p>
+                                    <p className="text-xs text-slate-400">
+                                        {invitation.status === 'DECLINED' ? 'A refusé' : 'Invitation expirée'}
+                                    </p>
+                                </div>
                                 <button
                                     onClick={() => invitation.invitedUser.email && invite(invitation.invitedUser.email)}
                                     disabled={loading}

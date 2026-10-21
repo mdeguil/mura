@@ -376,7 +376,14 @@ export default function ProjectPage() {
                                     currentUserId={currentUserId}
                                     onMembersChanged={setMembers}
                                     onInvited={(invitation) =>
-                                        setInvitations((prev) => [...prev, invitation])
+                                        setInvitations((prev) => [
+                                            // A new invitation replaces this person's refused or
+                                            // lapsed one server-side, so the old row goes too.
+                                            ...prev.filter(
+                                                (i) => i.invitedUser.id !== invitation.invitedUser.id
+                                            ),
+                                            invitation,
+                                        ])
                                     }
                                     onInvitationCancelled={(invitationId) =>
                                         setInvitations((prev) => prev.filter((i) => i.id !== invitationId))

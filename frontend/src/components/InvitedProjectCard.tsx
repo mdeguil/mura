@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { formatDistanceToNow } from 'date-fns'
+import { fr } from 'date-fns/locale'
 import type { Invitation } from '../types'
 import { projectGlassBackground } from '../utils/color'
 
@@ -15,6 +17,10 @@ export default function InvitedProjectCard({ invitation }: { invitation: Invitat
                 Invité par <span className="text-slate-700">{invitation.invitedBy.username}</span>
             </p>
             <p className="text-xs text-brand-700 mt-3">Voir le projet et répondre →</p>
+            <p className="text-xs text-slate-400 mt-1">
+                Expire{' '}
+                {formatDistanceToNow(new Date(invitation.expiresAt), { addSuffix: true, locale: fr })}
+            </p>
 
             <span className="absolute top-4 right-4 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
                 Invitation

@@ -5,23 +5,41 @@ import io.mura.member.User;
 import io.mura.member.UserRepository;
 import io.mura.project.dto.CreateInvitationRequest;
 import io.mura.project.dto.InvitationResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class InvitationService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectInvitationRepository invitationRepository;
     private final UserRepository userRepository;
+
+    // Injected rather than hard-coded so the window can be changed without
+    // touching the rule that applies it.
+    private final Duration lifetime;
+
+    public InvitationService(
+            ProjectRepository projectRepository,
+            ProjectMemberRepository projectMemberRepository,
+            ProjectInvitationRepository invitationRepository,
+            UserRepository userRepository,
+            @Value("${mura.invitations.lifetime-days}") long lifetimeDays
+    ) {
+        this.projectRepository = projectRepository;
+        this.projectMemberRepository = projectMemberRepository;
+        this.invitationRepository = invitationRepository;
+        this.userRepository = userRepository;
+        this.lifetime = Duration.ofDays(lifetimeDays);
+    }
 
     @Transactional
     public InvitationResponse invite(UUID actorId, UUID projectId, CreateInvitationRequest request) {
@@ -38,6 +56,11 @@ public class InvitationService {
             throw new ApiException(HttpStatus.CONFLICT, user.getUsername() + " fait déjà partie du projet.");
         }
 
+        // An invitation that lapsed is no obstacle to sending a new one, so
+        // it is expired here before the "already pending" check sees it.
+        expireStale(invitationRepository.findAllByProjectIdAndInvitedUserIdAndStatus(
+                projectId, user.getId(), InvitationStatus.PENDING));
+
         if (invitationRepository.existsByProjectIdAndInvitedUserIdAndStatus(
                 projectId, user.getId(), InvitationStatus.PENDING)) {
             throw new ApiException(
@@ -46,10 +69,12 @@ public class InvitationService {
             );
         }
 
-        // Someone can be asked again after refusing, and the new invitation
-        // replaces the refusal rather than sitting next to it.
+        // Someone can be asked again after refusing or letting one lapse, and
+        // the new invitation replaces the old rather than sitting next to it.
         invitationRepository.deleteAll(invitationRepository.findAllByProjectIdAndInvitedUserIdAndStatus(
                 projectId, user.getId(), InvitationStatus.DECLINED));
+        invitationRepository.deleteAll(invitationRepository.findAllByProjectIdAndInvitedUserIdAndStatus(
+                projectId, user.getId(), InvitationStatus.EXPIRED));
 
         ProjectInvitation invitation = new ProjectInvitation();
         invitation.setProject(project);
@@ -60,7 +85,7 @@ public class InvitationService {
         // built before Hibernate flushes the insert.
         invitation.setCreatedAt(Instant.now());
 
-        return InvitationResponse.from(invitationRepository.save(invitation));
+        return toResponse(invitationRepository.save(invitation));
     }
 
 
@@ -99,11 +124,12 @@ public class InvitationService {
                     invitation.setStatus(InvitationStatus.PENDING);
                     invitation.setCreatedAt(Instant.now());
 
-                    return InvitationResponse.from(invitationRepository.save(invitation));
+                    return toResponse(invitationRepository.save(invitation));
                 })
                 .toList();
     }
-    @Transactional(readOnly = true)
+    // Not read-only: reading is what applies expiry.
+    @Transactional
     public List<InvitationResponse> listOpenForProject(UUID userId, UUID projectId) {
         if (!projectRepository.existsById(projectId)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable.");
@@ -113,15 +139,18 @@ public class InvitationService {
             throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
         }
 
-        return invitationRepository.findAllOpenForProject(projectId).stream()
-                .map(InvitationResponse::from)
+        return expireStale(invitationRepository.findAllOpenForProject(projectId)).stream()
+                .map(this::toResponse)
                 .toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<InvitationResponse> listPendingForUser(UUID userId) {
-        return invitationRepository.findAllForUser(userId, InvitationStatus.PENDING).stream()
-                .map(InvitationResponse::from)
+        // Anything that expired drops out of this list in the same breath as
+        // being marked expired, so nobody is offered a dead invitation.
+        return expireStale(invitationRepository.findAllForUser(userId, InvitationStatus.PENDING)).stream()
+                .filter(i -> i.getStatus() == InvitationStatus.PENDING)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -153,7 +182,7 @@ public class InvitationService {
         invitation.setStatus(InvitationStatus.ACCEPTED);
         invitation.setRespondedAt(Instant.now());
 
-        return InvitationResponse.from(invitation);
+        return toResponse(invitation);
     }
 
     @Transactional
@@ -161,7 +190,7 @@ public class InvitationService {
         ProjectInvitation invitation = requireOwnInvitation(userId, invitationId);
         invitation.setStatus(InvitationStatus.DECLINED);
         invitation.setRespondedAt(Instant.now());
-        return InvitationResponse.from(invitation);
+        return toResponse(invitation);
     }
 
 
@@ -177,7 +206,7 @@ public class InvitationService {
             invitation.setReadAt(Instant.now());
         }
 
-        return InvitationResponse.from(invitation);
+        return toResponse(invitation);
     }
 
     // Clearing the notification, not the invitation: the bell forgets it,
@@ -194,12 +223,52 @@ public class InvitationService {
             invitation.setReadAt(Instant.now());
         }
 
-        return InvitationResponse.from(invitation);
+        return toResponse(invitation);
     }
 
     // Read and dismiss both act on a notification rather than on the
     // invitation's outcome, so they accept it whatever its status: only the
     // person it was sent to may touch it.
+
+    private InvitationResponse toResponse(ProjectInvitation invitation) {
+        return InvitationResponse.from(invitation, expiryOf(invitation));
+    }
+
+    private Instant expiryOf(ProjectInvitation invitation) {
+        return invitation.getCreatedAt().plus(lifetime);
+    }
+
+    // Expiry is applied when something reads the invitation rather than by a
+    // scheduled sweep: an invitation left unanswered while the application
+    // was down is just as expired, and the row is corrected the moment
+    // anyone looks at it. That also frees the partial unique index on
+    // PENDING, so the person can be invited again.
+    private List<ProjectInvitation> expireStale(List<ProjectInvitation> invitations) {
+        Instant now = Instant.now();
+        List<ProjectInvitation> lapsed = invitations.stream()
+                .filter(i -> i.getStatus() == InvitationStatus.PENDING)
+                .filter(i -> expiryOf(i).isBefore(now))
+                .toList();
+
+        lapsed.forEach(i -> {
+            i.setStatus(InvitationStatus.EXPIRED);
+            i.setRespondedAt(now);
+        });
+
+        // Flushed on the spot: a fresh invitation inserted later in the same
+        // transaction would otherwise meet the old row still marked pending,
+        // and the partial unique index on PENDING would reject it.
+        if (!lapsed.isEmpty()) {
+            invitationRepository.flush();
+        }
+
+        return invitations;
+    }
+
+    private ProjectInvitation expireStale(ProjectInvitation invitation) {
+        expireStale(List.of(invitation));
+        return invitation;
+    }
     private ProjectInvitation requireAddressedTo(UUID userId, UUID invitationId) {
         ProjectInvitation invitation = invitationRepository.findById(invitationId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invitation introuvable."));
@@ -224,8 +293,15 @@ public class InvitationService {
     }
 
     private ProjectInvitation requirePendingInvitation(UUID invitationId) {
-        ProjectInvitation invitation = invitationRepository.findById(invitationId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invitation introuvable."));
+        ProjectInvitation invitation = expireStale(invitationRepository.findById(invitationId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invitation introuvable.")));
+
+        if (invitation.getStatus() == InvitationStatus.EXPIRED) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "Cette invitation a expiré. Demande à l'équipe de t'inviter à nouveau."
+            );
+        }
 
         if (invitation.getStatus() != InvitationStatus.PENDING) {
             throw new ApiException(HttpStatus.CONFLICT, "Cette invitation a déjà reçu une réponse.");

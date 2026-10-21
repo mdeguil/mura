@@ -19,9 +19,11 @@ public record InvitationResponse(
         InvitationStatus status,
         boolean read,
         boolean dismissed,
-        Instant createdAt
+        Instant createdAt,
+        // When it stops being answerable. Shown so nobody is surprised by it.
+        Instant expiresAt
 ) {
-    public static InvitationResponse from(ProjectInvitation invitation) {
+    public static InvitationResponse from(ProjectInvitation invitation, Instant expiresAt) {
         return new InvitationResponse(
                 invitation.getId(),
                 invitation.getProject().getId(),
@@ -32,7 +34,8 @@ public record InvitationResponse(
                 invitation.getStatus(),
                 invitation.getReadAt() != null,
                 invitation.getDismissedAt() != null,
-                invitation.getCreatedAt()
+                invitation.getCreatedAt(),
+                expiresAt
         );
     }
 }

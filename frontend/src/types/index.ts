@@ -32,7 +32,7 @@ export interface List {
 
 export type ProjectRole = 'OWNER' | 'ADMIN' | 'MEMBER'
 
-export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED'
+export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED'
 
 export type ProjectAccess = 'MEMBER' | 'INVITED'
 
@@ -65,6 +65,9 @@ export interface Invitation {
   // showing in the projects list until it is answered.
   dismissed: boolean
   createdAt: string
+  // When it stops being answerable. Past it the server marks it EXPIRED
+  // the next time anyone reads it.
+  expiresAt: string
 }
 
 // A user plus the role they hold on one project, flattened so a member row
