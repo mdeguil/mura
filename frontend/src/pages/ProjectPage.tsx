@@ -316,17 +316,43 @@ export default function ProjectPage() {
                                 {canManage && (
                                     <button
                                         onClick={() => setEditingProject(true)}
-                                        className="h-8 px-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium transition"
+                                        className="h-8 px-3 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-medium transition flex items-center gap-1.5"
                                     >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            className="w-3.5 h-3.5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            aria-hidden="true"
+                                        >
+                                            <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                                        </svg>
                                         Modifier
                                     </button>
                                 )}
                                 {isOwner && (
                                     <button
                                         onClick={handleArchiveProject}
-                                        className="h-8 px-3 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition"
+                                        className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition flex items-center gap-1.5"
                                         title="Le projet quitte la liste de l'équipe, rien n'est perdu"
                                     >
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            className="w-3.5 h-3.5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            aria-hidden="true"
+                                        >
+                                            <path d="M3 8v12h18V8" />
+                                            <path d="M1 3h22v5H1z" />
+                                            <path d="M10 12h4" />
+                                        </svg>
                                         Archiver
                                     </button>
                                 )}
