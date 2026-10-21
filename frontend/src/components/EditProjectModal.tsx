@@ -10,17 +10,12 @@ const STATUSES = Object.keys(PROJECT_STATUS_LABELS) as ProjectStatus[]
 
 export default function EditProjectModal({
     project,
-    canArchive,
     onClose,
     onSaved,
-    onArchived,
 }: {
     project: Project
-    // The owner alone may put the project in the bin.
-    canArchive: boolean
     onClose: () => void
     onSaved: (project: Project) => void
-    onArchived: () => void
 }) {
     const [values, setValues] = useState<ProjectFormValues>({
         name: project.name,
@@ -51,24 +46,6 @@ export default function EditProjectModal({
             setError(apiErrorMessage(err, 'Impossible d’enregistrer ces changements.'))
         } finally {
             setLoading(false)
-        }
-    }
-
-    async function handleArchive() {
-        if (
-            !window.confirm(
-                `Archiver « ${project.name} » ? Il disparaîtra de la liste de toute l’équipe. Tu pourras le restaurer, ou le supprimer définitivement depuis les projets archivés.`
-            )
-        ) {
-            return
-        }
-
-        setError('')
-        try {
-            await api.patch(`/projects/${project.id}/archive`)
-            onArchived()
-        } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible d’archiver ce projet.'))
         }
     }
 
@@ -110,23 +87,6 @@ export default function EditProjectModal({
                                     ))}
                                 </select>
                             </div>
-
-                            {canArchive && (
-                                <div className="mt-auto">
-                                    <label className={LABEL}>Archiver</label>
-                                    <button
-                                        type="button"
-                                        onClick={handleArchive}
-                                        className="h-9 px-3 rounded-lg border border-border-strong text-sm text-slate-600 hover:border-red-400 hover:text-red-600 transition"
-                                    >
-                                        Mettre le projet à la corbeille
-                                    </button>
-                                    <p className="text-xs text-slate-400 mt-1.5">
-                                        Il quitte la liste de l’équipe. Rien n’est perdu tant qu’il n’est pas
-                                        supprimé depuis les projets archivés.
-                                    </p>
-                                </div>
-                            )}
                         </div>
                     </div>
 

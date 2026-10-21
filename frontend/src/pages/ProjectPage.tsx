@@ -162,6 +162,24 @@ export default function ProjectPage() {
         setMembers(data.members)
     }
 
+
+    async function handleArchiveProject() {
+        if (
+            !window.confirm(
+                `Archiver « ${project?.name} » ? Il quittera la liste de toute l’équipe. Tu pourras le restaurer, ou le supprimer définitivement, depuis les projets archivés.`
+            )
+        ) {
+            return
+        }
+
+        try {
+            await api.patch(`/projects/${id}/archive`)
+            // It just left everyone's list, this page included.
+            navigate('/')
+        } catch (err) {
+            window.alert(apiErrorMessage(err, 'Impossible d’archiver ce projet.'))
+        }
+    }
     function handleTaskCreated(task: Task) {
         setTasks((prev) => [...prev, task].sort((a, b) => a.startDate.localeCompare(b.startDate)))
     }
@@ -280,6 +298,15 @@ export default function ProjectPage() {
                                         className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-brand-500 transition"
                                     >
                                         Modifier
+                                    </button>
+                                )}
+                                {isOwner && (
+                                    <button
+                                        onClick={handleArchiveProject}
+                                        className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-red-400 hover:text-red-600 transition"
+                                        title="Le projet quitte la liste de l'équipe, rien n'est perdu"
+                                    >
+                                        Archiver
                                     </button>
                                 )}
                             </div>
@@ -411,14 +438,8 @@ export default function ProjectPage() {
             {editingProject && project && (
                 <EditProjectModal
                     project={project}
-                    canArchive={isOwner}
                     onClose={() => setEditingProject(false)}
                     onSaved={(updated) => setProject(updated)}
-                    onArchived={() => {
-                        setEditingProject(false)
-                        // It just left everyone's list, this page included.
-                        navigate('/')
-                    }}
                 />
             )}
             {showCreateTask && id && (
