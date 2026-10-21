@@ -3,14 +3,27 @@ import Navbar from '../components/Navbar'
 import ProjectCard from '../components/ProjectCard'
 import CreateProjectModal from '../components/CreateProjectModal'
 import InvitedProjectCard from '../components/InvitedProjectCard'
-import ArchivedProjects from '../components/ArchivedProjects'
+import ArchivedProjectList from '../components/ArchivedProjectList'
 import api from '../services/api'
 import type { Invitation, Project, ProjectStatus, ProjectType } from '../types'
-import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
+import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 import { apiErrorMessage } from '../utils/apiError'
 
 const TYPE_FILTERS = Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]
-const STATUS_FILTERS = Object.keys(PROJECT_STATUS_LABELS) as ProjectStatus[]
+
+// Archived sits alongside the statuses rather than under them: it is where a
+// project goes, not how its work is going. Keeping it as its own tab is also
+// what keeps it out of every other one.
+type ProjectTab = 'ALL' | ProjectStatus | 'ARCHIVED'
+
+const TABS: { key: ProjectTab; label: string }[] = [
+    { key: 'ALL', label: 'Tous' },
+    ...(Object.keys(PROJECT_STATUS_LABELS) as ProjectStatus[]).map((status) => ({
+        key: status as ProjectTab,
+        label: PROJECT_STATUS_LABELS[status],
+    })),
+    { key: 'ARCHIVED', label: 'Archivés' },
+]
 
 export default function HomePage() {
     const [projects, setProjects] = useState<Project[]>([])
@@ -20,7 +33,7 @@ export default function HomePage() {
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
     const [typeFilter, setTypeFilter] = useState<ProjectType | 'ALL'>('ALL')
-    const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'ALL'>('ALL')
+    const [tab, setTab] = useState<ProjectTab>('ALL')
     const [showCreateModal, setShowCreateModal] = useState(false)
 
     useEffect(() => {
@@ -41,7 +54,6 @@ export default function HomePage() {
             cancelled = true
         }
     }, [])
-
 
     // Pending invitations, dismissed from the bell or not: this list is
     // where someone comes back to find a project they were invited to.
@@ -73,13 +85,27 @@ export default function HomePage() {
             cancelled = true
         }
     }, [])
-    const filteredProjects = useMemo(() => {
+
+    // Search and type narrow whatever tab is open, so the counts on the tabs
+    // always match what opening one would show.
+    const narrow = useMemo(() => {
         const q = query.trim().toLowerCase()
-        return projects
-            .filter((p) => !q || p.name.toLowerCase().includes(q))
-            .filter((p) => typeFilter === 'ALL' || p.type === typeFilter)
-            .filter((p) => statusFilter === 'ALL' || p.status === statusFilter)
-    }, [projects, query, typeFilter, statusFilter])
+        return (list: Project[]) =>
+            list
+                .filter((p) => !q || p.name.toLowerCase().includes(q))
+                .filter((p) => typeFilter === 'ALL' || p.type === typeFilter)
+    }, [query, typeFilter])
+
+    const active = useMemo(() => narrow(projects), [narrow, projects])
+    const narrowedArchived = useMemo(() => narrow(archived), [narrow, archived])
+
+    function countFor(key: ProjectTab) {
+        if (key === 'ALL') return active.length
+        if (key === 'ARCHIVED') return narrowedArchived.length
+        return active.filter((p) => p.status === key).length
+    }
+
+    const shown = tab === 'ALL' ? active : active.filter((p) => p.status === tab)
 
     return (
         <div className="min-h-screen bg-app">
@@ -121,6 +147,30 @@ export default function HomePage() {
                     </section>
                 )}
 
+                {/* overflow-y-hidden on purpose: overflow-x alone computes y to
+                    auto, and the tabs' -mb-px overlap makes the content one
+                    pixel taller than the bar, which is enough for a stray
+                    vertical scrollbar. */}
+                <div className="flex items-center gap-6 border-b border-border mb-5 overflow-x-auto overflow-y-hidden">
+                    {TABS.map((entry) => {
+                        const count = countFor(entry.key)
+                        return (
+                            <button
+                                key={entry.key}
+                                onClick={() => setTab(entry.key)}
+                                className={`pb-3 -mb-px text-sm font-medium border-b-2 transition whitespace-nowrap ${
+                                    tab === entry.key
+                                        ? 'text-slate-800 border-brand-500'
+                                        : 'text-slate-500 border-transparent hover:text-slate-700'
+                                }`}
+                            >
+                                {entry.label}
+                                <span className="text-slate-400 font-normal ml-1.5">{count}</span>
+                            </button>
+                        )
+                    })}
+                </div>
+
                 <div className="relative mb-3 max-w-sm">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
                     <input
@@ -132,8 +182,7 @@ export default function HomePage() {
                     />
                 </div>
 
-
-                <div className="flex flex-wrap items-center gap-2 mb-3">
+                <div className="flex flex-wrap items-center gap-2 mb-6">
                     <span className="text-xs text-slate-400 mr-1">Type</span>
                     <button
                         onClick={() => setTypeFilter('ALL')}
@@ -160,38 +209,19 @@ export default function HomePage() {
                     ))}
                 </div>
 
-                {/* Status reads as a second axis rather than more of the same
-                    list, so these chips wear the status colours the rest of
-                    the app already uses. */}
-                <div className="flex flex-wrap items-center gap-2 mb-6">
-                    <span className="text-xs text-slate-400 mr-1">Statut</span>
-                    <button
-                        onClick={() => setStatusFilter('ALL')}
-                        className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
-                            statusFilter === 'ALL'
-                                ? 'bg-slate-800 text-white border-slate-800'
-                                : 'bg-surface text-slate-600 border-border-strong hover:border-brand-500'
-                        }`}
-                    >
-                        Tous
-                    </button>
-                    {STATUS_FILTERS.map((s) => (
-                        <button
-                            key={s}
-                            onClick={() => setStatusFilter(s)}
-                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
-                                statusFilter === s
-                                    ? `${PROJECT_STATUS_CLASSES[s]} border-transparent ring-1 ring-slate-800/20`
-                                    : 'bg-surface text-slate-600 border-border-strong hover:border-brand-500'
-                            }`}
-                        >
-                            {PROJECT_STATUS_LABELS[s]}
-                        </button>
-                    ))}
-                </div>
-
                 {loading ? (
                     <div className="text-sm text-slate-500">Chargement…</div>
+                ) : tab === 'ARCHIVED' ? (
+                    <ArchivedProjectList
+                        projects={narrowedArchived}
+                        onRestored={(project) => {
+                            setArchived((prev) => prev.filter((p) => p.id !== project.id))
+                            setProjects((prev) => [project, ...prev])
+                        }}
+                        onDeleted={(projectId) =>
+                            setArchived((prev) => prev.filter((p) => p.id !== projectId))
+                        }
+                    />
                 ) : projects.length === 0 ? (
                     <div className="bg-surface border border-border rounded-2xl py-16 px-6 flex flex-col items-center text-center">
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center mb-4">
@@ -202,31 +232,20 @@ export default function HomePage() {
                             Crée ton premier projet pour commencer à organiser tes tâches en listes et cartes.
                         </p>
                     </div>
-                ) : filteredProjects.length === 0 ? (
+                ) : shown.length === 0 ? (
                     <div className="bg-surface border border-border rounded-2xl py-16 px-6 flex flex-col items-center text-center">
                         <h2 className="text-base font-semibold text-slate-800 mb-1">
-                            {query ? <>Aucun résultat pour « {query} »</> : 'Aucun projet ne correspond à ce filtre'}
+                            {query ? <>Aucun résultat pour « {query} »</> : 'Aucun projet dans cet onglet'}
                         </h2>
-                        <p className="text-sm text-slate-500 max-w-sm">Essaie un autre nom ou un autre type.</p>
+                        <p className="text-sm text-slate-500 max-w-sm">Essaie un autre nom, un autre type ou un autre onglet.</p>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4">
-                        {filteredProjects.map((project) => (
+                        {shown.map((project) => (
                             <ProjectCard key={project.id} project={project} />
                         ))}
                     </div>
                 )}
-
-                <ArchivedProjects
-                    projects={archived}
-                    onRestored={(project) => {
-                        setArchived((prev) => prev.filter((p) => p.id !== project.id))
-                        setProjects((prev) => [project, ...prev])
-                    }}
-                    onDeleted={(projectId) =>
-                        setArchived((prev) => prev.filter((p) => p.id !== projectId))
-                    }
-                />
             </main>
 
             {showCreateModal && (
