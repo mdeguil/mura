@@ -137,7 +137,7 @@ export default function MemberList({
                 {canManage && (
                     <button
                         onClick={() => (inviting ? closeInvite() : setInviting(true))}
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-base leading-none transition ${
+                        className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center transition ${
                             inviting
                                 ? 'bg-surface-muted text-slate-500 rotate-45'
                                 : 'bg-brand-500 text-white hover:bg-brand-600'
@@ -146,7 +146,20 @@ export default function MemberList({
                         aria-label={inviting ? 'Annuler' : 'Inviter une personne'}
                         aria-expanded={inviting}
                     >
-                        +
+                        {/* Drawn rather than typed: the + glyph sits off the
+                            optical centre of a round button, and this one also
+                            has to rotate cleanly into a ✕. */}
+                        <svg
+                            viewBox="0 0 16 16"
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            aria-hidden="true"
+                        >
+                            <path d="M8 3.5v9M3.5 8h9" />
+                        </svg>
                     </button>
                 )}
             </div>

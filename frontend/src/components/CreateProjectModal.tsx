@@ -114,10 +114,20 @@ export default function CreateProjectModal({
                                         type="button"
                                         onClick={addEmail}
                                         disabled={!emailDraft.trim()}
-                                        className="w-10 h-10 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-lg leading-none transition disabled:opacity-40 shrink-0"
+                                        className="w-10 h-10 rounded-lg bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center transition disabled:opacity-40 shrink-0"
                                         aria-label="Ajouter cette personne à la liste"
                                     >
-                                        +
+                                        <svg
+                                            viewBox="0 0 16 16"
+                                            className="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            aria-hidden="true"
+                                        >
+                                            <path d="M8 3.5v9M3.5 8h9" />
+                                        </svg>
                                     </button>
                                 </div>
 
