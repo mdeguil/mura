@@ -53,6 +53,11 @@ public class Project {
     @Column(nullable = false)
     private boolean archived;
 
+    // When the project reached ACHEVE. Null at any other status, including
+    // after being reopened.
+    @Column(name = "completed_at")
+    private Instant completedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProjectStatus status;

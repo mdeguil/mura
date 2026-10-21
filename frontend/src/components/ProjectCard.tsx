@@ -26,6 +26,11 @@ export default function ProjectCard({ project }: { project: Project }) {
                     Date de début : {format(new Date(project.startDate), 'dd/MM/yyyy', { locale: fr })}
                 </p>
             )}
+            {project.completedAt && (
+                <p className="text-xs text-emerald-700">
+                    Achevé le {format(new Date(project.completedAt), 'dd/MM/yyyy', { locale: fr })}
+                </p>
+            )}
 
             {project.description && (
                 <p className="text-xs text-slate-500 mt-1.5 line-clamp-2">{project.description}</p>

@@ -88,6 +88,8 @@ export interface Project {
   type: ProjectType
   startDate?: string
   status: ProjectStatus
+  // When it reached Achevé. Null at any other status.
+  completedAt: string | null
   archived: boolean
   owner: User
   // INVITED means the caller only holds an invitation: the project answers

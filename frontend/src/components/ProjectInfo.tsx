@@ -206,6 +206,11 @@ export default function ProjectInfo({
                                     ? format(new Date(project.startDate), 'dd MMMM yyyy', { locale: fr })
                                     : <span className="text-slate-400">Non définie</span>}
                             </Fact>
+                            {project.completedAt && (
+                                <Fact label="Achevé le">
+                                    {format(new Date(project.completedAt), 'dd MMMM yyyy', { locale: fr })}
+                                </Fact>
+                            )}
                         </dl>
                     </section>
 

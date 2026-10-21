@@ -8,6 +8,7 @@ import io.mura.project.ProjectMember;
 import io.mura.project.ProjectStatus;
 import io.mura.project.ProjectType;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +24,7 @@ public record ProjectResponse(
         ProjectType type,
         LocalDate startDate,
         ProjectStatus status,
+        Instant completedAt,
         boolean archived,
         UserResponse owner,
         ProjectAccess access,
@@ -38,6 +40,7 @@ public record ProjectResponse(
                 project.getType(),
                 project.getStartDate(),
                 project.getStatus(),
+                project.getCompletedAt(),
                 project.isArchived(),
                 UserResponse.from(project.getOwner()),
                 access,

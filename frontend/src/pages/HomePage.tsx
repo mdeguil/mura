@@ -5,11 +5,12 @@ import CreateProjectModal from '../components/CreateProjectModal'
 import InvitedProjectCard from '../components/InvitedProjectCard'
 import ArchivedProjects from '../components/ArchivedProjects'
 import api from '../services/api'
-import type { Invitation, Project, ProjectType } from '../types'
-import { PROJECT_TYPE_LABELS } from '../utils/projectMeta'
+import type { Invitation, Project, ProjectStatus, ProjectType } from '../types'
+import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 import { apiErrorMessage } from '../utils/apiError'
 
 const TYPE_FILTERS = Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]
+const STATUS_FILTERS = Object.keys(PROJECT_STATUS_LABELS) as ProjectStatus[]
 
 export default function HomePage() {
     const [projects, setProjects] = useState<Project[]>([])
@@ -19,6 +20,7 @@ export default function HomePage() {
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
     const [typeFilter, setTypeFilter] = useState<ProjectType | 'ALL'>('ALL')
+    const [statusFilter, setStatusFilter] = useState<ProjectStatus | 'ALL'>('ALL')
     const [showCreateModal, setShowCreateModal] = useState(false)
 
     useEffect(() => {
@@ -76,7 +78,8 @@ export default function HomePage() {
         return projects
             .filter((p) => !q || p.name.toLowerCase().includes(q))
             .filter((p) => typeFilter === 'ALL' || p.type === typeFilter)
-    }, [projects, query, typeFilter])
+            .filter((p) => statusFilter === 'ALL' || p.status === statusFilter)
+    }, [projects, query, typeFilter, statusFilter])
 
     return (
         <div className="min-h-screen bg-app">
@@ -130,7 +133,8 @@ export default function HomePage() {
                 </div>
 
 
-                <div className="flex flex-wrap gap-2 mb-6">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <span className="text-xs text-slate-400 mr-1">Type</span>
                     <button
                         onClick={() => setTypeFilter('ALL')}
                         className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
@@ -152,6 +156,36 @@ export default function HomePage() {
                             }`}
                         >
                             {PROJECT_TYPE_LABELS[t]}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Status reads as a second axis rather than more of the same
+                    list, so these chips wear the status colours the rest of
+                    the app already uses. */}
+                <div className="flex flex-wrap items-center gap-2 mb-6">
+                    <span className="text-xs text-slate-400 mr-1">Statut</span>
+                    <button
+                        onClick={() => setStatusFilter('ALL')}
+                        className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
+                            statusFilter === 'ALL'
+                                ? 'bg-slate-800 text-white border-slate-800'
+                                : 'bg-surface text-slate-600 border-border-strong hover:border-brand-500'
+                        }`}
+                    >
+                        Tous
+                    </button>
+                    {STATUS_FILTERS.map((s) => (
+                        <button
+                            key={s}
+                            onClick={() => setStatusFilter(s)}
+                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
+                                statusFilter === s
+                                    ? `${PROJECT_STATUS_CLASSES[s]} border-transparent ring-1 ring-slate-800/20`
+                                    : 'bg-surface text-slate-600 border-border-strong hover:border-brand-500'
+                            }`}
+                        >
+                            {PROJECT_STATUS_LABELS[s]}
                         </button>
                     ))}
                 </div>

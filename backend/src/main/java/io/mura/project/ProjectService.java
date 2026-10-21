@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -117,7 +118,7 @@ public class ProjectService {
         project.setColor(StringUtils.hasText(request.color()) ? request.color() : DEFAULT_COLOR);
         project.setType(request.type());
         project.setStartDate(request.startDate());
-        project.setStatus(request.status());
+        applyStatus(project, request.status());
 
         return ProjectResponse.from(
                 project,
@@ -284,6 +285,18 @@ public class ProjectService {
         }
     }
 
+
+    // Reaching Achevé stamps the date; leaving it clears the stamp, so a
+    // reopened project does not keep claiming it finished. Staying on
+    // Achevé through an unrelated edit keeps the original date.
+    private void applyStatus(Project project, ProjectStatus status) {
+        if (status == project.getStatus()) {
+            return;
+        }
+
+        project.setStatus(status);
+        project.setCompletedAt(status == ProjectStatus.ACHEVE ? Instant.now() : null);
+    }
     private ProjectMember requireMembership(UUID userId, UUID projectId) {
         if (!projectRepository.existsById(projectId)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable.");
