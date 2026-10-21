@@ -3,6 +3,8 @@ package io.mura.project;
 import io.mura.common.exception.ApiException;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
+import io.mura.notification.NotificationService;
+import io.mura.notification.NotificationType;
 import io.mura.project.dto.CreateProjectRequest;
 import io.mura.project.dto.MemberResponse;
 import io.mura.project.dto.ProjectResponse;
@@ -30,6 +32,7 @@ public class ProjectService {
     private final UserRepository userRepository;
     private final TaskService taskService;
     private final InvitationService invitationService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<ProjectResponse> listForUser(UUID userId) {
@@ -164,7 +167,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public void removeMember(UUID actorId, UUID projectId, UUID memberId) {
+    public void removeMember(UUID actorId, UUID projectId, UUID memberId, String message) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
 
@@ -192,10 +195,28 @@ public class ProjectService {
             requireMembership(actorId, projectId);
         }
 
+        User actor = userRepository.findById(actorId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
+
         // Their tasks stay, but nobody is in charge of them any more: leaving
         // a dangling assignee would show a name that can no longer act on it.
         taskService.unassignMember(projectId, memberId);
         projectMemberRepository.delete(target);
+
+        if (actorId.equals(memberId)) {
+            // Leaving: the people running the project are the ones who need
+            // to know, and to read why.
+            projectMemberRepository.findAllForProject(projectId).stream()
+                    .filter(m -> m.getRole().manages())
+                    // The delete above may not have flushed yet, so the
+                    // leaver can still show up in that query.
+                    .filter(m -> !m.getUser().getId().equals(actorId))
+                    .forEach(m -> notificationService.notify(
+                            m.getUser(), NotificationType.MEMBER_LEFT_PROJECT, project, actor, message));
+        } else {
+            notificationService.notify(
+                    target.getUser(), NotificationType.REMOVED_FROM_PROJECT, project, actor, message);
+        }
     }
 
     private ProjectMember requireMembership(UUID userId, UUID projectId) {

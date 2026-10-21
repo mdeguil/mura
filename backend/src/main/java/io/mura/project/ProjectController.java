@@ -4,12 +4,12 @@ import io.mura.project.dto.ChangeRoleRequest;
 import io.mura.project.dto.CreateProjectRequest;
 import io.mura.project.dto.MemberResponse;
 import io.mura.project.dto.ProjectResponse;
+import io.mura.project.dto.RemoveMemberRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -57,7 +57,6 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.listMembers(userId, id));
     }
 
-
     @PatchMapping("/{id}/members/{memberId}/role")
     public ResponseEntity<MemberResponse> changeRole(
             @AuthenticationPrincipal UUID userId,
@@ -76,13 +75,15 @@ public class ProjectController {
     ) {
         return ResponseEntity.ok(projectService.transferOwnership(userId, id, memberId));
     }
-    @DeleteMapping("/{id}/members/{memberId}")
+
+    @PostMapping("/{id}/members/{memberId}/remove")
     public ResponseEntity<Void> removeMember(
             @AuthenticationPrincipal UUID userId,
             @PathVariable UUID id,
-            @PathVariable UUID memberId
+            @PathVariable UUID memberId,
+            @Valid @RequestBody(required = false) RemoveMemberRequest request
     ) {
-        projectService.removeMember(userId, id, memberId);
+        projectService.removeMember(userId, id, memberId, request == null ? null : request.message());
         return ResponseEntity.noContent().build();
     }
 }

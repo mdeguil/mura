@@ -3,15 +3,44 @@ import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import api from '../services/api'
-import type { Invitation } from '../types'
+import type { AppNotification, Invitation } from '../types'
+
+// Two sources share the bell: invitations, which are waiting for an answer
+// and survive being cleared, and notifications, which only report something
+// that already happened and are deleted when cleared.
+type Item =
+    | { kind: 'invitation'; id: string; createdAt: string; read: boolean; invitation: Invitation }
+    | { kind: 'notification'; id: string; createdAt: string; read: boolean; notification: AppNotification }
 
 export default function NotificationBell() {
     const navigate = useNavigate()
     const [invitations, setInvitations] = useState<Invitation[]>([])
+    const [notifications, setNotifications] = useState<AppNotification[]>([])
     const [open, setOpen] = useState(false)
     const panel = useRef<HTMLDivElement>(null)
 
-    const unread = invitations.filter((i) => !i.read).length
+    const items: Item[] = [
+        ...invitations.map(
+            (invitation): Item => ({
+                kind: 'invitation',
+                id: invitation.id,
+                createdAt: invitation.createdAt,
+                read: invitation.read,
+                invitation,
+            })
+        ),
+        ...notifications.map(
+            (notification): Item => ({
+                kind: 'notification',
+                id: notification.id,
+                createdAt: notification.createdAt,
+                read: notification.read,
+                notification,
+            })
+        ),
+    ].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+
+    const unread = items.filter((i) => !i.read).length
 
     useEffect(() => {
         let cancelled = false
@@ -21,6 +50,12 @@ export default function NotificationBell() {
                 // Dismissed ones are gone from the bell for good; they are still
                 // reachable from the projects list until answered.
                 if (!cancelled) setInvitations(data.filter((i) => !i.dismissed))
+            })
+            .catch(() => {})
+
+        api.get<AppNotification[]>('/notifications')
+            .then(({ data }) => {
+                if (!cancelled) setNotifications(data)
             })
             .catch(() => {})
 
@@ -49,38 +84,56 @@ export default function NotificationBell() {
         }
     }, [open])
 
-    async function markRead(invitation: Invitation) {
-        if (invitation.read) return
+    function setRead(item: Item, read: boolean) {
+        if (item.kind === 'invitation') {
+            setInvitations((prev) => prev.map((i) => (i.id === item.id ? { ...i, read } : i)))
+        } else {
+            setNotifications((prev) => prev.map((n) => (n.id === item.id ? { ...n, read } : n)))
+        }
+    }
 
-        setInvitations((prev) =>
-            prev.map((i) => (i.id === invitation.id ? { ...i, read: true } : i))
-        )
+    async function markRead(item: Item) {
+        if (item.read) return
+
+        setRead(item, true)
         try {
-            await api.post(`/invitations/${invitation.id}/read`)
+            const base = item.kind === 'invitation' ? 'invitations' : 'notifications'
+            await api.post(`/${base}/${item.id}/read`)
         } catch {
             // Put the dot back rather than claiming it was read.
-            setInvitations((prev) =>
-                prev.map((i) => (i.id === invitation.id ? { ...i, read: false } : i))
-            )
+            setRead(item, false)
         }
     }
 
-    // Clearing the notification is not answering the invitation: it leaves
-    // the bell, and the projects list still offers it under « À rejoindre ».
-    async function dismiss(invitation: Invitation) {
-        setInvitations((prev) => prev.filter((i) => i.id !== invitation.id))
-        try {
-            await api.post(`/invitations/${invitation.id}/dismiss`)
-        } catch {
-            setInvitations((prev) =>
-                [...prev, invitation].sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-            )
+    // An invitation is only cleared from the bell — it still waits under
+    // « À rejoindre ». A notification has nowhere else to live, so it goes.
+    async function clear(item: Item) {
+        if (item.kind === 'invitation') {
+            setInvitations((prev) => prev.filter((i) => i.id !== item.id))
+            try {
+                await api.post(`/invitations/${item.id}/dismiss`)
+            } catch {
+                setInvitations((prev) => [...prev, item.invitation])
+            }
+        } else {
+            setNotifications((prev) => prev.filter((n) => n.id !== item.id))
+            try {
+                await api.delete(`/notifications/${item.id}`)
+            } catch {
+                setNotifications((prev) => [...prev, item.notification])
+            }
         }
     }
 
-    function openProject(invitation: Invitation) {
+    function projectOf(item: Item) {
+        return item.kind === 'invitation' ? item.invitation.projectId : item.notification.projectId
+    }
+
+    function openProject(item: Item) {
+        const projectId = projectOf(item)
+        if (!projectId) return
         setOpen(false)
-        navigate(`/project/${invitation.projectId}`)
+        navigate(`/project/${projectId}`)
     }
 
     return (
@@ -124,51 +177,94 @@ export default function NotificationBell() {
                         <p className="text-sm font-semibold text-slate-800">Notifications</p>
                     </div>
 
-                    {invitations.length === 0 ? (
+                    {items.length === 0 ? (
                         <p className="px-4 py-6 text-sm text-slate-400 text-center">
                             Rien de neuf pour le moment.
                         </p>
                     ) : (
-                        <ul className="max-h-80 overflow-y-auto">
-                            {invitations.map((invitation) => (
+                        <ul className="max-h-96 overflow-y-auto">
+                            {items.map((item) => (
                                 <li
-                                    key={invitation.id}
+                                    key={item.id}
                                     className={`flex items-stretch border-b border-border last:border-b-0 ${
-                                        invitation.read ? '' : 'bg-rose-50/40'
+                                        item.read ? '' : 'bg-rose-50/40'
                                     }`}
                                 >
                                     <button
-                                        onClick={() => markRead(invitation)}
-                                        onDoubleClick={() => openProject(invitation)}
+                                        onClick={() => markRead(item)}
+                                        onDoubleClick={() => openProject(item)}
                                         className="flex-1 min-w-0 text-left px-4 py-3 flex gap-3 hover:bg-surface-muted transition"
-                                        title="Clic pour marquer comme lu, double-clic pour ouvrir le projet"
+                                        title={
+                                            projectOf(item)
+                                                ? 'Clic pour marquer comme lu, double-clic pour ouvrir le projet'
+                                                : 'Clic pour marquer comme lu'
+                                        }
                                     >
                                         <span
                                             className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-                                                invitation.read ? 'bg-transparent' : 'bg-rose-500'
+                                                item.read ? 'bg-transparent' : 'bg-rose-500'
                                             }`}
                                         />
                                         <span className="min-w-0">
-                                            <span className="block text-sm text-slate-700">
-                                                <span className="font-medium">
-                                                    {invitation.invitedBy.username}
-                                                </span>{' '}
-                                                t'invite à rejoindre{' '}
-                                                <span className="font-medium">{invitation.projectName}</span>
-                                            </span>
-                                            <span className="block text-xs text-slate-400 mt-0.5">
-                                                {formatDistanceToNow(new Date(invitation.createdAt), {
+                                            {item.kind === 'invitation' ? (
+                                                <span className="block text-sm text-slate-700">
+                                                    <span className="font-medium">
+                                                        {item.invitation.invitedBy.username}
+                                                    </span>{' '}
+                                                    t'invite à rejoindre{' '}
+                                                    <span className="font-medium">
+                                                        {item.invitation.projectName}
+                                                    </span>
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <span className="block text-sm text-slate-700">
+                                                        {item.notification.type === 'REMOVED_FROM_PROJECT' ? (
+                                                            <>
+                                                                <span className="font-medium">
+                                                                    {item.notification.actorName}
+                                                                </span>{' '}
+                                                                t'a retiré de{' '}
+                                                                <span className="font-medium">
+                                                                    {item.notification.projectName}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <span className="font-medium">
+                                                                    {item.notification.actorName}
+                                                                </span>{' '}
+                                                                a quitté{' '}
+                                                                <span className="font-medium">
+                                                                    {item.notification.projectName}
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </span>
+                                                    {item.notification.message && (
+                                                        <span className="block text-xs text-slate-500 mt-1 border-l-2 border-border-strong pl-2 italic">
+                                                            {item.notification.message}
+                                                        </span>
+                                                    )}
+                                                </>
+                                            )}
+                                            <span className="block text-xs text-slate-400 mt-1">
+                                                {formatDistanceToNow(new Date(item.createdAt), {
                                                     addSuffix: true,
                                                     locale: fr,
                                                 })}
-                                                {' · double-clic pour voir le projet'}
+                                                {projectOf(item) && ' · double-clic pour voir le projet'}
                                             </span>
                                         </span>
                                     </button>
                                     <button
-                                        onClick={() => dismiss(invitation)}
+                                        onClick={() => clear(item)}
                                         className="px-3 text-slate-300 hover:text-red-500 transition text-xs leading-none shrink-0"
-                                        title="Supprimer la notification (l'invitation reste dans tes projets)"
+                                        title={
+                                            item.kind === 'invitation'
+                                                ? "Retirer de la cloche (l'invitation reste dans tes projets)"
+                                                : 'Supprimer la notification'
+                                        }
                                         aria-label="Supprimer la notification"
                                     >
                                         ✕

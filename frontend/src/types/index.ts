@@ -36,6 +36,22 @@ export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED'
 
 export type ProjectAccess = 'MEMBER' | 'INVITED'
 
+export type NotificationType = 'REMOVED_FROM_PROJECT' | 'MEMBER_LEFT_PROJECT'
+
+// Named around the DOM's own Notification. Unlike an invitation there is
+// nothing to answer: clearing one deletes it.
+export interface AppNotification {
+  id: string
+  type: NotificationType
+  // Null when the project is no longer the reader's to open.
+  projectId: string | null
+  projectName: string
+  actorName: string
+  message: string | null
+  read: boolean
+  createdAt: string
+}
+
 export interface Invitation {
   id: string
   projectId: string

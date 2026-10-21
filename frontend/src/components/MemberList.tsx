@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '../services/api'
 import UserAvatar from './UserAvatar'
+import MemberDepartureDialog, { type Departure } from './MemberDepartureDialog'
 import type { Invitation, Member, ProjectRole } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
 
@@ -40,11 +41,13 @@ export default function MemberList({
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [successorId, setSuccessorId] = useState('')
+    const [departure, setDeparture] = useState<Departure | null>(null)
     const emailField = useRef<HTMLInputElement>(null)
 
     const pending = invitations.filter((i) => i.status === 'PENDING')
     const declined = invitations.filter((i) => i.status === 'DECLINED')
     const others = members.filter((m) => m.id !== currentUserId)
+    const me = members.find((m) => m.id === currentUserId)
 
     // Opening the panel from the + should land the caret in the field: the
     // click and the typing are one gesture.
@@ -80,21 +83,6 @@ export default function MemberList({
             onInvitationCancelled(invitation.id)
         } catch (err) {
             setError(apiErrorMessage(err, "Impossible d'annuler cette invitation."))
-        }
-    }
-
-    async function handleRemove(member: Member) {
-        const leaving = member.id === currentUserId
-        const question = leaving
-            ? 'Quitter ce projet ? Tu perdras l’accès à ses tâches.'
-            : `Retirer ${member.username} du projet ? Ses tâches resteront, sans responsable.`
-        if (!window.confirm(question)) return
-
-        try {
-            await api.delete(`/projects/${projectId}/members/${member.id}`)
-            onRemoved(member.id)
-        } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible de retirer ce membre.'))
         }
     }
 
@@ -232,12 +220,12 @@ export default function MemberList({
                             </span>
                         )}
 
-                        {member.role !== 'OWNER' && (canManage || member.id === currentUserId) && (
+                        {member.role !== 'OWNER' && canManage && member.id !== currentUserId && (
                             <button
-                                onClick={() => handleRemove(member)}
+                                onClick={() => setDeparture({ member, leaving: false })}
                                 className="text-slate-300 hover:text-red-500 transition text-xs leading-none shrink-0"
-                                title={member.id === currentUserId ? 'Quitter le projet' : 'Retirer du projet'}
-                                aria-label={member.id === currentUserId ? 'Quitter le projet' : 'Retirer du projet'}
+                                title={`Retirer ${member.username} du projet`}
+                                aria-label={`Retirer ${member.username} du projet`}
                             >
                                 ✕
                             </button>
@@ -335,6 +323,31 @@ export default function MemberList({
                         Tu deviendras administrateur et pourras ensuite quitter le projet.
                     </p>
                 </div>
+            )}
+
+            {/* Showing yourself out deserves a button of its own: a cross on
+                your own row read as "remove me" without saying so. */}
+            {me && me.role !== 'OWNER' && (
+                <div className="mt-5 pt-4 border-t border-border">
+                    <button
+                        onClick={() => setDeparture({ member: me, leaving: true })}
+                        className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-red-400 hover:text-red-600 transition"
+                    >
+                        Quitter le projet
+                    </button>
+                </div>
+            )}
+
+            {departure && (
+                <MemberDepartureDialog
+                    projectId={projectId}
+                    departure={departure}
+                    onClose={() => setDeparture(null)}
+                    onDone={(memberId) => {
+                        setDeparture(null)
+                        onRemoved(memberId)
+                    }}
+                />
             )}
         </section>
     )
