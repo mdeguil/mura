@@ -1,16 +1,15 @@
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
-import type { Project, ProjectType } from '../types'
+import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
-import { PROJECT_TYPE_LABELS } from '../utils/projectMeta'
-
-const COLORS = ['#06b6d4', '#3b82f6', '#a855f7', '#ec4899', '#f97316', '#22c55e']
-const TYPES = Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]
-
-const FIELD =
-    'w-full h-10 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition'
-const LABEL = 'block text-xs font-medium text-slate-600 mb-1.5'
+import ProjectFormFields, {
+    ColorPicker,
+    FIELD,
+    LABEL,
+    PROJECT_COLORS,
+    type ProjectFormValues,
+} from './ProjectFormFields'
 
 export default function CreateProjectModal({
     onClose,
@@ -19,15 +18,19 @@ export default function CreateProjectModal({
     onClose: () => void
     onCreated: (project: Project) => void
 }) {
-    const [name, setName] = useState('')
-    const [description, setDescription] = useState('')
-    const [color, setColor] = useState(COLORS[0])
-    const [type, setType] = useState<ProjectType>('AUTRE')
-    const [startDate, setStartDate] = useState('')
+    const [values, setValues] = useState<ProjectFormValues>({
+        name: '',
+        description: '',
+        color: PROJECT_COLORS[0],
+        type: 'AUTRE',
+        startDate: '',
+    })
     const [invitedEmails, setInvitedEmails] = useState<string[]>([])
     const [emailDraft, setEmailDraft] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+
+    const patch = (p: Partial<ProjectFormValues>) => setValues((prev) => ({ ...prev, ...p }))
 
     // The draft field is not a form field of its own — Entrée adds it to the
     // list rather than submitting the project half-filled.
@@ -49,11 +52,8 @@ export default function CreateProjectModal({
         setLoading(true)
         try {
             const { data } = await api.post<Project>('/projects', {
-                name,
-                description,
-                color,
-                type,
-                startDate: startDate || null,
+                ...values,
+                startDate: values.startDate || null,
                 invitedEmails,
             })
             onCreated(data)
@@ -72,7 +72,7 @@ export default function CreateProjectModal({
                     below has something to answer to. */}
                 <span
                     className="h-1.5 shrink-0"
-                    style={{ background: projectGlassBackground(color) }}
+                    style={{ background: projectGlassBackground(values.color) }}
                 />
 
                 <div className="px-6 pt-5 pb-4 border-b border-border shrink-0">
@@ -87,78 +87,11 @@ export default function CreateProjectModal({
                         {/* Left: what the project is. Right: how it looks and
                             who is on it. */}
                         <div className="flex flex-col gap-5">
-                            <div>
-                                <label className={LABEL}>Nom</label>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="Mon nouveau projet"
-                                    required
-                                    maxLength={255}
-                                    autoFocus
-                                    className={FIELD}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className={LABEL}>Type</label>
-                                    <select
-                                        value={type}
-                                        onChange={(e) => setType(e.target.value as ProjectType)}
-                                        className={FIELD}
-                                    >
-                                        {TYPES.map((t) => (
-                                            <option key={t} value={t}>
-                                                {PROJECT_TYPE_LABELS[t]}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className={LABEL}>Date de début</label>
-                                    <input
-                                        type="date"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                        className={FIELD}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className={LABEL}>Description (optionnel)</label>
-                                <textarea
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="De quoi parle ce projet ?"
-                                    rows={5}
-                                    maxLength={2000}
-                                    className="w-full rounded-lg border border-border-strong bg-surface-muted px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition resize-none"
-                                />
-                            </div>
+                            <ProjectFormFields values={values} onChange={patch} autoFocus />
                         </div>
 
                         <div className="flex flex-col gap-5">
-                            <div>
-                                <label className={LABEL}>Couleur</label>
-                                <div className="flex gap-2">
-                                    {COLORS.map((c) => (
-                                        <button
-                                            key={c}
-                                            type="button"
-                                            onClick={() => setColor(c)}
-                                            style={{ background: projectGlassBackground(c) }}
-                                            className={`w-8 h-8 rounded-full transition ${
-                                                color === c ? 'ring-2 ring-offset-2 ring-slate-400' : ''
-                                            }`}
-                                            aria-label={c}
-                                            aria-pressed={color === c}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
+                            <ColorPicker color={values.color} onChange={(color) => patch({ color })} />
 
                             <div>
                                 <label className={LABEL}>Inviter des personnes (optionnel)</label>

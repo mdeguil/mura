@@ -8,6 +8,7 @@ import io.mura.notification.NotificationType;
 import io.mura.project.dto.CreateProjectRequest;
 import io.mura.project.dto.MemberResponse;
 import io.mura.project.dto.ProjectResponse;
+import io.mura.project.dto.UpdateProjectRequest;
 import io.mura.task.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -95,6 +96,70 @@ public class ProjectService {
                 .toList();
     }
 
+
+    @Transactional(readOnly = true)
+    public List<ProjectResponse> listArchivedForUser(UUID ownerId) {
+        return projectRepository.findAllByOwnerIdAndArchivedTrueOrderByUpdatedAtDesc(ownerId).stream()
+                .map(project -> ProjectResponse.from(project, ProjectAccess.MEMBER, List.of()))
+                .toList();
+    }
+
+    // Editing the project's details is part of running it, so admins may do
+    // it too. Putting it in the bin is not: that stays with the owner.
+    @Transactional
+    public ProjectResponse update(UUID actorId, UUID projectId, UpdateProjectRequest request) {
+        requireManager(actorId, projectId);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+
+        project.setName(request.name());
+        project.setDescription(request.description());
+        project.setColor(StringUtils.hasText(request.color()) ? request.color() : DEFAULT_COLOR);
+        project.setType(request.type());
+        project.setStartDate(request.startDate());
+        project.setStatus(request.status());
+
+        return ProjectResponse.from(
+                project,
+                ProjectAccess.MEMBER,
+                projectMemberRepository.findAllForProject(projectId)
+        );
+    }
+
+    @Transactional
+    public ProjectResponse archive(UUID actorId, UUID projectId) {
+        Project project = requireOwner(actorId, projectId);
+        project.setArchived(true);
+        return ProjectResponse.from(project, ProjectAccess.MEMBER, List.of());
+    }
+
+    @Transactional
+    public ProjectResponse restore(UUID actorId, UUID projectId) {
+        Project project = requireOwner(actorId, projectId);
+        project.setArchived(false);
+        return ProjectResponse.from(
+                project,
+                ProjectAccess.MEMBER,
+                projectMemberRepository.findAllForProject(projectId)
+        );
+    }
+
+    // Everything hanging off the project goes with it — tasks, subtasks,
+    // status history, members, invitations — which is why it has to sit in
+    // the bin first.
+    @Transactional
+    public void delete(UUID actorId, UUID projectId) {
+        Project project = requireOwner(actorId, projectId);
+
+        if (!project.isArchived()) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "Le projet doit être archivé avant d'être supprimé."
+            );
+        }
+
+        projectRepository.delete(project);
+    }
     @Transactional
     public ProjectResponse create(UUID ownerId, CreateProjectRequest request) {
         User owner = userRepository.findById(ownerId)
@@ -244,7 +309,7 @@ public class ProjectService {
         if (!membership.getRole().manages()) {
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
-                    "Il faut être propriétaire ou administrateur du projet pour gérer son équipe."
+                    "Il faut être propriétaire ou administrateur de ce projet."
             );
         }
 

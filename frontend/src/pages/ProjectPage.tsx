@@ -7,6 +7,7 @@ import MonthCalendar from '../components/MonthCalendar'
 import TaskBoard from '../components/TaskBoard'
 import TaskDetailModal from '../components/TaskDetailModal'
 import ProjectInfo from '../components/ProjectInfo'
+import EditProjectModal from '../components/EditProjectModal'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import type { Invitation, Member, Project, Subtask, Task, TaskStatus } from '../types'
@@ -46,6 +47,7 @@ export default function ProjectPage() {
     const [tasks, setTasks] = useState<Task[]>([])
     const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
     const [showCreateTask, setShowCreateTask] = useState(false)
+    const [editingProject, setEditingProject] = useState(false)
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
     const [planningView, setPlanningView] = useState<PlanningView>('calendar')
     const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
@@ -266,11 +268,21 @@ export default function ProjectPage() {
                                     <p className="text-sm text-slate-500">{PROJECT_TYPE_LABELS[project.type]}</p>
                                 </div>
                             </div>
-                            <span
-                                className={`shrink-0 text-xs font-medium px-2.5 py-1 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}
-                            >
-                                {PROJECT_STATUS_LABELS[project.status]}
-                            </span>
+                            <div className="flex items-center gap-3 shrink-0">
+                                <span
+                                    className={`text-xs font-medium px-2.5 py-1 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}
+                                >
+                                    {PROJECT_STATUS_LABELS[project.status]}
+                                </span>
+                                {canManage && (
+                                    <button
+                                        onClick={() => setEditingProject(true)}
+                                        className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-brand-500 transition"
+                                    >
+                                        Modifier
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         <div className="mt-6 flex items-center gap-6 border-b border-border">
@@ -395,6 +407,20 @@ export default function ProjectPage() {
                 )}
             </main>
 
+
+            {editingProject && project && (
+                <EditProjectModal
+                    project={project}
+                    canArchive={isOwner}
+                    onClose={() => setEditingProject(false)}
+                    onSaved={(updated) => setProject(updated)}
+                    onArchived={() => {
+                        setEditingProject(false)
+                        // It just left everyone's list, this page included.
+                        navigate('/')
+                    }}
+                />
+            )}
             {showCreateTask && id && (
                 <CreateTaskModal
                     projectId={id}

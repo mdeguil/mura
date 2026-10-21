@@ -48,6 +48,11 @@ public class Project {
     @Column(name = "start_date")
     private LocalDate startDate;
 
+    // In the bin: hidden from everyone's project list, and the only state
+    // from which it can be deleted for good.
+    @Column(nullable = false)
+    private boolean archived;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProjectStatus status;

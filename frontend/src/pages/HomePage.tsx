@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar'
 import ProjectCard from '../components/ProjectCard'
 import CreateProjectModal from '../components/CreateProjectModal'
 import InvitedProjectCard from '../components/InvitedProjectCard'
+import ArchivedProjects from '../components/ArchivedProjects'
 import api from '../services/api'
 import type { Invitation, Project, ProjectType } from '../types'
 import { PROJECT_TYPE_LABELS } from '../utils/projectMeta'
@@ -13,6 +14,7 @@ const TYPE_FILTERS = Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]
 export default function HomePage() {
     const [projects, setProjects] = useState<Project[]>([])
     const [invitations, setInvitations] = useState<Invitation[]>([])
+    const [archived, setArchived] = useState<Project[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
@@ -47,6 +49,21 @@ export default function HomePage() {
         api.get<Invitation[]>('/invitations')
             .then(({ data }) => {
                 if (!cancelled) setInvitations(data)
+            })
+            .catch(() => {})
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
+    // The owner's bin: restoring or deleting from here is the only way out.
+    useEffect(() => {
+        let cancelled = false
+
+        api.get<Project[]>('/projects/archived')
+            .then(({ data }) => {
+                if (!cancelled) setArchived(data)
             })
             .catch(() => {})
 
@@ -165,6 +182,17 @@ export default function HomePage() {
                         ))}
                     </div>
                 )}
+
+                <ArchivedProjects
+                    projects={archived}
+                    onRestored={(project) => {
+                        setArchived((prev) => prev.filter((p) => p.id !== project.id))
+                        setProjects((prev) => [project, ...prev])
+                    }}
+                    onDeleted={(projectId) =>
+                        setArchived((prev) => prev.filter((p) => p.id !== projectId))
+                    }
+                />
             </main>
 
             {showCreateModal && (

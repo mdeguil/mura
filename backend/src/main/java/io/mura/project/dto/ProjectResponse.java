@@ -23,6 +23,7 @@ public record ProjectResponse(
         ProjectType type,
         LocalDate startDate,
         ProjectStatus status,
+        boolean archived,
         UserResponse owner,
         ProjectAccess access,
         List<MemberResponse> members,
@@ -37,6 +38,7 @@ public record ProjectResponse(
                 project.getType(),
                 project.getStartDate(),
                 project.getStatus(),
+                project.isArchived(),
                 UserResponse.from(project.getOwner()),
                 access,
                 members.stream()

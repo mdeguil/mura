@@ -85,6 +85,7 @@ export interface Project {
   type: ProjectType
   startDate?: string
   status: ProjectStatus
+  archived: boolean
   owner: User
   // INVITED means the caller only holds an invitation: the project answers
   // with its description and nothing the team is working on.
