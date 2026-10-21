@@ -316,7 +316,7 @@ export default function ProjectPage() {
                                 {canManage && (
                                     <button
                                         onClick={() => setEditingProject(true)}
-                                        className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-brand-500 transition"
+                                        className="h-8 px-3 rounded-lg bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium transition"
                                     >
                                         Modifier
                                     </button>
@@ -324,7 +324,7 @@ export default function ProjectPage() {
                                 {isOwner && (
                                     <button
                                         onClick={handleArchiveProject}
-                                        className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-red-400 hover:text-red-600 transition"
+                                        className="h-8 px-3 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-medium transition"
                                         title="Le projet quitte la liste de l'équipe, rien n'est perdu"
                                     >
                                         Archiver
