@@ -29,6 +29,7 @@ public class ProjectService {
     private final ProjectInvitationRepository invitationRepository;
     private final UserRepository userRepository;
     private final TaskService taskService;
+    private final InvitationService invitationService;
 
     @Transactional(readOnly = true)
     public List<ProjectResponse> listForUser(UUID userId) {
@@ -109,6 +110,8 @@ public class ProjectService {
         ProjectMember membership = projectMemberRepository.save(
                 new ProjectMember(project, owner, ProjectRole.OWNER)
         );
+
+        invitationService.inviteAll(project, owner, request.invitedEmails());
 
         return ProjectResponse.from(project, ProjectAccess.MEMBER, List.of(membership));
     }

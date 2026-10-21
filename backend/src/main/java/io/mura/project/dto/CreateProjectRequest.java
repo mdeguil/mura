@@ -1,12 +1,14 @@
 package io.mura.project.dto;
 
 import io.mura.project.ProjectType;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record CreateProjectRequest(
         @NotBlank(message = "Le nom du projet est requis.")
@@ -22,5 +24,10 @@ public record CreateProjectRequest(
         @NotNull(message = "Le type de projet est requis.")
         ProjectType type,
 
-        LocalDate startDate
+        LocalDate startDate,
+
+        // People to invite right away. They are invited, not added: the
+        // project opens to them only once they accept.
+        @Size(max = 20, message = "Pas plus de 20 personnes à inviter à la création.")
+        List<@Email(message = "Un des emails n'est pas valide.") String> invitedEmails
 ) {}

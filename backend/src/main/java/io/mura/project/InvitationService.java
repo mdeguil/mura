@@ -58,6 +58,46 @@ public class InvitationService {
         return InvitationResponse.from(invitationRepository.save(invitation));
     }
 
+
+    // Used when a project is created with people already listed. The caller
+    // owns the transaction: one unknown address rolls the whole creation
+    // back, so nobody ends up with a project half of whose team is missing.
+    @Transactional
+    public List<InvitationResponse> inviteAll(Project project, User owner, List<String> emails) {
+        if (emails == null || emails.isEmpty()) {
+            return List.of();
+        }
+
+        return emails.stream()
+                .map(String::trim)
+                .filter(email -> !email.isEmpty())
+                .map(String::toLowerCase)
+                .distinct()
+                .map(email -> {
+                    if (email.equalsIgnoreCase(owner.getEmail())) {
+                        throw new ApiException(
+                                HttpStatus.CONFLICT,
+                                "Tu n'as pas besoin de t'inviter toi-même."
+                        );
+                    }
+
+                    User user = userRepository.findByEmailIgnoreCase(email)
+                            .orElseThrow(() -> new ApiException(
+                                    HttpStatus.NOT_FOUND,
+                                    "Aucun compte Mura n'utilise l'email " + email + "."
+                            ));
+
+                    ProjectInvitation invitation = new ProjectInvitation();
+                    invitation.setProject(project);
+                    invitation.setInvitedUser(user);
+                    invitation.setInvitedBy(owner);
+                    invitation.setStatus(InvitationStatus.PENDING);
+                    invitation.setCreatedAt(Instant.now());
+
+                    return InvitationResponse.from(invitationRepository.save(invitation));
+                })
+                .toList();
+    }
     @Transactional(readOnly = true)
     public List<InvitationResponse> listPendingForProject(UUID userId, UUID projectId) {
         if (!projectRepository.existsById(projectId)) {
