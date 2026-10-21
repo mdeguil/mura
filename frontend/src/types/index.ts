@@ -139,6 +139,17 @@ export interface KnownUser {
   saved: boolean
 }
 
+// A named set of people, kept once instead of rebuilt project by project.
+// Grants no access on its own: it is a shortcut for inviting.
+export interface Group {
+  id: string
+  name: string
+  owner: User
+  // True when the viewer owns it, and so may rename, delete and manage it.
+  owned: boolean
+  members: User[]
+}
+
 export interface AuthResponse {
   token: string
   user: User

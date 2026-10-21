@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import UserAvatar from '../components/UserAvatar'
+import GroupList from '../components/GroupList'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
+import { useAuthStore } from '../store/authStore'
 import type { KnownUser } from '../types'
 import { projectGlassBackground } from '../utils/color'
 
@@ -12,6 +14,8 @@ export default function DirectoryPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
+    const [tab, setTab] = useState<'people' | 'groups'>('people')
+    const currentUserId = useAuthStore((s) => s.user?.id) ?? ''
 
     useEffect(() => {
         let cancelled = false
@@ -91,157 +95,187 @@ export default function DirectoryPage() {
             <Navbar />
 
             <main className="max-w-5xl mx-auto px-6 py-10">
-                <div className="flex items-start justify-between gap-4 mb-6">
+                <div className="flex items-start justify-between gap-4 mb-5">
                     <div>
                         <h1 className="text-2xl font-semibold text-slate-800">Carnet</h1>
                         <p className="text-sm text-slate-500 mt-1">
-                            Les personnes que tu croises sur Mura, et celles que tu y ajoutes toi-même.
+                            Les personnes que tu croises sur Mura, et les groupes dont tu fais partie.
                         </p>
                     </div>
-                    <button
-                        onClick={() => setAdding((v) => !v)}
-                        className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition shrink-0"
-                    >
-                        {adding ? 'Annuler' : '+ Ajouter une personne'}
-                    </button>
+                    {tab === 'people' && (
+                        <button
+                            onClick={() => setAdding((v) => !v)}
+                            className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition shrink-0"
+                        >
+                            {adding ? 'Annuler' : '+ Ajouter une personne'}
+                        </button>
+                    )}
                 </div>
 
-                {adding && (
-                    <form
-                        onSubmit={addContact}
-                        className="mb-6 bg-surface border border-border rounded-xl p-4 max-w-md"
-                    >
-                        <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                            Email de la personne
-                        </label>
-                        <div className="flex gap-2">
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Escape' && setAdding(false)}
-                                placeholder="prenom@exemple.com"
-                                required
-                                autoFocus
-                                className="flex-1 min-w-0 h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
-                            />
-                            <button
-                                type="submit"
-                                disabled={saving || !email.trim()}
-                                className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition disabled:opacity-60 shrink-0"
-                            >
-                                {saving ? 'Ajout…' : 'Ajouter'}
-                            </button>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-1.5">
-                            Elle rejoint ton carnet, rien de plus : aucun projet partagé, et elle n'en est
-                            pas avertie.
-                        </p>
-                        {formError && <p className="text-xs text-red-500 mt-2">{formError}</p>}
-                    </form>
-                )}
-
-                {error && (
-                    <div className="mb-6 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-                        {error}
-                    </div>
-                )}
-
-                <div className="relative mb-6 max-w-sm">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
-                    <input
-                        type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Rechercher une personne ou un projet…"
-                        className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
-                    />
+                <div className="flex items-center gap-6 border-b border-border mb-5 overflow-x-auto overflow-y-hidden">
+                    {[
+                        { key: 'people' as const, label: 'Personnes', count: people.length },
+                        { key: 'groups' as const, label: 'Groupes', count: null },
+                    ].map((entry) => (
+                        <button
+                            key={entry.key}
+                            onClick={() => setTab(entry.key)}
+                            className={`pb-3 -mb-px text-sm font-medium border-b-2 transition whitespace-nowrap ${
+                                tab === entry.key
+                                    ? 'text-slate-800 border-brand-500'
+                                    : 'text-slate-500 border-transparent hover:text-slate-700'
+                            }`}
+                        >
+                            {entry.label}
+                            {entry.count !== null && (
+                                <span className="text-slate-400 font-normal ml-1.5">{entry.count}</span>
+                            )}
+                        </button>
+                    ))}
                 </div>
 
-                {loading ? (
-                    <div className="text-sm text-slate-500">Chargement…</div>
-                ) : people.length === 0 ? (
-                    <div className="bg-surface border border-border rounded-2xl py-16 px-6 flex flex-col items-center text-center">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center mb-4">
-                            <span className="text-white text-2xl">📇</span>
+                {tab === 'people' ? (
+                    <>
+                    {adding && (
+                        <form
+                            onSubmit={addContact}
+                            className="mb-6 bg-surface border border-border rounded-xl p-4 max-w-md"
+                        >
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                                Email de la personne
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Escape' && setAdding(false)}
+                                    placeholder="prenom@exemple.com"
+                                    required
+                                    autoFocus
+                                    className="flex-1 min-w-0 h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={saving || !email.trim()}
+                                    className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition disabled:opacity-60 shrink-0"
+                                >
+                                    {saving ? 'Ajout…' : 'Ajouter'}
+                                </button>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1.5">
+                                Elle rejoint ton carnet, rien de plus : aucun projet partagé, et elle n'en est
+                                pas avertie.
+                            </p>
+                            {formError && <p className="text-xs text-red-500 mt-2">{formError}</p>}
+                        </form>
+                    )}
+
+                    {error && (
+                        <div className="mb-6 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+                            {error}
                         </div>
-                        <h2 className="text-base font-semibold text-slate-800 mb-1">
-                            Ton carnet est vide
-                        </h2>
-                        <p className="text-sm text-slate-500 max-w-sm">
-                            Invite quelqu'un sur un projet, et il apparaîtra ici.
-                        </p>
+                    )}
+
+                    <div className="relative mb-6 max-w-sm">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+                        <input
+                            type="text"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Rechercher une personne ou un projet…"
+                            className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
+                        />
                     </div>
-                ) : shown.length === 0 ? (
-                    <div className="bg-surface border border-border rounded-2xl py-16 px-6 text-center">
-                        <h2 className="text-base font-semibold text-slate-800 mb-1">
-                            Aucun résultat pour « {query} »
-                        </h2>
-                        <p className="text-sm text-slate-500">Essaie un autre nom, un email ou un projet.</p>
-                    </div>
+
+                    {loading ? (
+                        <div className="text-sm text-slate-500">Chargement…</div>
+                    ) : people.length === 0 ? (
+                        <div className="bg-surface border border-border rounded-2xl py-16 px-6 flex flex-col items-center text-center">
+                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center mb-4">
+                                <span className="text-white text-2xl">📇</span>
+                            </div>
+                            <h2 className="text-base font-semibold text-slate-800 mb-1">
+                                Ton carnet est vide
+                            </h2>
+                            <p className="text-sm text-slate-500 max-w-sm">
+                                Invite quelqu'un sur un projet, et il apparaîtra ici.
+                            </p>
+                        </div>
+                    ) : shown.length === 0 ? (
+                        <div className="bg-surface border border-border rounded-2xl py-16 px-6 text-center">
+                            <h2 className="text-base font-semibold text-slate-800 mb-1">
+                                Aucun résultat pour « {query} »
+                            </h2>
+                            <p className="text-sm text-slate-500">Essaie un autre nom, un email ou un projet.</p>
+                        </div>
+                    ) : (
+                        <ul className="flex flex-col gap-2">
+                            {shown.map((person) => (
+                                <li
+                                    key={person.id}
+                                    className="flex items-start gap-3 bg-surface border border-border rounded-xl px-4 py-3"
+                                >
+                                    <UserAvatar user={{ ...person, email: person.email }} />
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm text-slate-800">{person.username}</p>
+                                        {person.email && (
+                                            <p className="text-xs text-slate-400 truncate">{person.email}</p>
+                                        )}
+
+                                        {person.sharedProjects.length > 0 ? (
+                                            <ul className="flex flex-wrap gap-1.5 mt-2">
+                                                {person.sharedProjects.map((project) => (
+                                                    <li key={project.id}>
+                                                        <Link
+                                                            to={`/project/${project.id}`}
+                                                            className="flex items-center gap-1.5 bg-surface-muted border border-border rounded-full pl-1.5 pr-2.5 py-0.5 hover:border-brand-500 transition"
+                                                        >
+                                                            <span
+                                                                className="w-2 h-2 rounded-full"
+                                                                style={{
+                                                                    background: projectGlassBackground(project.color),
+                                                                }}
+                                                            />
+                                                            <span className="text-xs text-slate-600">
+                                                                {project.name}
+                                                            </span>
+                                                        </Link>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <p className="text-xs text-slate-400 mt-2 italic">
+                                                Aucun projet en commun pour l'instant.
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                                        <span className="text-xs text-slate-400">
+                                            {person.sharedProjects.length > 0
+                                                ? `${person.sharedProjects.length} projet${person.sharedProjects.length > 1 ? 's' : ''}`
+                                                : person.saved
+                                                  ? 'Ajouté'
+                                                  : 'Invitation'}
+                                        </span>
+                                        {person.saved && (
+                                            <button
+                                                onClick={() => removeContact(person)}
+                                                className="text-slate-300 hover:text-red-500 transition text-xs leading-none"
+                                                title="Retirer de mon carnet"
+                                                aria-label={`Retirer ${person.username} de mon carnet`}
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                    </>
                 ) : (
-                    <ul className="flex flex-col gap-2">
-                        {shown.map((person) => (
-                            <li
-                                key={person.id}
-                                className="flex items-start gap-3 bg-surface border border-border rounded-xl px-4 py-3"
-                            >
-                                <UserAvatar user={{ ...person, email: person.email }} />
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm text-slate-800">{person.username}</p>
-                                    {person.email && (
-                                        <p className="text-xs text-slate-400 truncate">{person.email}</p>
-                                    )}
-
-                                    {person.sharedProjects.length > 0 ? (
-                                        <ul className="flex flex-wrap gap-1.5 mt-2">
-                                            {person.sharedProjects.map((project) => (
-                                                <li key={project.id}>
-                                                    <Link
-                                                        to={`/project/${project.id}`}
-                                                        className="flex items-center gap-1.5 bg-surface-muted border border-border rounded-full pl-1.5 pr-2.5 py-0.5 hover:border-brand-500 transition"
-                                                    >
-                                                        <span
-                                                            className="w-2 h-2 rounded-full"
-                                                            style={{
-                                                                background: projectGlassBackground(project.color),
-                                                            }}
-                                                        />
-                                                        <span className="text-xs text-slate-600">
-                                                            {project.name}
-                                                        </span>
-                                                    </Link>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <p className="text-xs text-slate-400 mt-2 italic">
-                                            Aucun projet en commun pour l'instant.
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-2 shrink-0 mt-0.5">
-                                    <span className="text-xs text-slate-400">
-                                        {person.sharedProjects.length > 0
-                                            ? `${person.sharedProjects.length} projet${person.sharedProjects.length > 1 ? 's' : ''}`
-                                            : person.saved
-                                              ? 'Ajouté'
-                                              : 'Invitation'}
-                                    </span>
-                                    {person.saved && (
-                                        <button
-                                            onClick={() => removeContact(person)}
-                                            className="text-slate-300 hover:text-red-500 transition text-xs leading-none"
-                                            title="Retirer de mon carnet"
-                                            aria-label={`Retirer ${person.username} de mon carnet`}
-                                        >
-                                            ✕
-                                        </button>
-                                    )}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                    <GroupList currentUserId={currentUserId} carnet={people} />
                 )}
             </main>
         </div>
