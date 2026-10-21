@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import api from '../services/api'
 import UserAvatar from './UserAvatar'
 import MemberDepartureDialog, { type Departure } from './MemberDepartureDialog'
-import type { Invitation, Member, ProjectRole } from '../types'
+import type { Invitation, KnownUser, Member, ProjectRole } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -58,6 +58,25 @@ export default function MemberList({
     useEffect(() => {
         if (inviting) emailField.current?.focus()
     }, [inviting])
+
+    // Offered as suggestions on the invite field: the carnet is where you
+    // put people so you would not have to retype their address here.
+    const [carnet, setCarnet] = useState<KnownUser[]>([])
+
+    useEffect(() => {
+        if (!canManage) return
+        let cancelled = false
+
+        api.get<KnownUser[]>('/directory')
+            .then(({ data }) => {
+                if (!cancelled) setCarnet(data)
+            })
+            .catch(() => {})
+
+        return () => {
+            cancelled = true
+        }
+    }, [canManage])
 
     function closeInvite() {
         setInviting(false)
@@ -184,8 +203,19 @@ export default function MemberList({
                             onKeyDown={(e) => e.key === 'Escape' && closeInvite()}
                             placeholder="prenom@exemple.com"
                             required
+                            list="carnet-emails"
                             className="flex-1 min-w-0 h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
                         />
+                        <datalist id="carnet-emails">
+                            {carnet
+                                .filter((person) => person.email)
+                                .filter((person) => !members.some((m) => m.id === person.id))
+                                .map((person) => (
+                                    <option key={person.id} value={person.email!}>
+                                        {person.username}
+                                    </option>
+                                ))}
+                        </datalist>
                         <button
                             type="submit"
                             disabled={loading || !email.trim()}

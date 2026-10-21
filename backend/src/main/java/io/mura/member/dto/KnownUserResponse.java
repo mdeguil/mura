@@ -11,7 +11,10 @@ public record KnownUserResponse(
         String username,
         String email,
         String avatarUrl,
-        List<SharedProject> sharedProjects
+        List<SharedProject> sharedProjects,
+        // True when the person was put in the carnet on purpose, which is
+        // also the only case where they can be taken out of it.
+        boolean saved
 ) {
     public record SharedProject(UUID id, String name, String color) {}
 }

@@ -134,6 +134,9 @@ export interface KnownUser {
   email: string | null
   avatarUrl?: string
   sharedProjects: { id: string; name: string; color: string }[]
+  // Put there on purpose, and so removable. Someone who only appears
+  // through a shared project is not.
+  saved: boolean
 }
 
 export interface AuthResponse {

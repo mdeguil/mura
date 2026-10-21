@@ -32,6 +32,49 @@ export default function DirectoryPage() {
         }
     }, [])
 
+    const [adding, setAdding] = useState(false)
+    const [email, setEmail] = useState('')
+    const [formError, setFormError] = useState('')
+    const [saving, setSaving] = useState(false)
+
+    async function addContact(e: React.FormEvent) {
+        e.preventDefault()
+        if (!email.trim()) return
+
+        setFormError('')
+        setSaving(true)
+        try {
+            const { data } = await api.post<KnownUser>('/directory', { email: email.trim() })
+            setPeople((prev) => [data, ...prev.filter((p) => p.id !== data.id)])
+            setEmail('')
+            setAdding(false)
+        } catch (err) {
+            setFormError(apiErrorMessage(err, "Impossible d'ajouter cette personne."))
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    async function removeContact(person: KnownUser) {
+        setFormError('')
+        try {
+            await api.delete(`/directory/${person.id}`)
+            // Still listed if a shared project puts them there; only the
+            // deliberate link went.
+            setPeople((prev) =>
+                prev.flatMap((p) =>
+                    p.id !== person.id
+                        ? [p]
+                        : p.sharedProjects.length > 0
+                          ? [{ ...p, saved: false }]
+                          : []
+                )
+            )
+        } catch (err) {
+            setFormError(apiErrorMessage(err, 'Impossible de retirer cette personne.'))
+        }
+    }
+
     const shown = useMemo(() => {
         const q = query.trim().toLowerCase()
         if (!q) return people
@@ -48,13 +91,55 @@ export default function DirectoryPage() {
             <Navbar />
 
             <main className="max-w-5xl mx-auto px-6 py-10">
-                <div className="mb-6">
-                    <h1 className="text-2xl font-semibold text-slate-800">Carnet</h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        Les personnes que tu croises sur Mura : celles de tes projets, et celles avec qui
-                        tu as échangé une invitation.
-                    </p>
+                <div className="flex items-start justify-between gap-4 mb-6">
+                    <div>
+                        <h1 className="text-2xl font-semibold text-slate-800">Carnet</h1>
+                        <p className="text-sm text-slate-500 mt-1">
+                            Les personnes que tu croises sur Mura, et celles que tu y ajoutes toi-même.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setAdding((v) => !v)}
+                        className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition shrink-0"
+                    >
+                        {adding ? 'Annuler' : '+ Ajouter une personne'}
+                    </button>
                 </div>
+
+                {adding && (
+                    <form
+                        onSubmit={addContact}
+                        className="mb-6 bg-surface border border-border rounded-xl p-4 max-w-md"
+                    >
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                            Email de la personne
+                        </label>
+                        <div className="flex gap-2">
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Escape' && setAdding(false)}
+                                placeholder="prenom@exemple.com"
+                                required
+                                autoFocus
+                                className="flex-1 min-w-0 h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
+                            />
+                            <button
+                                type="submit"
+                                disabled={saving || !email.trim()}
+                                className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition disabled:opacity-60 shrink-0"
+                            >
+                                {saving ? 'Ajout…' : 'Ajouter'}
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1.5">
+                            Elle rejoint ton carnet, rien de plus : aucun projet partagé, et elle n'en est
+                            pas avertie.
+                        </p>
+                        {formError && <p className="text-xs text-red-500 mt-2">{formError}</p>}
+                    </form>
+                )}
 
                 {error && (
                     <div className="mb-6 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
@@ -135,11 +220,25 @@ export default function DirectoryPage() {
                                         </p>
                                     )}
                                 </div>
-                                <span className="text-xs text-slate-400 shrink-0 mt-0.5">
-                                    {person.sharedProjects.length > 0
-                                        ? `${person.sharedProjects.length} projet${person.sharedProjects.length > 1 ? 's' : ''}`
-                                        : 'Invitation'}
-                                </span>
+                                <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                                    <span className="text-xs text-slate-400">
+                                        {person.sharedProjects.length > 0
+                                            ? `${person.sharedProjects.length} projet${person.sharedProjects.length > 1 ? 's' : ''}`
+                                            : person.saved
+                                              ? 'Ajouté'
+                                              : 'Invitation'}
+                                    </span>
+                                    {person.saved && (
+                                        <button
+                                            onClick={() => removeContact(person)}
+                                            className="text-slate-300 hover:text-red-500 transition text-xs leading-none"
+                                            title="Retirer de mon carnet"
+                                            aria-label={`Retirer ${person.username} de mon carnet`}
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
                             </li>
                         ))}
                     </ul>
