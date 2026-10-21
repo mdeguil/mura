@@ -52,13 +52,21 @@ public class DirectoryService {
         }
 
         Set<UUID> saved = new HashSet<>();
+        Set<UUID> hidden = new HashSet<>();
         for (Contact contact : contactRepository.findAllForOwner(userId)) {
             User person = contact.getPerson();
+            if (contact.isHidden()) {
+                hidden.add(person.getId());
+                continue;
+            }
             people.putIfAbsent(person.getId(), person);
             saved.add(person.getId());
         }
 
         return people.values().stream()
+                // Taken out of the carnet on purpose, whatever else would
+                // otherwise put them back in it.
+                .filter(person -> !hidden.contains(person.getId()))
                 .map(person -> new KnownUserResponse(
                         person.getId(),
                         person.getUsername(),
@@ -92,14 +100,21 @@ public class DirectoryService {
             throw new ApiException(HttpStatus.CONFLICT, "Tu n'as pas besoin de t'ajouter toi-même.");
         }
 
-        if (contactRepository.findByOwnerIdAndPersonId(ownerId, person.getId()).isPresent()) {
+        if (contactRepository.findByOwnerIdAndPersonId(ownerId, person.getId())
+                .filter(c -> !c.isHidden())
+                .isPresent()) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
                     person.getUsername() + " est déjà dans ton carnet."
             );
         }
 
-        contactRepository.save(new Contact(owner, person));
+        // Re-adding someone you had taken out puts them back rather than
+        // failing on the row that was holding them hidden.
+        Contact contact = contactRepository.findByOwnerIdAndPersonId(ownerId, person.getId())
+                .orElseGet(() -> new Contact(owner, person));
+        contact.setHidden(false);
+        contactRepository.save(contact);
 
         // Someone added by hand can already share projects with you, so the
         // answer carries what the list would show rather than a bare row.
@@ -113,17 +128,23 @@ public class DirectoryService {
         );
     }
 
-    // Only the deliberate link goes: someone you still share a project with
-    // stays in the carnet, because that is where the carnet gets them from.
+    // Removing from the carnet, for anyone in it. The row is kept and marked
+    // hidden rather than deleted: someone arriving through a shared project
+    // would otherwise be rebuilt on the next read. Adding them again by
+    // email undoes it.
     @Transactional
     public void removeContact(UUID ownerId, UUID personId) {
-        Contact contact = contactRepository.findByOwnerIdAndPersonId(ownerId, personId)
-                .orElseThrow(() -> new ApiException(
-                        HttpStatus.NOT_FOUND,
-                        "Cette personne n'est pas dans ton carnet."
-                ));
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
 
-        contactRepository.delete(contact);
+        User person = userRepository.findById(personId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Personne introuvable."));
+
+        Contact contact = contactRepository.findByOwnerIdAndPersonId(ownerId, personId)
+                .orElseGet(() -> new Contact(owner, person));
+
+        contact.setHidden(true);
+        contactRepository.save(contact);
     }
 
     private List<KnownUserResponse.SharedProject> sharedProjectsBetween(UUID userId, UUID personId) {

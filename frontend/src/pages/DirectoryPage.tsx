@@ -63,17 +63,9 @@ export default function DirectoryPage() {
         setFormError('')
         try {
             await api.delete(`/directory/${person.id}`)
-            // Still listed if a shared project puts them there; only the
-            // deliberate link went.
-            setPeople((prev) =>
-                prev.flatMap((p) =>
-                    p.id !== person.id
-                        ? [p]
-                        : p.sharedProjects.length > 0
-                          ? [{ ...p, saved: false }]
-                          : []
-                )
-            )
+            // Out of the carnet whatever put them there; adding them again
+            // by email brings them back.
+            setPeople((prev) => prev.filter((p) => p.id !== person.id))
         } catch (err) {
             setFormError(apiErrorMessage(err, 'Impossible de retirer cette personne.'))
         }
@@ -258,16 +250,14 @@ export default function DirectoryPage() {
                                                   ? 'Ajouté'
                                                   : 'Invitation'}
                                         </span>
-                                        {person.saved && (
-                                            <button
-                                                onClick={() => removeContact(person)}
-                                                className="text-slate-300 hover:text-red-500 transition text-xs leading-none"
-                                                title="Retirer de mon carnet"
-                                                aria-label={`Retirer ${person.username} de mon carnet`}
-                                            >
-                                                ✕
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={() => removeContact(person)}
+                                            className="text-slate-300 hover:text-red-500 transition text-xs leading-none"
+                                            title="Retirer de mon carnet"
+                                            aria-label={`Retirer ${person.username} de mon carnet`}
+                                        >
+                                            ✕
+                                        </button>
                                     </div>
                                 </li>
                             ))}
