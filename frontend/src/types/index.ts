@@ -127,6 +127,15 @@ export interface Task {
   statusHistory: StatusChange[]
 }
 
+// Someone you share a project with, or have exchanged an invitation with.
+export interface KnownUser {
+  id: string
+  username: string
+  email: string | null
+  avatarUrl?: string
+  sharedProjects: { id: string; name: string; color: string }[]
+}
+
 export interface AuthResponse {
   token: string
   user: User
