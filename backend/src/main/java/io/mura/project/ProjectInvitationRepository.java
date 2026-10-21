@@ -11,6 +11,12 @@ public interface ProjectInvitationRepository extends JpaRepository<ProjectInvita
 
     boolean existsByProjectIdAndInvitedUserIdAndStatus(UUID projectId, UUID invitedUserId, InvitationStatus status);
 
+    // Re-inviting someone who said no replaces their refusal rather than
+    // stacking a second row beside it.
+    List<ProjectInvitation> findAllByProjectIdAndInvitedUserIdAndStatus(
+            UUID projectId, UUID invitedUserId, InvitationStatus status
+    );
+
     // Both sides are joined eagerly: the project page shows who was invited,
     // and the home page shows which project each invitation is for.
     @Query("""
@@ -18,13 +24,10 @@ public interface ProjectInvitationRepository extends JpaRepository<ProjectInvita
             JOIN FETCH i.invitedUser
             JOIN FETCH i.invitedBy
             JOIN FETCH i.project
-            WHERE i.project.id = :projectId AND i.status = :status
+            WHERE i.project.id = :projectId AND i.status <> io.mura.project.InvitationStatus.ACCEPTED
             ORDER BY i.createdAt
             """)
-    List<ProjectInvitation> findAllForProject(
-            @Param("projectId") UUID projectId,
-            @Param("status") InvitationStatus status
-    );
+    List<ProjectInvitation> findAllOpenForProject(@Param("projectId") UUID projectId);
 
     @Query("""
             SELECT i FROM ProjectInvitation i

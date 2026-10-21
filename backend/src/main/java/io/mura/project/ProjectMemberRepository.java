@@ -13,14 +13,21 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Pr
 
     // The user is joined eagerly here: every caller renders the member list,
     // and the lazy association would otherwise fire a query per row. The role
-    // is stored as text, where MEMBER sorts before OWNER, so DESC is what
-    // puts the owner at the top.
+    // is stored as text, so the order is spelled out rather than alphabetical
+    // — owner, then admins, then members.
+    String ORDER_BY_ROLE = """
+            ORDER BY CASE m.role
+                         WHEN io.mura.project.ProjectRole.OWNER THEN 0
+                         WHEN io.mura.project.ProjectRole.ADMIN THEN 1
+                         ELSE 2
+                     END, u.username
+            """;
+
     @Query("""
             SELECT m FROM ProjectMember m
             JOIN FETCH m.user u
             WHERE m.project.id = :projectId
-            ORDER BY m.role DESC, u.username
-            """)
+            """ + ORDER_BY_ROLE)
     List<ProjectMember> findAllForProject(@Param("projectId") UUID projectId);
 
     // Batched variant for the projects list, which would otherwise run one
@@ -29,8 +36,7 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Pr
             SELECT m FROM ProjectMember m
             JOIN FETCH m.user u
             WHERE m.project.id IN :projectIds
-            ORDER BY m.role DESC, u.username
-            """)
+            """ + ORDER_BY_ROLE)
     List<ProjectMember> findAllForProjects(@Param("projectIds") Collection<UUID> projectIds);
 
     Optional<ProjectMember> findByProjectIdAndUserId(UUID projectId, UUID userId);

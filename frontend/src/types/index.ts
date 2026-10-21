@@ -30,7 +30,7 @@ export interface List {
   cards: Card[]
 }
 
-export type ProjectRole = 'OWNER' | 'MEMBER'
+export type ProjectRole = 'OWNER' | 'ADMIN' | 'MEMBER'
 
 export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED'
 

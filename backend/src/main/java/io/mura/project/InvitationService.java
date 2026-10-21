@@ -25,7 +25,7 @@ public class InvitationService {
 
     @Transactional
     public InvitationResponse invite(UUID actorId, UUID projectId, CreateInvitationRequest request) {
-        Project project = requireOwner(actorId, projectId);
+        Project project = requireManager(actorId, projectId);
 
         String email = request.email().trim();
         User user = userRepository.findByEmailIgnoreCase(email)
@@ -45,6 +45,11 @@ public class InvitationService {
                     user.getUsername() + " a déjà une invitation en attente pour ce projet."
             );
         }
+
+        // Someone can be asked again after refusing, and the new invitation
+        // replaces the refusal rather than sitting next to it.
+        invitationRepository.deleteAll(invitationRepository.findAllByProjectIdAndInvitedUserIdAndStatus(
+                projectId, user.getId(), InvitationStatus.DECLINED));
 
         ProjectInvitation invitation = new ProjectInvitation();
         invitation.setProject(project);
@@ -99,7 +104,7 @@ public class InvitationService {
                 .toList();
     }
     @Transactional(readOnly = true)
-    public List<InvitationResponse> listPendingForProject(UUID userId, UUID projectId) {
+    public List<InvitationResponse> listOpenForProject(UUID userId, UUID projectId) {
         if (!projectRepository.existsById(projectId)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable.");
         }
@@ -108,7 +113,7 @@ public class InvitationService {
             throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
         }
 
-        return invitationRepository.findAllForProject(projectId, InvitationStatus.PENDING).stream()
+        return invitationRepository.findAllOpenForProject(projectId).stream()
                 .map(InvitationResponse::from)
                 .toList();
     }
@@ -122,7 +127,7 @@ public class InvitationService {
 
     @Transactional
     public void cancel(UUID actorId, UUID projectId, UUID invitationId) {
-        requireOwner(actorId, projectId);
+        requireManager(actorId, projectId);
         ProjectInvitation invitation = requirePendingInvitation(invitationId);
 
         if (!invitation.getProject().getId().equals(projectId)) {
@@ -229,14 +234,21 @@ public class InvitationService {
         return invitation;
     }
 
-    private Project requireOwner(UUID userId, UUID projectId) {
+    // Inviting and cancelling are open to the owner and to admins. The check
+    // lives here rather than calling ProjectService, which already depends on
+    // this service to invite people at creation time.
+    private Project requireManager(UUID userId, UUID projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
 
-        if (!project.getOwner().getId().equals(userId)) {
+        ProjectRole role = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
+                .map(ProjectMember::getRole)
+                .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet."));
+
+        if (!role.manages()) {
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
-                    "Seul le propriétaire du projet peut inviter ou retirer des personnes."
+                    "Il faut être propriétaire ou administrateur du projet pour inviter ou retirer des personnes."
             );
         }
 

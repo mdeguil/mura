@@ -42,7 +42,7 @@ public class InvitationController {
             @AuthenticationPrincipal UUID userId,
             @PathVariable UUID projectId
     ) {
-        return ResponseEntity.ok(invitationService.listPendingForProject(userId, projectId));
+        return ResponseEntity.ok(invitationService.listOpenForProject(userId, projectId));
     }
 
     @DeleteMapping("/projects/{projectId}/invitations/{invitationId}")

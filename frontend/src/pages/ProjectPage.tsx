@@ -50,7 +50,11 @@ export default function ProjectPage() {
     const [planningView, setPlanningView] = useState<PlanningView>('calendar')
     const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
     const currentUserId = useAuthStore((s) => s.user?.id) ?? ''
-    const isOwner = project?.owner.id === currentUserId
+    // Rights come from the membership row, not from owning the project: an
+    // admin manages the team too.
+    const myRole = members.find((m) => m.id === currentUserId)?.role
+    const isOwner = myRole === 'OWNER'
+    const canManage = myRole === 'OWNER' || myRole === 'ADMIN'
     // Holding an invitation buys a look at the project, not a seat on it:
     // the other tabs stay shut until it is accepted.
     const invitedOnly = project?.access === 'INVITED'
@@ -307,8 +311,10 @@ export default function ProjectPage() {
                                     archivedCount={archivedTasks.length}
                                     members={members}
                                     invitations={invitations}
-                                    canManage={isOwner}
+                                    canManage={canManage}
+                                    isOwner={isOwner}
                                     currentUserId={currentUserId}
+                                    onMembersChanged={setMembers}
                                     onInvited={(invitation) =>
                                         setInvitations((prev) => [...prev, invitation])
                                     }

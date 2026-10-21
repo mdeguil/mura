@@ -1,33 +1,50 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '../services/api'
 import UserAvatar from './UserAvatar'
-import type { Invitation, Member } from '../types'
+import type { Invitation, Member, ProjectRole } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
+
+const ROLE_LABELS: Record<ProjectRole, string> = {
+    OWNER: 'Propriétaire',
+    ADMIN: 'Administrateur',
+    MEMBER: 'Membre',
+}
 
 export default function MemberList({
     projectId,
     members,
     invitations,
     canManage,
+    isOwner,
     currentUserId,
     onInvited,
     onInvitationCancelled,
     onRemoved,
+    onMembersChanged,
 }: {
     projectId: string
     members: Member[]
     invitations: Invitation[]
+    // Owner or admin: may invite, cancel an invitation, remove members.
     canManage: boolean
+    // Owner only: may change roles and hand the project over.
+    isOwner: boolean
     currentUserId: string
     onInvited: (invitation: Invitation) => void
     onInvitationCancelled: (invitationId: string) => void
     onRemoved: (memberId: string) => void
+    onMembersChanged: (members: Member[]) => void
 }) {
     const [inviting, setInviting] = useState(false)
     const [email, setEmail] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
+    const [successorId, setSuccessorId] = useState('')
     const emailField = useRef<HTMLInputElement>(null)
+
+    const pending = invitations.filter((i) => i.status === 'PENDING')
+    const declined = invitations.filter((i) => i.status === 'DECLINED')
+    const others = members.filter((m) => m.id !== currentUserId)
 
     // Opening the panel from the + should land the caret in the field: the
     // click and the typing are one gesture.
@@ -41,15 +58,12 @@ export default function MemberList({
         setError('')
     }
 
-    async function handleInvite(e: React.FormEvent) {
-        e.preventDefault()
-        if (!email.trim()) return
-
+    async function invite(address: string) {
         setError('')
         setLoading(true)
         try {
             const { data } = await api.post<Invitation>(`/projects/${projectId}/invitations`, {
-                email: email.trim(),
+                email: address,
             })
             onInvited(data)
             closeInvite()
@@ -70,15 +84,55 @@ export default function MemberList({
     }
 
     async function handleRemove(member: Member) {
-        if (!window.confirm(`Retirer ${member.username} du projet ? Ses tâches resteront, sans responsable.`)) {
-            return
-        }
+        const leaving = member.id === currentUserId
+        const question = leaving
+            ? 'Quitter ce projet ? Tu perdras l’accès à ses tâches.'
+            : `Retirer ${member.username} du projet ? Ses tâches resteront, sans responsable.`
+        if (!window.confirm(question)) return
 
         try {
             await api.delete(`/projects/${projectId}/members/${member.id}`)
             onRemoved(member.id)
         } catch (err) {
             setError(apiErrorMessage(err, 'Impossible de retirer ce membre.'))
+        }
+    }
+
+    async function handleRoleChange(member: Member, role: ProjectRole) {
+        setError('')
+        try {
+            const { data } = await api.patch<Member>(
+                `/projects/${projectId}/members/${member.id}/role`,
+                { role }
+            )
+            onMembersChanged(members.map((m) => (m.id === data.id ? data : m)))
+        } catch (err) {
+            setError(apiErrorMessage(err, 'Impossible de changer ce rôle.'))
+        }
+    }
+
+    async function handleTransfer() {
+        const successor = members.find((m) => m.id === successorId)
+        if (!successor) return
+
+        // Irreversible from this side: only the new owner can hand it back.
+        if (
+            !window.confirm(
+                `Céder le projet à ${successor.username} ? Tu deviendras administrateur, et seul ${successor.username} pourra te le rendre.`
+            )
+        ) {
+            return
+        }
+
+        setError('')
+        try {
+            const { data } = await api.post<Member[]>(
+                `/projects/${projectId}/members/${successorId}/transfer-ownership`
+            )
+            onMembersChanged(data)
+            setSuccessorId('')
+        } catch (err) {
+            setError(apiErrorMessage(err, 'Impossible de céder le projet.'))
         }
     }
 
@@ -106,7 +160,13 @@ export default function MemberList({
             </div>
 
             {inviting && (
-                <form onSubmit={handleInvite} className="mb-4">
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault()
+                        if (email.trim()) invite(email.trim())
+                    }}
+                    className="mb-4"
+                >
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">
                         Email de la personne à inviter
                     </label>
@@ -129,9 +189,6 @@ export default function MemberList({
                             {loading ? 'Envoi…' : 'Inviter'}
                         </button>
                     </div>
-                    <p className="text-xs text-slate-400 mt-1.5">
-                        Elle rejoint le projet si elle accepte l'invitation.
-                    </p>
                 </form>
             )}
 
@@ -154,13 +211,27 @@ export default function MemberList({
                                 <p className="text-xs text-slate-400 truncate">{member.email}</p>
                             )}
                         </div>
+
                         {member.role === 'OWNER' ? (
                             <span className="text-xs font-medium text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full shrink-0">
-                                Propriétaire
+                                {ROLE_LABELS.OWNER}
                             </span>
+                        ) : isOwner ? (
+                            <select
+                                value={member.role}
+                                onChange={(e) => handleRoleChange(member, e.target.value as ProjectRole)}
+                                className="h-7 rounded-lg border border-border-strong bg-surface-muted px-1.5 text-xs text-slate-600 outline-none focus:border-brand-500 transition shrink-0"
+                                aria-label={`Rôle de ${member.username}`}
+                            >
+                                <option value="MEMBER">{ROLE_LABELS.MEMBER}</option>
+                                <option value="ADMIN">{ROLE_LABELS.ADMIN}</option>
+                            </select>
                         ) : (
-                            <span className="text-xs text-slate-400 shrink-0">Membre</span>
+                            <span className="text-xs text-slate-400 shrink-0">
+                                {ROLE_LABELS[member.role]}
+                            </span>
                         )}
+
                         {member.role !== 'OWNER' && (canManage || member.id === currentUserId) && (
                             <button
                                 onClick={() => handleRemove(member)}
@@ -177,13 +248,13 @@ export default function MemberList({
 
             {/* Invited but not yet on the team: kept apart from the members so
                 the two are never read as the same thing. */}
-            {invitations.length > 0 && (
+            {pending.length > 0 && (
                 <div className="mt-5 pt-4 border-t border-dashed border-border-strong">
                     <h3 className="text-xs font-medium text-slate-500 mb-2">
-                        En attente de réponse ({invitations.length})
+                        En attente de réponse ({pending.length})
                     </h3>
                     <ul className="flex flex-col gap-2">
-                        {invitations.map((invitation) => (
+                        {pending.map((invitation) => (
                             <li key={invitation.id} className="flex items-center gap-3">
                                 <span className="w-7 h-7 rounded-full border border-dashed border-border-strong flex items-center justify-center text-xs text-slate-400 shrink-0">
                                     {invitation.invitedUser.username[0]?.toUpperCase()}
@@ -204,6 +275,65 @@ export default function MemberList({
                             </li>
                         ))}
                     </ul>
+                </div>
+            )}
+
+            {/* A refusal is not a dead end: asking again replaces it. */}
+            {declined.length > 0 && canManage && (
+                <div className="mt-5 pt-4 border-t border-dashed border-border-strong">
+                    <h3 className="text-xs font-medium text-slate-500 mb-2">
+                        Ont refusé ({declined.length})
+                    </h3>
+                    <ul className="flex flex-col gap-2">
+                        {declined.map((invitation) => (
+                            <li key={invitation.id} className="flex items-center gap-3">
+                                <span className="w-7 h-7 rounded-full bg-surface-muted flex items-center justify-center text-xs text-slate-400 shrink-0">
+                                    {invitation.invitedUser.username[0]?.toUpperCase()}
+                                </span>
+                                <p className="text-sm text-slate-400 min-w-0 flex-1 truncate line-through">
+                                    {invitation.invitedUser.email ?? invitation.invitedUser.username}
+                                </p>
+                                <button
+                                    onClick={() => invitation.invitedUser.email && invite(invitation.invitedUser.email)}
+                                    disabled={loading}
+                                    className="text-xs text-brand-600 hover:text-brand-700 transition shrink-0 disabled:opacity-60"
+                                >
+                                    Réinviter
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+
+            {isOwner && others.length > 0 && (
+                <div className="mt-5 pt-4 border-t border-border">
+                    <h3 className="text-xs font-medium text-slate-500 mb-2">Céder le projet</h3>
+                    <div className="flex gap-2">
+                        <select
+                            value={successorId}
+                            onChange={(e) => setSuccessorId(e.target.value)}
+                            className="flex-1 min-w-0 h-8 rounded-lg border border-border-strong bg-surface-muted px-2 text-xs text-slate-600 outline-none focus:border-brand-500 transition"
+                            aria-label="Nouveau propriétaire"
+                        >
+                            <option value="">Choisir une personne…</option>
+                            {others.map((member) => (
+                                <option key={member.id} value={member.id}>
+                                    {member.username}
+                                </option>
+                            ))}
+                        </select>
+                        <button
+                            onClick={handleTransfer}
+                            disabled={!successorId}
+                            className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-brand-500 transition disabled:opacity-40 shrink-0"
+                        >
+                            Céder
+                        </button>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1.5">
+                        Tu deviendras administrateur et pourras ensuite quitter le projet.
+                    </p>
                 </div>
             )}
         </section>

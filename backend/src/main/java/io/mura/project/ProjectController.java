@@ -1,5 +1,6 @@
 package io.mura.project;
 
+import io.mura.project.dto.ChangeRoleRequest;
 import io.mura.project.dto.CreateProjectRequest;
 import io.mura.project.dto.MemberResponse;
 import io.mura.project.dto.ProjectResponse;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -55,6 +57,25 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.listMembers(userId, id));
     }
 
+
+    @PatchMapping("/{id}/members/{memberId}/role")
+    public ResponseEntity<MemberResponse> changeRole(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID id,
+            @PathVariable UUID memberId,
+            @Valid @RequestBody ChangeRoleRequest request
+    ) {
+        return ResponseEntity.ok(projectService.changeRole(userId, id, memberId, request.role()));
+    }
+
+    @PostMapping("/{id}/members/{memberId}/transfer-ownership")
+    public ResponseEntity<List<MemberResponse>> transferOwnership(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID id,
+            @PathVariable UUID memberId
+    ) {
+        return ResponseEntity.ok(projectService.transferOwnership(userId, id, memberId));
+    }
     @DeleteMapping("/{id}/members/{memberId}")
     public ResponseEntity<Void> removeMember(
             @AuthenticationPrincipal UUID userId,

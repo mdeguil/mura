@@ -116,34 +116,86 @@ public class ProjectService {
         return ProjectResponse.from(project, ProjectAccess.MEMBER, List.of(membership));
     }
 
-    @Transactional
-    public void removeMember(UUID actorId, UUID projectId, UUID memberId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
 
-        // The owner manages the team; anyone else may still show themselves
-        // out, which is the only case where actor and target are the same.
-        boolean leavingOnOwnAccord = actorId.equals(memberId);
-        if (!leavingOnOwnAccord) {
-            requireOwner(actorId, projectId);
-        } else if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, actorId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
+    @Transactional
+    public MemberResponse changeRole(UUID actorId, UUID projectId, UUID memberId, ProjectRole role) {
+        Project project = requireOwner(actorId, projectId);
+
+        if (role == ProjectRole.OWNER) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "Pour céder le projet, utilise le transfert de propriété."
+            );
         }
 
         if (project.getOwner().getId().equals(memberId)) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Le propriétaire ne peut pas être retiré de son propre projet."
+                    "Le propriétaire garde son rôle tant qu'il n'a pas cédé le projet."
             );
         }
 
-        ProjectMember membership = projectMemberRepository.findByProjectIdAndUserId(projectId, memberId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Ce membre ne fait pas partie du projet."));
+        ProjectMember membership = requireMemberOf(projectId, memberId);
+        membership.setRole(role);
+        return MemberResponse.from(membership);
+    }
+
+    // Handing the project over, in one step: there is never a moment with two
+    // owners or none. The previous owner stays on as an admin rather than
+    // being dropped from a project they built.
+    @Transactional
+    public List<MemberResponse> transferOwnership(UUID actorId, UUID projectId, UUID newOwnerId) {
+        Project project = requireOwner(actorId, projectId);
+
+        if (actorId.equals(newOwnerId)) {
+            throw new ApiException(HttpStatus.CONFLICT, "Tu es déjà le propriétaire de ce projet.");
+        }
+
+        ProjectMember successor = requireMemberOf(projectId, newOwnerId);
+        ProjectMember previous = requireMemberOf(projectId, actorId);
+
+        successor.setRole(ProjectRole.OWNER);
+        previous.setRole(ProjectRole.ADMIN);
+        project.setOwner(successor.getUser());
+
+        return projectMemberRepository.findAllForProject(projectId).stream()
+                .map(MemberResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public void removeMember(UUID actorId, UUID projectId, UUID memberId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+
+        if (project.getOwner().getId().equals(memberId)) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "Le propriétaire doit d'abord céder le projet à quelqu'un d'autre."
+            );
+        }
+
+        ProjectMember target = requireMemberOf(projectId, memberId);
+
+        // Anyone may show themselves out. Removing someone else takes a
+        // manager, and an admin may only remove plain members — otherwise two
+        // admins could show each other the door.
+        if (!actorId.equals(memberId)) {
+            ProjectMember actor = requireManager(actorId, projectId);
+            if (actor.getRole() == ProjectRole.ADMIN && target.getRole() != ProjectRole.MEMBER) {
+                throw new ApiException(
+                        HttpStatus.FORBIDDEN,
+                        "Un administrateur ne peut retirer que des membres."
+                );
+            }
+        } else {
+            requireMembership(actorId, projectId);
+        }
 
         // Their tasks stay, but nobody is in charge of them any more: leaving
         // a dangling assignee would show a name that can no longer act on it.
         taskService.unassignMember(projectId, memberId);
-        projectMemberRepository.delete(membership);
+        projectMemberRepository.delete(target);
     }
 
     private ProjectMember requireMembership(UUID userId, UUID projectId) {
@@ -155,6 +207,29 @@ public class ProjectService {
                 .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet."));
     }
 
+    private ProjectMember requireMemberOf(UUID projectId, UUID memberId) {
+        return projectMemberRepository.findByProjectIdAndUserId(projectId, memberId)
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "Cette personne ne fait pas partie du projet."
+                ));
+    }
+
+    // Inviting, cancelling an invitation and removing members are open to the
+    // owner and to admins alike.
+    ProjectMember requireManager(UUID userId, UUID projectId) {
+        ProjectMember membership = requireMembership(userId, projectId);
+
+        if (!membership.getRole().manages()) {
+            throw new ApiException(
+                    HttpStatus.FORBIDDEN,
+                    "Il faut être propriétaire ou administrateur du projet pour gérer son équipe."
+            );
+        }
+
+        return membership;
+    }
+
     private Project requireOwner(UUID userId, UUID projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
@@ -162,7 +237,7 @@ public class ProjectService {
         if (!project.getOwner().getId().equals(userId)) {
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
-                    "Seul le propriétaire du projet peut gérer ses membres."
+                    "Seul le propriétaire du projet peut faire cela."
             );
         }
 

@@ -23,10 +23,12 @@ export default function ProjectInfo({
     members,
     invitations,
     canManage,
+    isOwner,
     currentUserId,
     onInvited,
     onInvitationCancelled,
     onMemberRemoved,
+    onMembersChanged,
 }: {
     project: Project
     // Set only when the viewer holds a live invitation to this project.
@@ -37,10 +39,12 @@ export default function ProjectInfo({
     members: Member[]
     invitations: Invitation[]
     canManage: boolean
+    isOwner: boolean
     currentUserId: string
     onInvited: (invitation: Invitation) => void
     onInvitationCancelled: (invitationId: string) => void
     onMemberRemoved: (memberId: string) => void
+    onMembersChanged: (members: Member[]) => void
 }) {
     const invitedOnly = project.access === 'INVITED'
 
@@ -111,10 +115,12 @@ export default function ProjectInfo({
                     members={members}
                     invitations={[]}
                     canManage={false}
+                    isOwner={false}
                     currentUserId={currentUserId}
                     onInvited={() => {}}
                     onInvitationCancelled={() => {}}
                     onRemoved={() => {}}
+                    onMembersChanged={() => {}}
                 />
             </div>
         )
@@ -220,10 +226,12 @@ export default function ProjectInfo({
                     members={members}
                     invitations={invitations}
                     canManage={canManage}
+                    isOwner={isOwner}
                     currentUserId={currentUserId}
                     onInvited={onInvited}
                     onInvitationCancelled={onInvitationCancelled}
                     onRemoved={onMemberRemoved}
+                    onMembersChanged={onMembersChanged}
                 />
             </div>
         </div>
