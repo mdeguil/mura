@@ -12,6 +12,8 @@ import { projectGlassBackground } from '../utils/color'
 
 export default function DirectoryPage() {
     const [people, setPeople] = useState<KnownUser[]>([])
+    // Not carnet entries yet: questions waiting on an answer.
+    const [requests, setRequests] = useState<KnownUser[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
@@ -20,6 +22,12 @@ export default function DirectoryPage() {
 
     useEffect(() => {
         let cancelled = false
+
+        api.get<KnownUser[]>('/directory/requests')
+            .then(({ data }) => {
+                if (!cancelled) setRequests(data)
+            })
+            .catch(() => {})
 
         api.get<KnownUser[]>('/directory')
             .then(({ data }) => {
@@ -46,6 +54,27 @@ export default function DirectoryPage() {
     // Favourites stay on top whichever way this points: the star is a
     // decision about importance, the sort only orders what is left.
     const [ascending, setAscending] = useState(true)
+
+    async function acceptRequest(person: KnownUser) {
+        setError('')
+        try {
+            const { data } = await api.post<KnownUser>(`/directory/requests/${person.id}/accept`)
+            setRequests((prev) => prev.filter((r) => r.id !== person.id))
+            setPeople((prev) => [data, ...prev.filter((p) => p.id !== data.id)])
+        } catch (err) {
+            setError(apiErrorMessage(err, "Impossible d'accepter cette demande."))
+        }
+    }
+
+    async function declineRequest(person: KnownUser) {
+        setError('')
+        try {
+            await api.post(`/directory/requests/${person.id}/decline`)
+            setRequests((prev) => prev.filter((r) => r.id !== person.id))
+        } catch (err) {
+            setError(apiErrorMessage(err, "Impossible de refuser cette demande."))
+        }
+    }
 
     async function addContact(e: React.FormEvent) {
         e.preventDefault()
@@ -239,6 +268,50 @@ export default function DirectoryPage() {
                             {ascending ? 'A → Z' : 'Z → A'}
                         </button>
                     </div>
+                    {requests.length > 0 && (
+                        <section className="mb-5">
+                            <h2 className="text-xs font-medium text-slate-600 mb-2">
+                                Demande{requests.length > 1 ? 's' : ''} reçue
+                                {requests.length > 1 ? 's' : ''} ({requests.length})
+                            </h2>
+                            <ul className="flex flex-col gap-2">
+                                {requests.map((person) => (
+                                    <li
+                                        key={person.id}
+                                        className="flex items-center gap-3 bg-surface border border-blue-200 rounded-xl px-4 py-3"
+                                    >
+                                        <UserAvatar user={{ ...person, email: person.email }} />
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm text-slate-800 flex items-center gap-1.5">
+                                                <span className="truncate">{person.username}</span>
+                                                {person.suspended && <SuspendedPill />}
+                                            </p>
+                                            <p className="text-xs text-slate-400">
+                                                aimerait t’ajouter à son carnet
+                                                {person.sharedProjects.length > 0 &&
+                                                    ` · ${person.sharedProjects.length} projet${person.sharedProjects.length > 1 ? 's' : ''} en commun`}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                                onClick={() => declineRequest(person)}
+                                                className="h-8 px-3 rounded-lg border border-border-strong text-xs font-medium text-slate-600 hover:border-red-400 hover:text-red-600 transition"
+                                            >
+                                                Refuser
+                                            </button>
+                                            <button
+                                                onClick={() => acceptRequest(person)}
+                                                className="h-8 px-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-medium transition"
+                                            >
+                                                Accepter
+                                            </button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
+
                     {loading ? (
                         <div className="text-sm text-slate-500">Chargement…</div>
                     ) : people.length === 0 ? (
@@ -306,11 +379,13 @@ export default function DirectoryPage() {
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0 mt-0.5">
                                         <span className="text-xs text-slate-400">
-                                            {person.sharedProjects.length > 0
-                                                ? `${person.sharedProjects.length} projet${person.sharedProjects.length > 1 ? 's' : ''}`
-                                                : person.saved
-                                                  ? 'Ajouté'
-                                                  : 'Invitation'}
+                                            {person.pending
+                                                ? 'En attente'
+                                                : person.sharedProjects.length > 0
+                                                  ? `${person.sharedProjects.length} projet${person.sharedProjects.length > 1 ? 's' : ''}`
+                                                  : person.saved
+                                                    ? 'Ajouté'
+                                                    : 'Invitation'}
                                         </span>
                                         <button
                                             onClick={() => toggleFavourite(person)}

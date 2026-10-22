@@ -49,6 +49,10 @@ export type NotificationType =
   | 'MEMBER_SUSPENDED'
   | 'MEMBER_RESTORED'
   | 'MEMBER_DELETED'
+  // About a person rather than a project or a group: somebody wants you
+  // in their carnet, or said yes to you.
+  | 'CONTACT_REQUESTED'
+  | 'CONTACT_ACCEPTED'
 
 // Named around the DOM's own Notification. Unlike an invitation there is
 // nothing to answer: clearing one deletes it.
@@ -153,6 +157,8 @@ export interface KnownUser {
   saved: boolean
   favourite: boolean
   suspended: boolean
+  // Asked for, not yet answered. In neither carnet until they agree.
+  pending: boolean
 }
 
 // A named set of people, kept once instead of rebuilt project by project.

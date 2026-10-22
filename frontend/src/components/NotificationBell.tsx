@@ -294,6 +294,10 @@ function NotificationLine({ notification }: { notification: AppNotification }) {
                     Le compte de {who} est de nouveau actif — il est {where}
                 </>
             )
+        case 'CONTACT_REQUESTED':
+            return <>{who} aimerait t’ajouter à son carnet</>
+        case 'CONTACT_ACCEPTED':
+            return <>{who} a accepté ta demande de contact</>
         case 'MEMBER_DELETED':
             return (
                 <>
