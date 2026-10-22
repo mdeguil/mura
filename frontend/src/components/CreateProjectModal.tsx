@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
+import CarnetPicker from './CarnetPicker'
 import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
 import ProjectFormFields, {
@@ -25,7 +26,10 @@ export default function CreateProjectModal({
         type: 'AUTRE',
         startDate: '',
     })
-    const [invitedEmails, setInvitedEmails] = useState<string[]>([])
+    // The address is what the server needs; the name is what the chip
+    // should say when the person came from the carnet rather than a
+    // keyboard.
+    const [invited, setInvited] = useState<{ email: string; username?: string; id?: string }[]>([])
     const [emailDraft, setEmailDraft] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
@@ -43,7 +47,13 @@ export default function CreateProjectModal({
         }
         setError('')
         setEmailDraft('')
-        setInvitedEmails((prev) => (prev.includes(email) ? prev : [...prev, email]))
+        add({ email })
+    }
+
+    function add(person: { email: string; username?: string; id?: string }) {
+        setInvited((prev) =>
+            prev.some((p) => p.email === person.email) ? prev : [...prev, person]
+        )
     }
 
     async function handleSubmit(e: React.FormEvent) {
@@ -54,7 +64,7 @@ export default function CreateProjectModal({
             const { data } = await api.post<Project>('/projects', {
                 ...values,
                 startDate: values.startDate || null,
-                invitedEmails,
+                invitedEmails: invited.map((p) => p.email),
             })
             onCreated(data)
             onClose()
@@ -94,7 +104,22 @@ export default function CreateProjectModal({
                             <ColorPicker color={values.color} onChange={(color) => patch({ color })} />
 
                             <div>
-                                <label className={LABEL}>Inviter des personnes (optionnel)</label>
+                                <div className="flex items-center justify-between gap-3 mb-1.5">
+                                    <label className={LABEL}>Inviter des personnes (optionnel)</label>
+                                    {/* Somebody already in the carnet does not
+                                        need their address recalled. */}
+                                    <CarnetPicker
+                                        onPick={(person) =>
+                                            person.email &&
+                                            add({
+                                                email: person.email.toLowerCase(),
+                                                username: person.username,
+                                                id: person.id,
+                                            })
+                                        }
+                                        excludeEmails={invited.map((p) => p.email)}
+                                    />
+                                </div>
 
                                 <div className="flex gap-2">
                                     <input
@@ -131,23 +156,28 @@ export default function CreateProjectModal({
                                     </button>
                                 </div>
 
-                                {invitedEmails.length > 0 ? (
+                                {invited.length > 0 ? (
                                     <ul className="flex flex-wrap gap-1.5 mt-2.5">
-                                        {invitedEmails.map((email) => (
+                                        {invited.map((person) => (
                                             <li
-                                                key={email}
+                                                key={person.email}
                                                 className="flex items-center gap-1.5 bg-surface-muted border border-border rounded-full pl-2.5 pr-1.5 py-1"
                                             >
-                                                <span className="text-xs text-slate-600">{email}</span>
+                                                <span
+                                                    className="text-xs text-slate-600"
+                                                    title={person.email}
+                                                >
+                                                    {person.username ?? person.email}
+                                                </span>
                                                 <button
                                                     type="button"
                                                     onClick={() =>
-                                                        setInvitedEmails((prev) =>
-                                                            prev.filter((e) => e !== email)
+                                                        setInvited((prev) =>
+                                                            prev.filter((p) => p.email !== person.email)
                                                         )
                                                     }
                                                     className="text-slate-300 hover:text-red-500 transition text-xs leading-none"
-                                                    aria-label={`Retirer ${email}`}
+                                                    aria-label={`Retirer ${person.username ?? person.email}`}
                                                 >
                                                     ✕
                                                 </button>

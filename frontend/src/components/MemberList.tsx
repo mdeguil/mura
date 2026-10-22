@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '../services/api'
 import UserAvatar, { SuspendedPill } from './UserAvatar'
+import CarnetPicker from './CarnetPicker'
 import MemberDepartureDialog, { type Departure } from './MemberDepartureDialog'
-import type { Invitation, KnownUser, Member, ProjectRole } from '../types'
+import type { Invitation, Member, ProjectRole } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -59,24 +60,6 @@ export default function MemberList({
         if (inviting) emailField.current?.focus()
     }, [inviting])
 
-    // Offered as suggestions on the invite field: the carnet is where you
-    // put people so you would not have to retype their address here.
-    const [carnet, setCarnet] = useState<KnownUser[]>([])
-
-    useEffect(() => {
-        if (!canManage) return
-        let cancelled = false
-
-        api.get<KnownUser[]>('/directory')
-            .then(({ data }) => {
-                if (!cancelled) setCarnet(data)
-            })
-            .catch(() => {})
-
-        return () => {
-            cancelled = true
-        }
-    }, [canManage])
 
     function closeInvite() {
         setInviting(false)
@@ -191,9 +174,22 @@ export default function MemberList({
                     }}
                     className="mb-4"
                 >
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                        Email de la personne à inviter
-                    </label>
+                    <div className="flex items-center justify-between gap-3 mb-1.5">
+                        <label className="block text-xs font-medium text-slate-600">
+                            Email de la personne à inviter
+                        </label>
+                        {/* The quicker way in: somebody already in the carnet
+                            does not need their address recalled. */}
+                        <CarnetPicker
+                            onPick={(person) => person.email && invite(person.email)}
+                            // Already on the team, or already asked: offering
+                            // either would be offering a click that fails.
+                            excludeIds={[
+                                ...members.map((m) => m.id),
+                                ...pending.map((i) => i.invitedUser.id),
+                            ]}
+                        />
+                    </div>
                     <div className="flex gap-2">
                         <input
                             ref={emailField}
@@ -203,19 +199,8 @@ export default function MemberList({
                             onKeyDown={(e) => e.key === 'Escape' && closeInvite()}
                             placeholder="prenom@exemple.com"
                             required
-                            list="carnet-emails"
                             className="flex-1 min-w-0 h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
                         />
-                        <datalist id="carnet-emails">
-                            {carnet
-                                .filter((person) => person.email)
-                                .filter((person) => !members.some((m) => m.id === person.id))
-                                .map((person) => (
-                                    <option key={person.id} value={person.email!}>
-                                        {person.username}
-                                    </option>
-                                ))}
-                        </datalist>
                         <button
                             type="submit"
                             disabled={loading || !email.trim()}
