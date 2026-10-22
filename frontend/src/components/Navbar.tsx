@@ -19,12 +19,18 @@ export default function Navbar() {
                 <img src={logo} alt="Mura" className="w-8 h-8 rounded-full" />
                 <span className="text-lg font-semibold text-slate-800">Mura</span>
 
-                {/* The two halves of the app sit beside the mark, so the
-                    carnet is as reachable as the projects from anywhere. */}
+                {/* The halves of the app sit beside the mark, so the carnet
+                    is as reachable as the projects from anywhere. */}
                 <nav className="flex items-center gap-1 ml-4">
                     {[
                         { to: '/', label: 'Projets' },
                         { to: '/carnet', label: 'Carnet' },
+                        // Only for an administrator, and only as a
+                        // convenience: the server refuses every call this
+                        // page makes to anyone else.
+                        ...(user?.accountRole === 'ADMIN'
+                            ? [{ to: '/administration', label: 'Administration' }]
+                            : []),
                     ].map((entry) => (
                         <NavLink
                             key={entry.to}

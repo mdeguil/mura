@@ -21,7 +21,11 @@ api.interceptors.response.use(
     // page and wipes the error message before it can be shown, which is why
     // a failed sign-in used to look like nothing happened at all.
     const url = error.config?.url ?? ''
-    const isSignInAttempt = url.startsWith('/auth/')
+    // The two form endpoints by name, not the whole /auth/ prefix:
+    // /auth/me answering 401 means the session really is over -- the
+    // account was suspended or removed -- and that one must redirect.
+    const isSignInAttempt =
+      url.startsWith('/auth/login') || url.startsWith('/auth/register')
     const alreadyOnLogin = window.location.pathname === '/login'
 
     if (error.response?.status === 401 && !isSignInAttempt && !alreadyOnLogin) {

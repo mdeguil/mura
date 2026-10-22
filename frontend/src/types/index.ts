@@ -154,3 +154,23 @@ export interface AuthResponse {
   token: string
   user: User
 }
+
+// What an account may do to the application. Deliberately not ProjectRole:
+// that one says what someone may do inside a single project, and an
+// application administrator holds no rights on a project they are not a
+// member of.
+export type AccountRole = 'ADMIN' | 'USER'
+
+// The signed-in account as the server sees it right now. Wider than User,
+// which is how a person appears inside a project or a carnet and says
+// nothing about their application role.
+export interface Account {
+  id: string
+  email: string
+  username: string
+  avatarUrl?: string
+  accountRole: AccountRole
+  suspended: boolean
+  suspendedAt: string | null
+  createdAt: string
+}
