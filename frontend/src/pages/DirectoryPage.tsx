@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import UserAvatar from '../components/UserAvatar'
 import GroupList from '../components/GroupList'
+import ConfirmDialog from '../components/ConfirmDialog'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
@@ -40,6 +41,8 @@ export default function DirectoryPage() {
     const [email, setEmail] = useState('')
     const [formError, setFormError] = useState('')
     const [saving, setSaving] = useState(false)
+    const [removing, setRemoving] = useState<KnownUser | null>(null)
+    const [favouritesOnly, setFavouritesOnly] = useState(false)
 
     async function addContact(e: React.FormEvent) {
         e.preventDefault()
@@ -71,16 +74,41 @@ export default function DirectoryPage() {
         }
     }
 
+    async function toggleFavourite(person: KnownUser) {
+        const next = !person.favourite
+        // Optimistic: the star is the feedback, and a round trip before it
+        // moves would make the list feel stuck.
+        setPeople((prev) => prev.map((p) => (p.id === person.id ? { ...p, favourite: next } : p)))
+        try {
+            await api.put(`/directory/${person.id}/favourite`, { favourite: next })
+        } catch (err) {
+            setPeople((prev) =>
+                prev.map((p) => (p.id === person.id ? { ...p, favourite: !next } : p))
+            )
+            setFormError(apiErrorMessage(err, 'Impossible de changer ce favori.'))
+        }
+    }
+
     const shown = useMemo(() => {
         const q = query.trim().toLowerCase()
-        if (!q) return people
-        return people.filter(
-            (p) =>
-                p.username.toLowerCase().includes(q) ||
-                (p.email ?? '').toLowerCase().includes(q) ||
-                p.sharedProjects.some((s) => s.name.toLowerCase().includes(q))
-        )
-    }, [people, query])
+        return people
+            .filter((p) => !favouritesOnly || p.favourite)
+            .filter(
+                (p) =>
+                    !q ||
+                    p.username.toLowerCase().includes(q) ||
+                    (p.email ?? '').toLowerCase().includes(q) ||
+                    p.sharedProjects.some((s) => s.name.toLowerCase().includes(q))
+            )
+            // Same order the server sends, applied again here so starring
+            // someone moves them to the top without waiting for a reload.
+            .sort(
+                (a, b) =>
+                    Number(b.favourite) - Number(a.favourite) ||
+                    b.sharedProjects.length - a.sharedProjects.length ||
+                    a.username.localeCompare(b.username, 'fr', { sensitivity: 'base' })
+            )
+    }, [people, query, favouritesOnly])
 
     return (
         <div className="min-h-screen bg-app">
@@ -169,17 +197,33 @@ export default function DirectoryPage() {
                         </div>
                     )}
 
-                    <div className="relative mb-6 max-w-sm">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
-                        <input
-                            type="text"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Rechercher une personne ou un projet…"
-                            className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
-                        />
+                    <div className="flex flex-wrap items-center gap-3 mb-6">
+                        <div className="relative flex-1 min-w-[16rem] max-w-sm">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+                            <input
+                                type="text"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder="Rechercher une personne ou un projet…"
+                                className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
+                            />
+                        </div>
+                        <button
+                            onClick={() => setFavouritesOnly((v) => !v)}
+                            aria-pressed={favouritesOnly}
+                            className={`h-9 px-3 rounded-lg border text-xs font-medium transition flex items-center gap-1.5 ${
+                                favouritesOnly
+                                    ? 'bg-amber-50 border-amber-200 text-amber-700'
+                                    : 'bg-surface border-border-strong text-slate-600 hover:border-brand-500'
+                            }`}
+                        >
+                            <span aria-hidden="true">★</span>
+                            Favoris uniquement
+                            <span className="text-slate-400 font-normal">
+                                {people.filter((p) => p.favourite).length}
+                            </span>
+                        </button>
                     </div>
-
                     {loading ? (
                         <div className="text-sm text-slate-500">Chargement…</div>
                     ) : people.length === 0 ? (
@@ -251,12 +295,33 @@ export default function DirectoryPage() {
                                                   : 'Invitation'}
                                         </span>
                                         <button
-                                            onClick={() => removeContact(person)}
-                                            className="text-slate-300 hover:text-red-500 transition text-xs leading-none"
+                                            onClick={() => toggleFavourite(person)}
+                                            aria-pressed={person.favourite}
+                                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm leading-none transition ${
+                                                person.favourite
+                                                    ? 'text-amber-500 hover:bg-amber-50'
+                                                    : 'text-slate-300 hover:text-amber-500 hover:bg-surface-muted'
+                                            }`}
+                                            title={
+                                                person.favourite
+                                                    ? 'Retirer des favoris'
+                                                    : 'Mettre en favori'
+                                            }
+                                            aria-label={
+                                                person.favourite
+                                                    ? `Retirer ${person.username} des favoris`
+                                                    : `Mettre ${person.username} en favori`
+                                            }
+                                        >
+                                            {person.favourite ? '★' : '☆'}
+                                        </button>
+                                        <button
+                                            onClick={() => setRemoving(person)}
+                                            className="w-7 h-7 rounded-lg flex items-center justify-center text-sm leading-none text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
                                             title="Retirer de mon carnet"
                                             aria-label={`Retirer ${person.username} de mon carnet`}
                                         >
-                                            ✕
+                                            🗑
                                         </button>
                                     </div>
                                 </li>
@@ -268,6 +333,34 @@ export default function DirectoryPage() {
                     <GroupList currentUserId={currentUserId} carnet={people} />
                 )}
             </main>
+
+            {removing && (
+                <ConfirmDialog
+                    icon="🗑"
+                    title={`Retirer ${removing.username} de ton carnet ?`}
+                    confirmLabel="Retirer du carnet"
+                    body={
+                        <>
+                            <p>
+                                Cela ne touche que ton carnet : {removing.username} reste sur vos projets
+                                communs, et ton nom ne bouge pas de son côté.
+                            </p>
+                            {removing.sharedProjects.length > 0 && (
+                                <p className="mt-2 text-slate-400">
+                                    Vous partagez {removing.sharedProjects.length} projet
+                                    {removing.sharedProjects.length > 1 ? 's' : ''} : l’ajouter à nouveau
+                                    par email le fera revenir.
+                                </p>
+                            )}
+                        </>
+                    }
+                    onCancel={() => setRemoving(null)}
+                    onConfirm={async () => {
+                        await removeContact(removing)
+                        setRemoving(null)
+                    }}
+                />
+            )}
         </div>
     )
 }

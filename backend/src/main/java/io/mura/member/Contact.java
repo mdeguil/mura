@@ -44,6 +44,9 @@ public class Contact {
     @Column(nullable = false)
     private boolean hidden;
 
+    @Column(nullable = false)
+    private boolean favourite;
+
     public Contact(User owner, User person) {
         this.owner = owner;
         this.person = person;

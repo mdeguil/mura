@@ -1,6 +1,7 @@
 package io.mura.member;
 
 import io.mura.member.dto.AddContactRequest;
+import io.mura.member.dto.FavouriteRequest;
 import io.mura.member.dto.KnownUserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,6 +40,15 @@ public class DirectoryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(directoryService.addContact(userId, request));
     }
 
+
+    @PutMapping("/{personId}/favourite")
+    public ResponseEntity<KnownUserResponse> setFavourite(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID personId,
+            @Valid @RequestBody FavouriteRequest request
+    ) {
+        return ResponseEntity.ok(directoryService.setFavourite(userId, personId, request.favourite()));
+    }
     @DeleteMapping("/{personId}")
     public ResponseEntity<Void> remove(
             @AuthenticationPrincipal UUID userId,

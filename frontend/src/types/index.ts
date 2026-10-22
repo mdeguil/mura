@@ -134,9 +134,9 @@ export interface KnownUser {
   email: string | null
   avatarUrl?: string
   sharedProjects: { id: string; name: string; color: string }[]
-  // Put there on purpose, and so removable. Someone who only appears
-  // through a shared project is not.
+  // Put there on purpose rather than through a shared project.
   saved: boolean
+  favourite: boolean
 }
 
 // A named set of people, kept once instead of rebuilt project by project.

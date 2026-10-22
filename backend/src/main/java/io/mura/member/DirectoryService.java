@@ -2,6 +2,7 @@ package io.mura.member;
 
 import io.mura.common.exception.ApiException;
 import io.mura.member.dto.AddContactRequest;
+import io.mura.member.dto.FavouriteRequest;
 import io.mura.member.dto.KnownUserResponse;
 import io.mura.project.Project;
 import io.mura.project.ProjectMember;
@@ -53,6 +54,7 @@ public class DirectoryService {
 
         Set<UUID> saved = new HashSet<>();
         Set<UUID> hidden = new HashSet<>();
+        Set<UUID> favourites = new HashSet<>();
         for (Contact contact : contactRepository.findAllForOwner(userId)) {
             User person = contact.getPerson();
             if (contact.isHidden()) {
@@ -61,6 +63,9 @@ public class DirectoryService {
             }
             people.putIfAbsent(person.getId(), person);
             saved.add(person.getId());
+            if (contact.isFavourite()) {
+                favourites.add(person.getId());
+            }
         }
 
         return people.values().stream()
@@ -73,12 +78,14 @@ public class DirectoryService {
                         person.getEmail(),
                         person.getAvatarUrl(),
                         shared.getOrDefault(person.getId(), List.of()),
-                        saved.contains(person.getId())
+                        saved.contains(person.getId()),
+                        favourites.contains(person.getId())
                 ))
-                // Most shared projects first, then alphabetically: the people
-                // you work with most come to the top on their own.
+                // Favourites first because you said so, then most shared
+                // projects, then alphabetically.
                 .sorted(Comparator
-                        .comparingInt((KnownUserResponse u) -> -u.sharedProjects().size())
+                        .comparing((KnownUserResponse u) -> !u.favourite())
+                        .thenComparingInt(u -> -u.sharedProjects().size())
                         .thenComparing(KnownUserResponse::username, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
@@ -124,7 +131,8 @@ public class DirectoryService {
                 person.getEmail(),
                 person.getAvatarUrl(),
                 sharedProjectsBetween(ownerId, person.getId()),
-                true
+                true,
+                contact.isFavourite()
         );
     }
 
@@ -147,6 +155,40 @@ public class DirectoryService {
         contactRepository.save(contact);
     }
 
+
+    // Favouriting someone who only appears through a shared project creates
+    // the row that remembers it — the same row that would hold them hidden.
+    @Transactional
+    public KnownUserResponse setFavourite(UUID ownerId, UUID personId, boolean favourite) {
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
+
+        User person = userRepository.findById(personId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Personne introuvable."));
+
+        Contact contact = contactRepository.findByOwnerIdAndPersonId(ownerId, personId)
+                .orElseGet(() -> new Contact(owner, person));
+
+        if (contact.isHidden()) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    person.getUsername() + " ne fait pas partie de ton carnet."
+            );
+        }
+
+        contact.setFavourite(favourite);
+        contactRepository.save(contact);
+
+        return new KnownUserResponse(
+                person.getId(),
+                person.getUsername(),
+                person.getEmail(),
+                person.getAvatarUrl(),
+                sharedProjectsBetween(ownerId, personId),
+                true,
+                favourite
+        );
+    }
     private List<KnownUserResponse.SharedProject> sharedProjectsBetween(UUID userId, UUID personId) {
         return directoryRepository.findSharedMemberships(userId).stream()
                 .filter(m -> m.getUser().getId().equals(personId))
