@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
-import CarnetPicker from './CarnetPicker'
+import CarnetCombobox from './CarnetCombobox'
 import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
 import ProjectFormFields, {
     ColorPicker,
-    FIELD,
     LABEL,
     PROJECT_COLORS,
     type ProjectFormValues,
@@ -104,36 +103,26 @@ export default function CreateProjectModal({
                             <ColorPicker color={values.color} onChange={(color) => patch({ color })} />
 
                             <div>
-                                <div className="flex items-center justify-between gap-3 mb-1.5">
-                                    <label className={LABEL}>Inviter des personnes (optionnel)</label>
-                                    {/* Somebody already in the carnet does not
-                                        need their address recalled. */}
-                                    <CarnetPicker
-                                        onPick={(person) =>
-                                            person.email &&
+                                <label className={LABEL}>Inviter des personnes (optionnel)</label>
+
+                                <div className="flex gap-2">
+                                    {/* Typing a name searches the carnet; typing
+                                        an address invites somebody not in it. */}
+                                    <CarnetCombobox
+                                        className="flex-1 min-w-0"
+                                        value={emailDraft}
+                                        onChange={setEmailDraft}
+                                        onPick={(person) => {
+                                            if (!person.email) return
                                             add({
                                                 email: person.email.toLowerCase(),
                                                 username: person.username,
                                                 id: person.id,
                                             })
-                                        }
-                                        excludeEmails={invited.map((p) => p.email)}
-                                    />
-                                </div>
-
-                                <div className="flex gap-2">
-                                    <input
-                                        type="email"
-                                        value={emailDraft}
-                                        onChange={(e) => setEmailDraft(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault()
-                                                addEmail()
-                                            }
+                                            setEmailDraft('')
                                         }}
-                                        placeholder="prenom@exemple.com"
-                                        className={`${FIELD} flex-1 min-w-0`}
+                                        placeholder="Un nom du carnet, ou prenom@exemple.com"
+                                        excludeEmails={invited.map((p) => p.email)}
                                     />
                                     <button
                                         type="button"
