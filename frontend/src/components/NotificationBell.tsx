@@ -259,38 +259,51 @@ export default function NotificationBell() {
     )
 }
 
-// One line per kind. A project notification names the project; a group one
-// names the group and the person it is about -- never the administrator who
-// acted, whose identity is nobody else's business.
+// One line per kind. A project notification names the project; an account
+// one names whichever of the two the reader owns -- never the
+// administrator who acted, whose identity is nobody else's business.
 function NotificationLine({ notification }: { notification: AppNotification }) {
     const who = <span className="font-medium">{notification.actorName}</span>
-    const where = (
+    const name = (
         <span className="font-medium">{notification.projectName ?? notification.groupName}</span>
+    )
+    // The same news reaches a group owner and a project owner, so the line
+    // has to say which of theirs it is about.
+    const where = notification.groupName ? (
+        <>dans ton groupe {name}</>
+    ) : (
+        <>sur ton projet {name}</>
     )
 
     switch (notification.type) {
         case 'REMOVED_FROM_PROJECT':
             return (
                 <>
-                    {who} t'a retiré de {where}
+                    {who} t'a retiré de {name}
                 </>
             )
         case 'MEMBER_SUSPENDED':
             return (
                 <>
-                    Le compte de {who} a été suspendu — il est dans ton groupe {where}
+                    Le compte de {who} a été suspendu — il est {where}
                 </>
             )
         case 'MEMBER_RESTORED':
             return (
                 <>
-                    Le compte de {who} est de nouveau actif — il est dans ton groupe {where}
+                    Le compte de {who} est de nouveau actif — il est {where}
+                </>
+            )
+        case 'MEMBER_DELETED':
+            return (
+                <>
+                    Le compte de {who} a été supprimé — il était {where}
                 </>
             )
         default:
             return (
                 <>
-                    {who} a quitté {where}
+                    {who} a quitté {name}
                 </>
             )
     }

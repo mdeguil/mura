@@ -86,23 +86,41 @@ public class AccountService {
         }
 
         target.setSuspendedAt(suspended ? Instant.now() : null);
-        tellGroupOwners(target, actorId, suspended);
+        tellOwners(target, actorId, suspended);
         return AccountResponse.from(target);
     }
 
     // The people who have to work around an absence are the ones who put
-    // this person in a group, so they are the ones told. Not the whole
-    // application, and not the administrator who just did it.
-    private void tellGroupOwners(User target, UUID actorId, boolean suspended) {
+    // this person on a project or in a group, so they are the ones told --
+    // not the whole application, and not the administrator who just acted.
+    private void tellOwners(User target, UUID actorId, boolean suspended) {
         NotificationType type = suspended
                 ? NotificationType.MEMBER_SUSPENDED
                 : NotificationType.MEMBER_RESTORED;
 
-        userGroupRepository.findAllForMember(target.getId()).stream()
+        ownedGroupsHolding(target, actorId).forEach(group -> notificationService.notifyAboutGroup(
+                group.getOwner(), type, group.getName(), target));
+
+        projectsHolding(target, actorId).forEach(project -> notificationService.notify(
+                project.getOwner(), type, project, target, null));
+    }
+
+    // Groups this person belongs to that somebody else owns, leaving out the
+    // administrator doing the work: they already know.
+    private List<UserGroup> ownedGroupsHolding(User target, UUID actorId) {
+        return userGroupRepository.findAllForMember(target.getId()).stream()
                 .filter(group -> !group.getOwner().getId().equals(target.getId()))
                 .filter(group -> !group.getOwner().getId().equals(actorId))
-                .forEach(group -> notificationService.notifyAboutGroup(
-                        group.getOwner(), type, group.getName(), target));
+                .toList();
+    }
+
+    // Same, for projects. Owning one is not being a member of someone
+    // else's, so a project of their own tells nobody.
+    private List<Project> projectsHolding(User target, UUID actorId) {
+        return projectRepository.findAllForMember(target.getId()).stream()
+                .filter(project -> !project.getOwner().getId().equals(target.getId()))
+                .filter(project -> !project.getOwner().getId().equals(actorId))
+                .toList();
     }
 
     private void requireAdmin(UUID actorId) {
@@ -191,6 +209,12 @@ public class AccountService {
             );
         }
 
+        // Everyone who has to hear about it, gathered before anything is
+        // removed: the memberships that say who works with this person go
+        // with the account.
+        List<Project> theyBelongTo = projectsHolding(target, actorId);
+        List<UserGroup> groupsHoldingThem = ownedGroupsHolding(target, actorId);
+
         // A project outlives the account whenever somebody else is in it.
         // Handing it over is the whole point: letting it go with its owner
         // would take other people's tasks down too.
@@ -198,8 +222,22 @@ public class AccountService {
             successorFor(project, targetId).ifPresent(successor -> {
                 successor.setRole(ProjectRole.OWNER);
                 project.setOwner(successor.getUser());
+                // Nobody should become the owner of a project without being
+                // told, least of all by finding out later.
+                notificationService.notify(
+                        successor.getUser(),
+                        NotificationType.MEMBER_DELETED,
+                        project,
+                        target,
+                        "Tu es maintenant propriétaire de ce projet."
+                );
             });
         }
+
+        theyBelongTo.forEach(project -> notificationService.notify(
+                project.getOwner(), NotificationType.MEMBER_DELETED, project, target, null));
+        groupsHoldingThem.forEach(group -> notificationService.notifyAboutGroup(
+                group.getOwner(), NotificationType.MEMBER_DELETED, group.getName(), target));
 
         // Whatever is still owned by this account is, by definition, a
         // project nobody else belongs to, and the foreign key takes those

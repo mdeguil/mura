@@ -42,10 +42,13 @@ export type ProjectAccess = 'MEMBER' | 'INVITED'
 export type NotificationType =
   | 'REMOVED_FROM_PROJECT'
   | 'MEMBER_LEFT_PROJECT'
-  // About a group rather than a project: somebody in a group you own had
-  // their account suspended, or was let back in.
+  // About an account rather than a project membership: somebody you work
+  // with was suspended, let back in, or removed for good. Sent to the
+  // owner of each project and each group they belong to, so the subject
+  // is a project for some and a group for others.
   | 'MEMBER_SUSPENDED'
   | 'MEMBER_RESTORED'
+  | 'MEMBER_DELETED'
 
 // Named around the DOM's own Notification. Unlike an invitation there is
 // nothing to answer: clearing one deletes it.
