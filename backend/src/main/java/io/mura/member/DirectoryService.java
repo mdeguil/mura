@@ -81,11 +81,10 @@ public class DirectoryService {
                         saved.contains(person.getId()),
                         favourites.contains(person.getId())
                 ))
-                // Favourites first because you said so, then most shared
-                // projects, then alphabetically.
+                // Favourites first, then alphabetically — the order the carnet
+                // opens on, which the client can then flip.
                 .sorted(Comparator
                         .comparing((KnownUserResponse u) -> !u.favourite())
-                        .thenComparingInt(u -> -u.sharedProjects().size())
                         .thenComparing(KnownUserResponse::username, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }

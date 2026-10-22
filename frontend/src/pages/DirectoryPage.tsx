@@ -43,6 +43,9 @@ export default function DirectoryPage() {
     const [saving, setSaving] = useState(false)
     const [removing, setRemoving] = useState<KnownUser | null>(null)
     const [favouritesOnly, setFavouritesOnly] = useState(false)
+    // Favourites stay on top whichever way this points: the star is a
+    // decision about importance, the sort only orders what is left.
+    const [ascending, setAscending] = useState(true)
 
     async function addContact(e: React.FormEvent) {
         e.preventDefault()
@@ -100,15 +103,15 @@ export default function DirectoryPage() {
                     (p.email ?? '').toLowerCase().includes(q) ||
                     p.sharedProjects.some((s) => s.name.toLowerCase().includes(q))
             )
-            // Same order the server sends, applied again here so starring
-            // someone moves them to the top without waiting for a reload.
+            // Sorted here as well as on the server, so starring someone or
+            // flipping the order lands without waiting for a reload.
             .sort(
                 (a, b) =>
                     Number(b.favourite) - Number(a.favourite) ||
-                    b.sharedProjects.length - a.sharedProjects.length ||
-                    a.username.localeCompare(b.username, 'fr', { sensitivity: 'base' })
+                    (ascending ? 1 : -1) *
+                        a.username.localeCompare(b.username, 'fr', { sensitivity: 'base' })
             )
-    }, [people, query, favouritesOnly])
+    }, [people, query, favouritesOnly, ascending])
 
     return (
         <div className="min-h-screen bg-app">
@@ -223,6 +226,18 @@ export default function DirectoryPage() {
                                 {people.filter((p) => p.favourite).length}
                             </span>
                         </button>
+                        <button
+                            onClick={() => setAscending((v) => !v)}
+                            className="h-9 px-3 rounded-lg border border-border-strong bg-surface text-slate-600 hover:border-brand-500 text-xs font-medium transition flex items-center gap-1.5"
+                            title={
+                                ascending
+                                    ? 'Trié de A à Z — cliquer pour inverser'
+                                    : 'Trié de Z à A — cliquer pour inverser'
+                            }
+                        >
+                            <span aria-hidden="true">{ascending ? '↓' : '↑'}</span>
+                            {ascending ? 'A → Z' : 'Z → A'}
+                        </button>
                     </div>
                     {loading ? (
                         <div className="text-sm text-slate-500">Chargement…</div>
@@ -297,10 +312,10 @@ export default function DirectoryPage() {
                                         <button
                                             onClick={() => toggleFavourite(person)}
                                             aria-pressed={person.favourite}
-                                            className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm leading-none transition ${
+                                            className={`w-9 h-9 rounded-lg flex items-center justify-center text-xl leading-none transition ${
                                                 person.favourite
-                                                    ? 'text-amber-500 hover:bg-amber-50'
-                                                    : 'text-slate-300 hover:text-amber-500 hover:bg-surface-muted'
+                                                    ? 'text-amber-400 hover:bg-amber-50'
+                                                    : 'text-slate-300 hover:text-amber-400 hover:bg-surface-muted'
                                             }`}
                                             title={
                                                 person.favourite
@@ -317,7 +332,7 @@ export default function DirectoryPage() {
                                         </button>
                                         <button
                                             onClick={() => setRemoving(person)}
-                                            className="w-7 h-7 rounded-lg flex items-center justify-center text-sm leading-none text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-base leading-none text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
                                             title="Retirer de mon carnet"
                                             aria-label={`Retirer ${person.username} de mon carnet`}
                                         >
