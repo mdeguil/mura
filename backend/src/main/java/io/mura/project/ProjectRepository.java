@@ -23,4 +23,8 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     // The bin is the owner's: they are the only one who can restore or
     // delete, so they are the only one shown what is in it.
     List<Project> findAllByOwnerIdAndArchivedTrueOrderByUpdatedAtDesc(UUID ownerId);
+
+    // Every project this account owns, archived ones included: closing an
+    // account has to account for all of them, not only the visible ones.
+    List<Project> findAllByOwnerId(UUID ownerId);
 }

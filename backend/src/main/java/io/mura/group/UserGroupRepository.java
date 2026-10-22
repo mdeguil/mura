@@ -19,4 +19,8 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, UUID> {
             ORDER BY g.name
             """)
     List<UserGroup> findAllForMember(@Param("userId") UUID userId);
+
+    // The groups this account made, which disappear with it: a group is a
+    // list of people, not something its members own a share of.
+    List<UserGroup> findAllByOwnerId(UUID ownerId);
 }

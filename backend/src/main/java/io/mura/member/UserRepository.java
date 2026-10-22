@@ -1,6 +1,9 @@
 package io.mura.member;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -17,4 +20,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByEmailIgnoreCase(String email);
 
     boolean existsByUsernameIgnoreCase(String username);
+
+    // A statement rather than delete(entity), which proved unreliable in
+    // the one transaction that matters: after handing a project over to
+    // its new owner, the entity-level delete emitted no SQL at all while
+    // the handover itself still committed. This cannot silently do
+    // nothing -- it reports the rows it removed. The rest goes with it
+    // through the schema's own ON DELETE CASCADE.
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM User u WHERE u.id = :id")
+    int deleteAccountById(@Param("id") UUID id);
 }

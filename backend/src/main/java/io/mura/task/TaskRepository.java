@@ -20,6 +20,8 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             """)
     List<Task> findAllForProject(@Param("projectId") UUID projectId, @Param("archived") boolean archived);
 
+    long countByAssigneeId(UUID assigneeId);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Task t SET t.assignee = null WHERE t.project.id = :projectId AND t.assignee.id = :userId")
     void clearAssignee(@Param("projectId") UUID projectId, @Param("userId") UUID userId);

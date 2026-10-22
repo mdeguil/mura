@@ -1,19 +1,30 @@
 package io.mura.admin;
 
+import io.mura.admin.dto.AccountDeletionPreview;
 import io.mura.admin.dto.ChangeAccountRoleRequest;
 import io.mura.common.exception.ApiException;
+import io.mura.group.UserGroup;
+import io.mura.group.UserGroupRepository;
 import io.mura.member.AccountRole;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
 import io.mura.member.dto.AccountResponse;
+import io.mura.project.Project;
+import io.mura.project.ProjectMember;
+import io.mura.project.ProjectMemberRepository;
+import io.mura.project.ProjectRepository;
+import io.mura.project.ProjectRole;
+import io.mura.task.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -21,6 +32,10 @@ import java.util.UUID;
 public class AccountService {
 
     private final UserRepository userRepository;
+    private final ProjectRepository projectRepository;
+    private final ProjectMemberRepository projectMemberRepository;
+    private final UserGroupRepository userGroupRepository;
+    private final TaskRepository taskRepository;
 
     @Transactional(readOnly = true)
     public List<AccountResponse> list(UUID actorId) {
@@ -108,5 +123,87 @@ public class AccountService {
                     "C'est le dernier administrateur actif. Nomme quelqu'un d'autre avant."
             );
         }
+    }
+
+    @Transactional(readOnly = true)
+    public AccountDeletionPreview deletionPreview(UUID actorId, UUID targetId) {
+        requireAdmin(actorId);
+        User target = requireAccount(targetId);
+
+        List<AccountDeletionPreview.ProjectHandover> transferred = new ArrayList<>();
+        List<String> removed = new ArrayList<>();
+
+        for (Project project : projectRepository.findAllByOwnerId(targetId)) {
+            successorFor(project, targetId)
+                    .ifPresentOrElse(
+                            successor -> transferred.add(new AccountDeletionPreview.ProjectHandover(
+                                    project.getName(), successor.getUser().getUsername())),
+                            () -> removed.add(project.getName())
+                    );
+        }
+
+        return new AccountDeletionPreview(
+                target.getUsername(),
+                transferred,
+                removed,
+                userGroupRepository.findAllByOwnerId(targetId).stream()
+                        .map(UserGroup::getName)
+                        .toList(),
+                taskRepository.countByAssigneeId(targetId)
+        );
+    }
+
+    @Transactional
+    public void delete(UUID actorId, UUID targetId) {
+        requireAdmin(actorId);
+        User target = requireAccount(targetId);
+        refuseActingOnSelf(actorId, targetId, "Tu ne peux pas supprimer ton propre compte.");
+
+        // Suspended first, the way a project is archived before it can be
+        // deleted. It puts a deliberate step in front of something that
+        // cannot be undone -- and it means the last active administrator is
+        // already protected, since suspending them is refused.
+        if (!target.isSuspended()) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "Suspends d'abord ce compte. La suppression est définitive."
+            );
+        }
+
+        // A project outlives the account whenever somebody else is in it.
+        // Handing it over is the whole point: letting it go with its owner
+        // would take other people's tasks down too.
+        for (Project project : projectRepository.findAllByOwnerId(targetId)) {
+            successorFor(project, targetId).ifPresent(successor -> {
+                successor.setRole(ProjectRole.OWNER);
+                project.setOwner(successor.getUser());
+            });
+        }
+
+        // Whatever is still owned by this account is, by definition, a
+        // project nobody else belongs to, and the foreign key takes those
+        // with it -- along with the memberships, invitations, notifications,
+        // carnet entries and groups, which is what ON DELETE CASCADE was
+        // written for. Assigned tasks survive: that column is SET NULL.
+        //
+        // Deliberately a statement rather than userRepository.delete(target):
+        // after the handovers above, the entity-level delete produced no SQL
+        // at all in this transaction while the handovers themselves still
+        // committed. flushAutomatically writes the handovers first, so a
+        // project that has just changed hands is never caught by the
+        // cascade, and clearAutomatically drops the now-stale entities.
+        userRepository.deleteAccountById(targetId);
+    }
+    // Who inherits a project when its owner leaves: someone who already
+    // manages it if there is one, otherwise the member who has been there
+    // longest. Deterministic, so the preview and the deletion cannot
+    // disagree about what is going to happen.
+    private Optional<ProjectMember> successorFor(Project project, UUID leavingUserId) {
+        return projectMemberRepository.findAllForProject(project.getId()).stream()
+                .filter(m -> !m.getUser().getId().equals(leavingUserId))
+                .min(Comparator
+                        .comparing((ProjectMember m) -> m.getRole().manages() ? 0 : 1)
+                        .thenComparing(ProjectMember::getJoinedAt))
+    ;
     }
 }
