@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
-import AssigneeSelect from './AssigneeSelect'
+import AssigneePicker from './AssigneePicker'
 import type { Member, Task } from '../types'
 
 export default function CreateTaskModal({
@@ -95,7 +95,7 @@ export default function CreateTaskModal({
 
                     <div>
                         <label className="block text-xs font-medium text-slate-600 mb-1.5">Responsable (optionnel)</label>
-                        <AssigneeSelect members={members} value={assigneeId} onChange={setAssigneeId} fullWidth />
+                        <AssigneePicker members={members} value={assigneeId} onChange={setAssigneeId} fullWidth />
                     </div>
 
                     <div>

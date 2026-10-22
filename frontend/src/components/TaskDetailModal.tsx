@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import api from '../services/api'
-import AssigneeSelect from './AssigneeSelect'
+import AssigneePicker from './AssigneePicker'
 import type { Member, Subtask, Task } from '../types'
 import { TASK_STATUS_BAR_CLASSES, TASK_STATUS_CLASSES, TASK_STATUS_LABELS } from '../utils/taskMeta'
 
@@ -84,7 +84,7 @@ export default function TaskDetailModal({
 
                 <div className="flex items-center gap-2 mt-3">
                     <span className="text-xs font-medium text-slate-500">Responsable</span>
-                    <AssigneeSelect
+                    <AssigneePicker
                         members={members}
                         value={task.assignee?.id ?? null}
                         onChange={(assigneeId) => onAssigneeChange(task.id, assigneeId)}
