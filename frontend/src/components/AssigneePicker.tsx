@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { anchoredStyle, useAnchoredMenu } from '../hooks/useAnchoredMenu'
 import UserAvatar from './UserAvatar'
 import type { Member } from '../types'
 
@@ -20,70 +21,9 @@ export default function AssigneePicker({
     fullWidth?: boolean
 }) {
     const [open, setOpen] = useState(false)
-    // Measured when the list opens. The task modal scrolls its own
-    // content, and an absolutely positioned list inside it gets cut off
-    // at the modal edge once a project has six or so members. A fixed
-    // list is laid out against the viewport instead, so no ancestor can
-    // clip it -- at the cost of placing it by hand.
-    const [position, setPosition] = useState<{
-        top: number
-        left: number
-        width: number
-        maxHeight: number
-    } | null>(null)
     const [saving, setSaving] = useState(false)
-    const wrapper = useRef<HTMLDivElement>(null)
-    const trigger = useRef<HTMLButtonElement>(null)
-
-    useEffect(() => {
-        if (!open) {
-            setPosition(null)
-            return
-        }
-
-        function place() {
-            const rect = trigger.current?.getBoundingClientRect()
-            if (!rect) return
-
-            const gap = 6
-            const margin = 12
-            const below = window.innerHeight - rect.bottom - gap - margin
-            const above = rect.top - gap - margin
-            // Downwards unless there is plainly more room the other way.
-            const dropDown = below >= Math.min(above, 240) || below >= above
-            const maxHeight = Math.min(256, Math.max(dropDown ? below : above, 120))
-
-            setPosition({
-                top: dropDown ? rect.bottom + gap : rect.top - gap - maxHeight,
-                left: Math.min(rect.left, window.innerWidth - 240 - margin),
-                width: Math.max(rect.width, 224),
-                maxHeight,
-            })
-        }
-
-        place()
-        // The list is anchored to a point in the viewport, so anything that
-        // moves that point has to move it too.
-        window.addEventListener('resize', place)
-        window.addEventListener('scroll', place, true)
-
-        function onPointerDown(event: MouseEvent) {
-            if (!wrapper.current?.contains(event.target as Node)) setOpen(false)
-        }
-        function onKeyDown(event: KeyboardEvent) {
-            if (event.key === 'Escape') setOpen(false)
-        }
-
-        document.addEventListener('mousedown', onPointerDown)
-        document.addEventListener('keydown', onKeyDown)
-        return () => {
-            window.removeEventListener('resize', place)
-            window.removeEventListener('scroll', place, true)
-            document.removeEventListener('mousedown', onPointerDown)
-            document.removeEventListener('keydown', onKeyDown)
-        }
-    }, [open])
-
+    const close = useCallback(() => setOpen(false), [])
+    const { wrapper, trigger, position } = useAnchoredMenu({ open, onClose: close })
     const current = members.find((m) => m.id === value) ?? null
 
     async function pick(next: string | null) {
@@ -135,13 +75,7 @@ export default function AssigneePicker({
             {open && position && (
                 <div
                     role="listbox"
-                    style={{
-                        position: 'fixed',
-                        top: position.top,
-                        left: position.left,
-                        minWidth: position.width,
-                        maxHeight: position.maxHeight,
-                    }}
+                    style={anchoredStyle(position)}
                     className="overflow-y-auto bg-surface border border-border rounded-xl shadow-lg p-1.5 z-50 flex flex-col gap-1"
                 >
                     <Option selected={value === null} onPick={() => pick(null)}>

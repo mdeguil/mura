@@ -4,16 +4,19 @@ import Navbar from '../components/Navbar'
 import UserAvatar, { SuspendedPill } from '../components/UserAvatar'
 import GroupList from '../components/GroupList'
 import ConfirmDialog from '../components/ConfirmDialog'
+import ProjectInviteMenu from '../components/ProjectInviteMenu'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
-import type { KnownUser } from '../types'
+import type { KnownUser, Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
 
 export default function DirectoryPage() {
     const [people, setPeople] = useState<KnownUser[]>([])
     // Not carnet entries yet: questions waiting on an answer.
     const [requests, setRequests] = useState<KnownUser[]>([])
+    // Only to work out what the reader may invite someone onto.
+    const [projects, setProjects] = useState<Project[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
@@ -22,6 +25,12 @@ export default function DirectoryPage() {
 
     useEffect(() => {
         let cancelled = false
+
+        api.get<Project[]>('/projects')
+            .then(({ data }) => {
+                if (!cancelled) setProjects(data)
+            })
+            .catch(() => {})
 
         api.get<KnownUser[]>('/directory/requests')
             .then(({ data }) => {
@@ -387,6 +396,13 @@ export default function DirectoryPage() {
                                                     ? 'Ajouté'
                                                     : 'Invitation'}
                                         </span>
+                                        {!person.pending && (
+                                            <ProjectInviteMenu
+                                                person={person}
+                                                projects={projects}
+                                                currentUserId={currentUserId}
+                                            />
+                                        )}
                                         <button
                                             onClick={() => toggleFavourite(person)}
                                             aria-pressed={person.favourite}
