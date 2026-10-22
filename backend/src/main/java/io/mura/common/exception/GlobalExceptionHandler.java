@@ -1,5 +1,6 @@
 package io.mura.common.exception;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,24 +17,27 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException ex) {
-        return ResponseEntity.status(ex.getStatus()).body(new ErrorResponse(ex.getMessage()));
+        return ResponseEntity.status(ex.getStatus())
+                .body(new ErrorResponse(ex.getMessage(), ex.getField()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException ex) {
-        String message = ex.getBindingResult().getFieldErrors().stream()
-                .findFirst()
-                .map(FieldError::getDefaultMessage)
-                .orElse("Requête invalide.");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(message));
+        // The first error only: a form shows one message at a time, and the
+        // field name tells it where to put it.
+        FieldError first = ex.getBindingResult().getFieldErrors().stream().findFirst().orElse(null);
+        String message = first == null ? "Requête invalide." : first.getDefaultMessage();
+        String field = first == null ? null : first.getField();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(message, field));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("Une erreur inattendue est survenue."));
+                .body(new ErrorResponse("Une erreur inattendue est survenue.", null));
     }
 
-    public record ErrorResponse(String message) {}
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record ErrorResponse(String message, String field) {}
 }
