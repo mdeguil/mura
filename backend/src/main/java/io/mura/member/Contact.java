@@ -2,6 +2,8 @@ package io.mura.member;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
@@ -46,6 +48,12 @@ public class Contact {
 
     @Column(nullable = false)
     private boolean favourite;
+
+    // Adding someone is a request now: nothing reaches either carnet
+    // until they agree.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ContactStatus status = ContactStatus.PENDING;
 
     public Contact(User owner, User person) {
         this.owner = owner;

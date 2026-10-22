@@ -13,5 +13,10 @@ public enum NotificationType {
     MEMBER_RESTORED,
     // Their account is gone for good. On a project that was theirs, this
     // reaches whoever inherits it, and says so.
-    MEMBER_DELETED
+    MEMBER_DELETED,
+    // Someone wants you in their carnet. About a person, so it carries
+    // neither a project nor a group -- who it is about is the actor.
+    CONTACT_REQUESTED,
+    // And they said yes to yours.
+    CONTACT_ACCEPTED
 }

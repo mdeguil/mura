@@ -17,7 +17,10 @@ public record KnownUserResponse(
         boolean favourite,
         // Same reason as everywhere else a person is listed: someone
         // suspended is still in your carnet but cannot be reached.
-        boolean suspended
+        boolean suspended,
+        // Asked for, not yet answered. Shown to whoever asked, so a
+        // request does not look like it went nowhere.
+        boolean pending
 ) {
     public record SharedProject(UUID id, String name, String color) {}
 }

@@ -4,6 +4,8 @@ import io.mura.common.exception.ApiException;
 import io.mura.member.dto.AddContactRequest;
 import io.mura.member.dto.FavouriteRequest;
 import io.mura.member.dto.KnownUserResponse;
+import io.mura.notification.NotificationService;
+import io.mura.notification.NotificationType;
 import io.mura.project.Project;
 import io.mura.project.ProjectMember;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class DirectoryService {
     private final DirectoryRepository directoryRepository;
     private final ContactRepository contactRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<KnownUserResponse> listKnownTo(UUID userId) {
@@ -55,10 +58,23 @@ public class DirectoryService {
         Set<UUID> saved = new HashSet<>();
         Set<UUID> hidden = new HashSet<>();
         Set<UUID> favourites = new HashSet<>();
+        Set<UUID> pending = new HashSet<>();
         for (Contact contact : contactRepository.findAllForOwner(userId)) {
             User person = contact.getPerson();
             if (contact.isHidden()) {
                 hidden.add(person.getId());
+                continue;
+            }
+            // Still waiting on an answer: shown, so the request does not
+            // look like it went nowhere, but not yet a carnet entry.
+            if (contact.getStatus() == ContactStatus.PENDING) {
+                people.putIfAbsent(person.getId(), person);
+                pending.add(person.getId());
+                continue;
+            }
+            // Turned down. Nothing to show -- unless a shared project puts
+            // them in the carnet anyway, which is not this row's doing.
+            if (contact.getStatus() == ContactStatus.DECLINED) {
                 continue;
             }
             people.putIfAbsent(person.getId(), person);
@@ -80,7 +96,8 @@ public class DirectoryService {
                         shared.getOrDefault(person.getId(), List.of()),
                         saved.contains(person.getId()),
                         favourites.contains(person.getId()),
-                        person.isSuspended()
+                        person.isSuspended(),
+                        pending.contains(person.getId())
                 ))
                 // Favourites first, then alphabetically — the order the carnet
                 // opens on, which the client can then flip.
@@ -107,33 +124,53 @@ public class DirectoryService {
             throw new ApiException(HttpStatus.CONFLICT, "Tu n'as pas besoin de t'ajouter toi-même.");
         }
 
-        if (contactRepository.findByOwnerIdAndPersonId(ownerId, person.getId())
+        Contact existing = contactRepository.findByOwnerIdAndPersonId(ownerId, person.getId())
                 .filter(c -> !c.isHidden())
-                .isPresent()) {
+                .orElse(null);
+        if (existing != null && existing.getStatus() == ContactStatus.ACCEPTED) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
                     person.getUsername() + " est déjà dans ton carnet."
             );
         }
+        if (existing != null && existing.getStatus() == ContactStatus.PENDING) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    person.getUsername() + " n'a pas encore répondu à ta demande."
+            );
+        }
 
-        // Re-adding someone you had taken out puts them back rather than
-        // failing on the row that was holding them hidden.
+        // Already asked you? Then saying yes is the answer, not a second
+        // request crossing the first in the post.
+        Contact theirs = contactRepository.findByOwnerIdAndPersonId(person.getId(), ownerId)
+                .filter(c -> c.getStatus() == ContactStatus.PENDING)
+                .orElse(null);
+        if (theirs != null) {
+            return accept(ownerId, person.getId());
+        }
+
+        // Re-adding someone you had taken out, or asking again after a
+        // refusal, reuses the row rather than failing on it.
         Contact contact = contactRepository.findByOwnerIdAndPersonId(ownerId, person.getId())
                 .orElseGet(() -> new Contact(owner, person));
         contact.setHidden(false);
+        contact.setStatus(ContactStatus.PENDING);
         contactRepository.save(contact);
 
-        // Someone added by hand can already share projects with you, so the
-        // answer carries what the list would show rather than a bare row.
+        notificationService.notifyAboutPerson(person, NotificationType.CONTACT_REQUESTED, owner);
+
+        // The answer carries what the list would show rather than a bare
+        // row: saved is false until they agree.
         return new KnownUserResponse(
                 person.getId(),
                 person.getUsername(),
                 person.getEmail(),
                 person.getAvatarUrl(),
                 sharedProjectsBetween(ownerId, person.getId()),
-                true,
+                false,
                 contact.isFavourite(),
-                person.isSuspended()
+                person.isSuspended(),
+                true
         );
     }
 
@@ -188,8 +225,81 @@ public class DirectoryService {
                 sharedProjectsBetween(ownerId, personId),
                 true,
                 favourite,
-                person.isSuspended()
+                person.isSuspended(),
+                false
         );
+    }
+    // The requests waiting on this person. Separate from the carnet: these
+    // are not entries yet, they are questions.
+    @Transactional(readOnly = true)
+    public List<KnownUserResponse> listRequests(UUID userId) {
+        return contactRepository.findPendingForPerson(userId).stream()
+                .map(Contact::getOwner)
+                .map(requester -> new KnownUserResponse(
+                        requester.getId(),
+                        requester.getUsername(),
+                        requester.getEmail(),
+                        requester.getAvatarUrl(),
+                        sharedProjectsBetween(userId, requester.getId()),
+                        false,
+                        false,
+                        requester.isSuspended(),
+                        true
+                ))
+                .toList();
+    }
+
+    // Accepting is mutual: you end up in each other's carnets, the way
+    // accepting an invitation puts you on the team rather than leaving the
+    // relationship pointing one way.
+    @Transactional
+    public KnownUserResponse accept(UUID userId, UUID requesterId) {
+        Contact request = requirePendingRequest(userId, requesterId);
+        User me = request.getPerson();
+        User requester = request.getOwner();
+
+        request.setStatus(ContactStatus.ACCEPTED);
+        request.setHidden(false);
+        contactRepository.save(request);
+
+        Contact mine = contactRepository.findByOwnerIdAndPersonId(userId, requesterId)
+                .orElseGet(() -> new Contact(me, requester));
+        mine.setStatus(ContactStatus.ACCEPTED);
+        mine.setHidden(false);
+        contactRepository.save(mine);
+
+        notificationService.notifyAboutPerson(requester, NotificationType.CONTACT_ACCEPTED, me);
+
+        return new KnownUserResponse(
+                requester.getId(),
+                requester.getUsername(),
+                requester.getEmail(),
+                requester.getAvatarUrl(),
+                sharedProjectsBetween(userId, requesterId),
+                true,
+                mine.isFavourite(),
+                requester.isSuspended(),
+                false
+        );
+    }
+
+    // Refusing says nothing to the person who asked: a refusal they can see
+    // is an awkward conversation nobody asked for. The row is kept rather
+    // than deleted so asking again is possible -- people change their minds.
+    @Transactional
+    public void decline(UUID userId, UUID requesterId) {
+        Contact request = requirePendingRequest(userId, requesterId);
+        request.setStatus(ContactStatus.DECLINED);
+        contactRepository.save(request);
+    }
+
+    private Contact requirePendingRequest(UUID userId, UUID requesterId) {
+        return contactRepository.findByOwnerIdAndPersonId(requesterId, userId)
+                .filter(c -> c.getStatus() == ContactStatus.PENDING)
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        "Cette demande de contact n'existe plus."
+                ));
     }
     private List<KnownUserResponse.SharedProject> sharedProjectsBetween(UUID userId, UUID personId) {
         return directoryRepository.findSharedMemberships(userId).stream()

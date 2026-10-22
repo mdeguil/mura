@@ -56,6 +56,18 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
+    // Neither a project nor a group: this one is about a person, and the
+    // person is the subject already.
+    @Transactional
+    public void notifyAboutPerson(User recipient, NotificationType type, User subject) {
+        Notification notification = new Notification();
+        notification.setUser(recipient);
+        notification.setType(type);
+        notification.setActorName(subject.getUsername());
+        notification.setCreatedAt(Instant.now());
+        notificationRepository.save(notification);
+    }
+
     @Transactional
     public NotificationResponse markRead(UUID userId, UUID notificationId) {
         Notification notification = requireOwn(userId, notificationId);

@@ -18,4 +18,13 @@ public interface ContactRepository extends JpaRepository<Contact, ContactId> {
     List<Contact> findAllForOwner(@Param("ownerId") UUID ownerId);
 
     Optional<Contact> findByOwnerIdAndPersonId(UUID ownerId, UUID personId);
+
+    // The requests waiting on this person to answer.
+    @Query("""
+            SELECT c FROM Contact c
+            JOIN FETCH c.owner
+            WHERE c.person.id = :personId AND c.status = io.mura.member.ContactStatus.PENDING
+            ORDER BY c.createdAt DESC
+            """)
+    List<Contact> findPendingForPerson(@Param("personId") UUID personId);
 }

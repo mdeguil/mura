@@ -57,4 +57,26 @@ public class DirectoryController {
         directoryService.removeContact(userId, personId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/requests")
+    public ResponseEntity<List<KnownUserResponse>> listRequests(@AuthenticationPrincipal UUID userId) {
+        return ResponseEntity.ok(directoryService.listRequests(userId));
+    }
+
+    @PostMapping("/requests/{requesterId}/accept")
+    public ResponseEntity<KnownUserResponse> accept(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID requesterId
+    ) {
+        return ResponseEntity.ok(directoryService.accept(userId, requesterId));
+    }
+
+    @PostMapping("/requests/{requesterId}/decline")
+    public ResponseEntity<Void> decline(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID requesterId
+    ) {
+        directoryService.decline(userId, requesterId);
+        return ResponseEntity.noContent().build();
+    }
 }
