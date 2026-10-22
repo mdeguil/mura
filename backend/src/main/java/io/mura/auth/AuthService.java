@@ -7,12 +7,14 @@ import io.mura.common.exception.ApiException;
 import io.mura.common.security.JwtService;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
-import io.mura.member.dto.UserResponse;
+import io.mura.member.dto.AccountResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -66,7 +68,7 @@ public class AuthService {
         }
 
         String token = jwtService.generateToken(user);
-        return new AuthResponse(token, UserResponse.from(user));
+        return new AuthResponse(token, AccountResponse.from(user));
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -79,7 +81,25 @@ public class AuthService {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect.");
         }
 
+        // Said plainly rather than hidden behind the generic message: a
+        // suspended account is not a typo, and hunting for one would be a
+        // waste of the reader's evening.
+        if (user.isSuspended()) {
+            throw new ApiException(
+                    HttpStatus.FORBIDDEN,
+                    "Ce compte a été suspendu. Contacte un administrateur."
+            );
+        }
+
         String token = jwtService.generateToken(user);
-        return new AuthResponse(token, UserResponse.from(user));
+        return new AuthResponse(token, AccountResponse.from(user));
+    }
+
+    // Read from the database, never from the token: a role taken away an
+    // hour ago must read as taken away now.
+    public AccountResponse me(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Ce compte n'existe plus."));
+        return AccountResponse.from(user);
     }
 }

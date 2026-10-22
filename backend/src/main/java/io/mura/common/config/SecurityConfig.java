@@ -57,7 +57,12 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/**",
+                                // Named one by one rather than /api/auth/**:
+                                // /api/auth/me needs the token to know whose
+                                // account to answer with, and a wildcard here
+                                // would hand it a null caller.
+                                "/api/auth/login",
+                                "/api/auth/register",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/api-docs/**"
