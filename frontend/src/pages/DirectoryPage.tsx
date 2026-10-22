@@ -332,11 +332,27 @@ export default function DirectoryPage() {
                                         </button>
                                         <button
                                             onClick={() => setRemoving(person)}
-                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-base leading-none text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
                                             title="Retirer de mon carnet"
                                             aria-label={`Retirer ${person.username} de mon carnet`}
                                         >
-                                            🗑
+                                            {/* A person with a minus, not a bin: nothing is destroyed
+                                                here — they keep their account, their projects, and
+                                                their own carnet. Only this list loses them. */}
+                                            <svg
+                                                viewBox="0 0 24 24"
+                                                className="w-[18px] h-[18px]"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                aria-hidden="true"
+                                            >
+                                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                                <circle cx="8.5" cy="7" r="4" />
+                                                <path d="M17 11h6" />
+                                            </svg>
                                         </button>
                                     </div>
                                 </li>
@@ -351,7 +367,6 @@ export default function DirectoryPage() {
 
             {removing && (
                 <ConfirmDialog
-                    icon="🗑"
                     title={`Retirer ${removing.username} de ton carnet ?`}
                     confirmLabel="Retirer du carnet"
                     body={
