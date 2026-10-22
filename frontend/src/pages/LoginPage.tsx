@@ -20,7 +20,7 @@ export default function LoginPage() {
         try {
             const { data } = await api.post('/auth/login', { email, password })
             setAuth(data.token, data.user)
-            navigate('/')
+            navigate('/projets')
         } catch (err) {
             setError(apiErrorMessage(err, 'Email ou mot de passe incorrect.'))
         } finally {

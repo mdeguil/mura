@@ -23,7 +23,7 @@ export default function Navbar() {
                     is as reachable as the projects from anywhere. */}
                 <nav className="flex items-center gap-1 ml-4">
                     {[
-                        { to: '/', label: 'Projets' },
+                        { to: '/projets', label: 'Projets' },
                         { to: '/carnet', label: 'Carnet' },
                         // Only for an administrator, and only as a
                         // convenience: the server refuses every call this

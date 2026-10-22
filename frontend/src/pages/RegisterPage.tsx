@@ -78,7 +78,7 @@ export default function RegisterPage() {
                 password,
             })
             setAuth(data.token, data.user)
-            navigate('/')
+            navigate('/projets')
         } catch (err) {
             const field = apiErrorField(err)
             fail(

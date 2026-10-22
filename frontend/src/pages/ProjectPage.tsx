@@ -154,7 +154,7 @@ export default function ProjectPage() {
         setOwnInvitation(null)
 
         if (!accepted) {
-            navigate('/')
+            navigate('/projets')
             return
         }
 
@@ -270,7 +270,7 @@ export default function ProjectPage() {
             <Navbar />
 
             <main className="flex-1 flex flex-col px-8 py-8 w-full">
-                <Link to="/" className="text-sm text-slate-500 hover:text-slate-700 transition">
+                <Link to="/projets" className="text-sm text-slate-500 hover:text-slate-700 transition">
                     ← Mes projets
                 </Link>
 
@@ -483,7 +483,7 @@ export default function ProjectPage() {
                     onArchived={() => {
                         setArchiving(false)
                         // It just left everyone's list, this page included.
-                        navigate('/')
+                        navigate('/projets')
                     }}
                 />
             )}

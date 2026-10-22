@@ -19,7 +19,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 // this only decides whether showing the page is worth the trip.
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
-  return user?.accountRole === 'ADMIN' ? <>{children}</> : <Navigate to="/" replace />
+  return user?.accountRole === 'ADMIN' ? <>{children}</> : <Navigate to="/projets" replace />
 }
 
 // What the browser stored at sign-in is a snapshot; a role can have been
@@ -57,7 +57,11 @@ export default function App() {
       <Routes>
         <Route path="/login"    element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
+        {/* The list lives at a name of its own, beside /carnet. The bare
+            root still works: a bookmark should not break because the
+            address got a name. */}
+        <Route path="/" element={<Navigate to="/projets" replace />} />
+        <Route path="/projets" element={<PrivateRoute><HomePage /></PrivateRoute>} />
         <Route path="/carnet" element={<PrivateRoute><DirectoryPage /></PrivateRoute>} />
         <Route path="/administration" element={<PrivateRoute><AdminRoute><AdminPage /></AdminRoute></PrivateRoute>} />
         <Route path="/project/:id" element={<PrivateRoute><ProjectPage /></PrivateRoute>} />
