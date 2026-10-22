@@ -174,3 +174,13 @@ export interface Account {
   suspendedAt: string | null
   createdAt: string
 }
+
+// What deleting an account will actually do, worked out by the server
+// before anything happens.
+export interface AccountDeletionPreview {
+  username: string
+  projectsTransferred: { projectName: string; successorUsername: string }[]
+  projectsDeleted: string[]
+  groupsDeleted: string[]
+  tasksUnassigned: number
+}

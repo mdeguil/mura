@@ -4,6 +4,7 @@ import { fr } from 'date-fns/locale'
 import Navbar from '../components/Navbar'
 import ConfirmDialog from '../components/ConfirmDialog'
 import UserAvatar from '../components/UserAvatar'
+import DeleteAccountDialog from '../components/DeleteAccountDialog'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
@@ -20,6 +21,7 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [pending, setPending] = useState<Pending | null>(null)
+    const [deleting, setDeleting] = useState<Account | null>(null)
 
     useEffect(() => {
         let cancelled = false
@@ -150,7 +152,7 @@ export default function AdminPage() {
                                                   : 'Utilisateur'}
                                         </span>
 
-                                        <div className="flex items-center justify-end gap-2 shrink-0 w-[232px]">
+                                        <div className="flex items-center justify-end gap-2 shrink-0 w-[272px]">
                                             <button
                                                 onClick={() =>
                                                     setPending({
@@ -185,6 +187,26 @@ export default function AdminPage() {
                                                     {account.suspended ? 'Réactiver' : 'Suspendre'}
                                                 </button>
                                             )}
+
+                                            {/* Only once suspended, the way a project is
+                                                archived before it can be deleted: a step
+                                                in front of something irreversible. */}
+                                            {!isMe && account.suspended && (
+                                                <button
+                                                    onClick={() => setDeleting(account)}
+                                                    className="h-8 w-8 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition flex items-center justify-center"
+                                                    aria-label={`Supprimer le compte de ${account.username}`}
+                                                    title="Supprimer définitivement"
+                                                >
+                                                    <svg viewBox="0 0 24 24" className="w-[16px] h-[16px]" fill="none"
+                                                         stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+                                                         strokeLinejoin="round" aria-hidden="true">
+                                                        <path d="M3 6h18" />
+                                                        <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+                                                        <path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6" />
+                                                    </svg>
+                                                </button>
+                                            )}
                                         </div>
                                     </li>
                                 )
@@ -209,6 +231,17 @@ export default function AdminPage() {
                     }
                     onCancel={() => setPending(null)}
                     onConfirm={() => apply(pending)}
+                />
+            )}
+
+            {deleting && (
+                <DeleteAccountDialog
+                    account={deleting}
+                    onClose={() => setDeleting(null)}
+                    onDeleted={() => {
+                        setAccounts((prev) => prev.filter((a) => a.id !== deleting.id))
+                        setDeleting(null)
+                    }}
                 />
             )}
         </div>
