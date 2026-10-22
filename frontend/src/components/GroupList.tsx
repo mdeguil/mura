@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../services/api'
-import UserAvatar from './UserAvatar'
+import UserAvatar, { SuspendedPill } from './UserAvatar'
 import { apiErrorMessage } from '../utils/apiError'
 import type { Group, KnownUser } from '../types'
 
@@ -261,11 +261,12 @@ export default function GroupList({
                                         className="flex items-center gap-2 bg-surface-muted border border-border rounded-full pl-1 pr-2.5 py-1"
                                     >
                                         <UserAvatar user={member} size="sm" />
-                                        <span className="text-xs text-slate-600">
+                                        <span className="text-xs text-slate-600 flex items-center gap-1.5">
                                             {member.username}
                                             {member.id === group.owner.id && (
                                                 <span className="text-slate-400"> · propriétaire</span>
                                             )}
+                                            {member.suspended && <SuspendedPill />}
                                         </span>
                                         {group.owned && member.id !== group.owner.id && (
                                             <button

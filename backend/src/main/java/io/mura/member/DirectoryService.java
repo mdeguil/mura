@@ -79,7 +79,8 @@ public class DirectoryService {
                         person.getAvatarUrl(),
                         shared.getOrDefault(person.getId(), List.of()),
                         saved.contains(person.getId()),
-                        favourites.contains(person.getId())
+                        favourites.contains(person.getId()),
+                        person.isSuspended()
                 ))
                 // Favourites first, then alphabetically — the order the carnet
                 // opens on, which the client can then flip.
@@ -131,7 +132,8 @@ public class DirectoryService {
                 person.getAvatarUrl(),
                 sharedProjectsBetween(ownerId, person.getId()),
                 true,
-                contact.isFavourite()
+                contact.isFavourite(),
+                person.isSuspended()
         );
     }
 
@@ -185,7 +187,8 @@ public class DirectoryService {
                 person.getAvatarUrl(),
                 sharedProjectsBetween(ownerId, personId),
                 true,
-                favourite
+                favourite,
+                person.isSuspended()
         );
     }
     private List<KnownUserResponse.SharedProject> sharedProjectsBetween(UUID userId, UUID personId) {

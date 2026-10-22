@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
-import UserAvatar from '../components/UserAvatar'
+import UserAvatar, { SuspendedPill } from '../components/UserAvatar'
 import GroupList from '../components/GroupList'
 import ConfirmDialog from '../components/ConfirmDialog'
 import api from '../services/api'
@@ -269,7 +269,10 @@ export default function DirectoryPage() {
                                 >
                                     <UserAvatar user={{ ...person, email: person.email }} />
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-sm text-slate-800">{person.username}</p>
+                                        <p className="text-sm text-slate-800 flex items-center gap-1.5">
+                                            <span className="truncate">{person.username}</span>
+                                            {person.suspended && <SuspendedPill />}
+                                        </p>
                                         {person.email && (
                                             <p className="text-xs text-slate-400 truncate">{person.email}</p>
                                         )}

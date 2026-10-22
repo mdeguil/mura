@@ -13,7 +13,10 @@ public record MemberResponse(
         String email,
         String username,
         String avatarUrl,
-        ProjectRole role
+        ProjectRole role,
+        // Carried everywhere a person is shown: a suspended teammate is
+        // still on the team but cannot be reached.
+        boolean suspended
 ) {
     public static MemberResponse from(ProjectMember member) {
         return build(member, true);
@@ -33,7 +36,8 @@ public record MemberResponse(
                 withEmail ? user.getEmail() : null,
                 user.getUsername(),
                 user.getAvatarUrl(),
-                member.getRole()
+                member.getRole(),
+                user.isSuspended()
         );
     }
 }

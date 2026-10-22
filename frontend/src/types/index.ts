@@ -5,6 +5,9 @@ export interface User {
   email: string | null
   username: string
   avatarUrl?: string
+  // Everyone who works with someone needs to know they can no longer be
+  // reached. Their application role stays private; this does not.
+  suspended?: boolean
 }
 
 export interface Label {
@@ -36,7 +39,13 @@ export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED'
 
 export type ProjectAccess = 'MEMBER' | 'INVITED'
 
-export type NotificationType = 'REMOVED_FROM_PROJECT' | 'MEMBER_LEFT_PROJECT'
+export type NotificationType =
+  | 'REMOVED_FROM_PROJECT'
+  | 'MEMBER_LEFT_PROJECT'
+  // About a group rather than a project: somebody in a group you own had
+  // their account suspended, or was let back in.
+  | 'MEMBER_SUSPENDED'
+  | 'MEMBER_RESTORED'
 
 // Named around the DOM's own Notification. Unlike an invitation there is
 // nothing to answer: clearing one deletes it.
@@ -45,7 +54,10 @@ export interface AppNotification {
   type: NotificationType
   // Null when the project is no longer the reader's to open.
   projectId: string | null
-  projectName: string
+  // Exactly one of the two is set: a notification is about a project or
+  // about a group, never both.
+  projectName: string | null
+  groupName: string | null
   actorName: string
   message: string | null
   read: boolean
@@ -137,6 +149,7 @@ export interface KnownUser {
   // Put there on purpose rather than through a shared project.
   saved: boolean
   favourite: boolean
+  suspended: boolean
 }
 
 // A named set of people, kept once instead of rebuilt project by project.

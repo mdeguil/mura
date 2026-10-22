@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '../services/api'
-import UserAvatar from './UserAvatar'
+import UserAvatar, { SuspendedPill } from './UserAvatar'
 import MemberDepartureDialog, { type Departure } from './MemberDepartureDialog'
 import type { Invitation, KnownUser, Member, ProjectRole } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
@@ -238,9 +238,10 @@ export default function MemberList({
                     <li key={member.id} className="flex items-center gap-3 py-2.5 first:pt-0">
                         <UserAvatar user={member} />
                         <div className="min-w-0 flex-1">
-                            <p className="text-sm text-slate-700 truncate">
-                                {member.username}
+                            <p className="text-sm text-slate-700 truncate flex items-center gap-1.5">
+                                <span className="truncate">{member.username}</span>
                                 {member.id === currentUserId && <span className="text-slate-400"> · toi</span>}
+                                {member.suspended && <SuspendedPill />}
                             </p>
                             {member.email && (
                                 <p className="text-xs text-slate-400 truncate">{member.email}</p>

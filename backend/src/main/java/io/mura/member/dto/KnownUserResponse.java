@@ -14,7 +14,10 @@ public record KnownUserResponse(
         List<SharedProject> sharedProjects,
         // True when the person was put in the carnet on purpose.
         boolean saved,
-        boolean favourite
+        boolean favourite,
+        // Same reason as everywhere else a person is listed: someone
+        // suspended is still in your carnet but cannot be reached.
+        boolean suspended
 ) {
     public record SharedProject(UUID id, String name, String color) {}
 }

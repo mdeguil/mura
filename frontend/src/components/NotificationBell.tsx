@@ -219,27 +219,7 @@ export default function NotificationBell() {
                                             ) : (
                                                 <>
                                                     <span className="block text-sm text-slate-700">
-                                                        {item.notification.type === 'REMOVED_FROM_PROJECT' ? (
-                                                            <>
-                                                                <span className="font-medium">
-                                                                    {item.notification.actorName}
-                                                                </span>{' '}
-                                                                t'a retiré de{' '}
-                                                                <span className="font-medium">
-                                                                    {item.notification.projectName}
-                                                                </span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <span className="font-medium">
-                                                                    {item.notification.actorName}
-                                                                </span>{' '}
-                                                                a quitté{' '}
-                                                                <span className="font-medium">
-                                                                    {item.notification.projectName}
-                                                                </span>
-                                                            </>
-                                                        )}
+                                                        <NotificationLine notification={item.notification} />
                                                     </span>
                                                     {item.notification.message && (
                                                         <span className="block text-xs text-slate-500 mt-1 border-l-2 border-border-strong pl-2 italic">
@@ -277,4 +257,41 @@ export default function NotificationBell() {
             )}
         </div>
     )
+}
+
+// One line per kind. A project notification names the project; a group one
+// names the group and the person it is about -- never the administrator who
+// acted, whose identity is nobody else's business.
+function NotificationLine({ notification }: { notification: AppNotification }) {
+    const who = <span className="font-medium">{notification.actorName}</span>
+    const where = (
+        <span className="font-medium">{notification.projectName ?? notification.groupName}</span>
+    )
+
+    switch (notification.type) {
+        case 'REMOVED_FROM_PROJECT':
+            return (
+                <>
+                    {who} t'a retiré de {where}
+                </>
+            )
+        case 'MEMBER_SUSPENDED':
+            return (
+                <>
+                    Le compte de {who} a été suspendu — il est dans ton groupe {where}
+                </>
+            )
+        case 'MEMBER_RESTORED':
+            return (
+                <>
+                    Le compte de {who} est de nouveau actif — il est dans ton groupe {where}
+                </>
+            )
+        default:
+            return (
+                <>
+                    {who} a quitté {where}
+                </>
+            )
+    }
 }
