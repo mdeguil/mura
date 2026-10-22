@@ -41,6 +41,21 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
+    // The group counterpart of notify(). A group owner is told about the
+    // people in their group, so the subject is the member whose account
+    // changed -- not the administrator who changed it, whose identity is
+    // nobody else's business.
+    @Transactional
+    public void notifyAboutGroup(User recipient, NotificationType type, String groupName, User subject) {
+        Notification notification = new Notification();
+        notification.setUser(recipient);
+        notification.setType(type);
+        notification.setGroupName(groupName);
+        notification.setActorName(subject.getUsername());
+        notification.setCreatedAt(Instant.now());
+        notificationRepository.save(notification);
+    }
+
     @Transactional
     public NotificationResponse markRead(UUID userId, UUID notificationId) {
         Notification notification = requireOwn(userId, notificationId);

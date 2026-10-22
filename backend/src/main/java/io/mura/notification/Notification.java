@@ -45,9 +45,17 @@ public class Notification {
 
     // Kept as text rather than read through the association: someone removed
     // from a project can no longer load it, and the line still has to name it.
-    @Column(name = "project_name", nullable = false)
+    // Null when the notification is about a group instead.
+    @Column(name = "project_name")
     private String projectName;
 
+    // The other possible subject. Exactly one of the two is set, which the
+    // database enforces.
+    @Column(name = "group_name")
+    private String groupName;
+
+    // Who the line is about: the person who acted for a project, or the
+    // person whose account changed for a group.
     @Column(name = "actor_name", nullable = false)
     private String actorName;
 

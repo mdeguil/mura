@@ -11,6 +11,7 @@ public record NotificationResponse(
         NotificationType type,
         UUID projectId,
         String projectName,
+        String groupName,
         String actorName,
         String message,
         boolean read,
@@ -26,6 +27,7 @@ public record NotificationResponse(
                         ? null
                         : notification.getProject().getId(),
                 notification.getProjectName(),
+                notification.getGroupName(),
                 notification.getActorName(),
                 notification.getMessage(),
                 notification.getReadAt() != null,

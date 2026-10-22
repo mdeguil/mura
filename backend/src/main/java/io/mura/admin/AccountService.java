@@ -9,6 +9,8 @@ import io.mura.member.AccountRole;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
 import io.mura.member.dto.AccountResponse;
+import io.mura.notification.NotificationService;
+import io.mura.notification.NotificationType;
 import io.mura.project.Project;
 import io.mura.project.ProjectMember;
 import io.mura.project.ProjectMemberRepository;
@@ -36,6 +38,7 @@ public class AccountService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserGroupRepository userGroupRepository;
     private final TaskRepository taskRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<AccountResponse> list(UUID actorId) {
@@ -73,7 +76,9 @@ public class AccountService {
         User target = requireAccount(targetId);
         refuseActingOnSelf(actorId, targetId, "Tu ne peux pas suspendre ton propre compte.");
 
-        if (suspended && target.isSuspended()) {
+        // Nothing to do, and nothing to announce: re-sending the same state
+        // must not put a second line in anyone's bell.
+        if (suspended == target.isSuspended()) {
             return AccountResponse.from(target);
         }
         if (suspended) {
@@ -81,7 +86,23 @@ public class AccountService {
         }
 
         target.setSuspendedAt(suspended ? Instant.now() : null);
+        tellGroupOwners(target, actorId, suspended);
         return AccountResponse.from(target);
+    }
+
+    // The people who have to work around an absence are the ones who put
+    // this person in a group, so they are the ones told. Not the whole
+    // application, and not the administrator who just did it.
+    private void tellGroupOwners(User target, UUID actorId, boolean suspended) {
+        NotificationType type = suspended
+                ? NotificationType.MEMBER_SUSPENDED
+                : NotificationType.MEMBER_RESTORED;
+
+        userGroupRepository.findAllForMember(target.getId()).stream()
+                .filter(group -> !group.getOwner().getId().equals(target.getId()))
+                .filter(group -> !group.getOwner().getId().equals(actorId))
+                .forEach(group -> notificationService.notifyAboutGroup(
+                        group.getOwner(), type, group.getName(), target));
     }
 
     private void requireAdmin(UUID actorId) {
