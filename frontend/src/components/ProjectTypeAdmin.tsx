@@ -214,21 +214,26 @@ export default function ProjectTypeAdmin() {
                         </span>
 
                         <div className="flex items-center gap-2 shrink-0 w-[168px] justify-end">
-                            <button
-                                onClick={() => openEdit(type)}
-                                className="h-8 px-3 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-medium transition"
-                            >
-                                Modifier
-                            </button>
-                            {/* The fallback has nowhere to send its own
-                                projects, so it is not offered. */}
-                            {!type.fallback && (
-                                <button
-                                    onClick={() => setRemoving(type)}
-                                    className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition"
-                                >
-                                    Supprimer
-                                </button>
+                            {/* Neither offered on the fallback: it is where every
+                                other deletion sends its projects, so it has to
+                                stay, and stay called what the dialogs say it is. */}
+                            {type.fallback ? (
+                                <span className="text-xs text-slate-400">Non modifiable</span>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() => openEdit(type)}
+                                        className="h-8 px-3 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-medium transition"
+                                    >
+                                        Modifier
+                                    </button>
+                                    <button
+                                        onClick={() => setRemoving(type)}
+                                        className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition"
+                                    >
+                                        Supprimer
+                                    </button>
+                                </>
                             )}
                         </div>
                     </li>

@@ -53,6 +53,7 @@ public class ProjectTypeService {
     @Transactional
     public ProjectTypeResponse update(UUID id, SaveProjectTypeRequest request) {
         ProjectType type = require(id);
+        refuseTouchingTheFallback(type, "modifié");
         refuseDuplicate(request.label(), id);
         apply(type, request);
         return ProjectTypeResponse.of(type, projectRepository.countByTypeId(id));
@@ -62,14 +63,7 @@ public class ProjectTypeService {
     public void delete(UUID id) {
         ProjectType type = require(id);
 
-        // There has to be somewhere for the orphans to go, and this is it.
-        if (type.isFallback()) {
-            throw new ApiException(
-                    HttpStatus.CONFLICT,
-                    "« " + type.getLabel() + " » est le type de repli : les projets des types "
-                            + "supprimés y sont déplacés, donc il ne peut pas être supprimé."
-            );
-        }
+        refuseTouchingTheFallback(type, "supprimé");
 
         ProjectType fallback = typeRepository.findByFallbackTrue()
                 .orElseThrow(() -> new ApiException(
@@ -81,6 +75,20 @@ public class ProjectTypeService {
         // would have refused, and a cascade would have taken the projects.
         projectRepository.reassignType(id, fallback.getId());
         typeRepository.delete(type);
+    }
+
+    // The fallback is where every other deletion sends its projects, so it
+    // has to still be there and still mean what the message said it means.
+    // Locked rather than merely undeletable: renaming "Autre" to something
+    // else would make every deletion dialog quietly wrong.
+    private void refuseTouchingTheFallback(ProjectType type, String verb) {
+        if (type.isFallback()) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "« " + type.getLabel() + " » est le type de repli : les projets des types "
+                            + "supprimés y sont déplacés, donc il ne peut pas être " + verb + "."
+            );
+        }
     }
 
     ProjectType require(UUID id) {
