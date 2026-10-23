@@ -4,6 +4,8 @@ import UserAvatar from './UserAvatar'
 import type { Task, TaskStatus } from '../types'
 import {
     NEXT_TASK_STATUS,
+    TASK_ADVANCE_BLOCKED,
+    TASK_ADVANCE_CLASSES,
     TASK_STATUS_HEX,
     TASK_STATUS_ICON_ACTIVE_CLASSES,
     TASK_STATUS_ICONS,
@@ -37,7 +39,7 @@ export default function TaskBoard({
                 </h3>
                 <div className="flex flex-col gap-2">
                     {archivedTasks.map((task) => (
-                        <div key={task.id} className="relative overflow-hidden bg-surface border border-border rounded-lg p-3 pb-6">
+                        <div key={task.id} className="bg-surface border border-border rounded-lg p-3">
                             <p className="text-sm text-slate-800 font-medium">{task.name}</p>
                             <p className="text-xs text-slate-500 mt-1">
                                 {format(new Date(task.startDate), 'dd/MM', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
@@ -58,14 +60,6 @@ export default function TaskBoard({
                                     🗑 Supprimer
                                 </button>
                             </div>
-
-                            {/* Archived, but still the state it reached. The
-                                column header says the rest. */}
-                            <span
-                                className="absolute inset-x-0 bottom-0 h-3 border-t border-white/40"
-                                style={{ background: projectGlassBackground(TASK_STATUS_HEX[task.status]) }}
-                                aria-hidden="true"
-                            />
                         </div>
                     ))}
                     {archivedTasks.length === 0 && (
@@ -141,17 +135,17 @@ export default function TaskBoard({
                                                                 : `Passer ${TASK_STATUS_LABELS[next].toLowerCase()}`
                                                         }
                                                         aria-label={`Passer ${TASK_STATUS_LABELS[next].toLowerCase()}`}
-                                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none transition ${
+                                                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs leading-none transition ${
                                                             blockedByStatus
-                                                                ? 'bg-surface-muted text-slate-300 cursor-not-allowed'
-                                                                : 'bg-surface-muted text-slate-400 hover:text-slate-600'
+                                                                ? TASK_ADVANCE_BLOCKED
+                                                                : TASK_ADVANCE_CLASSES[next]
                                                         }`}
                                                     >
                                                         {TASK_STATUS_ICONS[next]}
                                                     </button>
                                                 ) : (
                                                     <span
-                                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs leading-none ${TASK_STATUS_ICON_ACTIVE_CLASSES.TERMINE}`}
+                                                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs leading-none ${TASK_STATUS_ICON_ACTIVE_CLASSES.TERMINE}`}
                                                         title="Terminé"
                                                         aria-label="Terminé"
                                                     >
