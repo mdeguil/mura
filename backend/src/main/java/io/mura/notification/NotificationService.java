@@ -1,6 +1,7 @@
 package io.mura.notification;
 
 import io.mura.common.exception.ApiException;
+import io.mura.mail.MailService;
 import io.mura.member.User;
 import io.mura.notification.dto.NotificationResponse;
 import io.mura.project.Project;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final MailService mailService;
 
     @Transactional(readOnly = true)
     public List<NotificationResponse> listForUser(UUID userId) {
@@ -29,16 +31,10 @@ public class NotificationService {
     @Transactional
     public void notify(User recipient, NotificationType type, Project project, User actor, String message) {
         Notification notification = new Notification();
-        notification.setUser(recipient);
-        notification.setType(type);
         notification.setProject(project);
         notification.setProjectName(project.getName());
-        notification.setActorName(actor.getUsername());
         notification.setMessage(message == null || message.isBlank() ? null : message.trim());
-        // Set here rather than in @PrePersist: callers read the row back
-        // before the flush.
-        notification.setCreatedAt(Instant.now());
-        notificationRepository.save(notification);
+        record(notification, recipient, type, actor.getUsername());
     }
 
     // The group counterpart of notify(). A group owner is told about the
@@ -48,24 +44,45 @@ public class NotificationService {
     @Transactional
     public void notifyAboutGroup(User recipient, NotificationType type, String groupName, User subject) {
         Notification notification = new Notification();
-        notification.setUser(recipient);
-        notification.setType(type);
         notification.setGroupName(groupName);
-        notification.setActorName(subject.getUsername());
-        notification.setCreatedAt(Instant.now());
-        notificationRepository.save(notification);
+        record(notification, recipient, type, subject.getUsername());
     }
 
     // Neither a project nor a group: this one is about a person, and the
     // person is the subject already.
     @Transactional
     public void notifyAboutPerson(User recipient, NotificationType type, User subject) {
-        Notification notification = new Notification();
+        record(new Notification(), recipient, type, subject.getUsername());
+    }
+
+    // The one place a notification comes into being, so a type added later
+    // cannot quietly arrive without its mail.
+    private void record(Notification notification, User recipient, NotificationType type, String actorName) {
         notification.setUser(recipient);
         notification.setType(type);
-        notification.setActorName(subject.getUsername());
+        notification.setActorName(actorName);
+        // Set here rather than in @PrePersist: callers read the row back
+        // before the flush.
         notification.setCreatedAt(Instant.now());
         notificationRepository.save(notification);
+
+        // Nothing to act on and no way in: a suspended account cannot sign
+        // in, so the mail would only be a reminder of that.
+        if (recipient.isSuspended()) {
+            return;
+        }
+
+        NotificationWording.Lines lines = NotificationWording.of(notification);
+        mailService.sendNotification(
+                recipient.getEmail(),
+                recipient.getUsername(),
+                lines.subject(),
+                lines.heading(),
+                lines.sentence(),
+                notification.getMessage(),
+                lines.linkPath(),
+                lines.linkLabel()
+        );
     }
 
     @Transactional

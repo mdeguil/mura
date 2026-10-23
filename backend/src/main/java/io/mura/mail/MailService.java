@@ -58,6 +58,34 @@ public class MailService {
         ));
     }
 
+    // Every notification goes out as mail too. The bell only reaches
+    // somebody who happens to be looking at Mura; most of what it carries
+    // is news they would rather not wait to see.
+    @Async
+    public void sendNotification(
+            String to,
+            String username,
+            String subject,
+            String heading,
+            String sentence,
+            String message,
+            String linkPath,
+            String linkLabel
+    ) {
+        String note = message == null || message.isBlank()
+                ? ""
+                : "<blockquote style=\"margin:16px 0;padding:8px 0 8px 12px;"
+                        + "border-left:3px solid #cbd5e1;color:#475569;font-style:italic\">"
+                        + escape(message) + "</blockquote>";
+
+        send(to, subject, body(
+                heading,
+                "<p>Bonjour " + escape(username) + ",</p>"
+                        + "<p>" + escape(sentence) + "</p>"
+                        + note
+                        + button(appUrl + linkPath, linkLabel)
+        ));
+    }
     @Async
     public void sendProjectInvitation(String to, String username, String inviter, String project) {
         send(to, inviter + " t'invite sur " + project, body(
