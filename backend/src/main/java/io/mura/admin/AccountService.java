@@ -123,7 +123,9 @@ public class AccountService {
                 .toList();
     }
 
-    private void requireAdmin(UUID actorId) {
+    // Public so the other administration endpoints can lean on the one
+    // definition of who counts as an administrator.
+    public void requireAdmin(UUID actorId) {
         if (!requireAccount(actorId).getAccountRole().administers()) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Cette page est réservée aux administrateurs.");
         }

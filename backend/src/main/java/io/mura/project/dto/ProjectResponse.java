@@ -6,7 +6,6 @@ import io.mura.project.ProjectAccess;
 import io.mura.project.ProjectMember;
 
 import io.mura.project.ProjectStatus;
-import io.mura.project.ProjectType;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -21,7 +20,7 @@ public record ProjectResponse(
         String name,
         String description,
         String color,
-        ProjectType type,
+        ProjectTypeResponse type,
         LocalDate startDate,
         ProjectStatus status,
         Instant completedAt,
@@ -37,7 +36,7 @@ public record ProjectResponse(
                 project.getName(),
                 project.getDescription(),
                 project.getColor(),
-                project.getType(),
+                ProjectTypeResponse.from(project.getType()),
                 project.getStartDate(),
                 project.getStatus(),
                 project.getCompletedAt(),

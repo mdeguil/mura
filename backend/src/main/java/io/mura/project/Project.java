@@ -41,8 +41,10 @@ public class Project {
     @Column(nullable = false)
     private String color;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    // A row rather than an enum constant, so an administrator can add a
+    // type without a release.
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "type_id", nullable = false)
     private ProjectType type;
 
     @Column(name = "start_date")

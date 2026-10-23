@@ -29,6 +29,7 @@ public class ProjectService {
     private static final String DEFAULT_COLOR = "#14b8a6";
 
     private final ProjectRepository projectRepository;
+    private final ProjectTypeService projectTypeService;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectInvitationRepository invitationRepository;
     private final UserRepository userRepository;
@@ -116,7 +117,7 @@ public class ProjectService {
         project.setName(request.name());
         project.setDescription(request.description());
         project.setColor(StringUtils.hasText(request.color()) ? request.color() : DEFAULT_COLOR);
-        project.setType(request.type());
+        project.setType(projectTypeService.require(request.typeId()));
         project.setStartDate(request.startDate());
         applyStatus(project, request.status());
 
@@ -170,7 +171,7 @@ public class ProjectService {
         project.setName(request.name());
         project.setDescription(request.description());
         project.setColor(StringUtils.hasText(request.color()) ? request.color() : DEFAULT_COLOR);
-        project.setType(request.type());
+        project.setType(projectTypeService.require(request.typeId()));
         project.setStartDate(request.startDate());
         project.setStatus(ProjectStatus.A_VENIR);
         project.setOwner(owner);

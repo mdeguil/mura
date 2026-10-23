@@ -1,13 +1,13 @@
 package io.mura.project.dto;
 
 import io.mura.project.ProjectStatus;
-import io.mura.project.ProjectType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record UpdateProjectRequest(
         @NotBlank(message = "Le nom du projet est requis.")
@@ -21,7 +21,7 @@ public record UpdateProjectRequest(
         String color,
 
         @NotNull(message = "Le type de projet est requis.")
-        ProjectType type,
+        UUID typeId,
 
         LocalDate startDate,
 

@@ -1,6 +1,7 @@
 package io.mura.project;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -27,4 +28,12 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     // Every project this account owns, archived ones included: closing an
     // account has to account for all of them, not only the visible ones.
     List<Project> findAllByOwnerId(UUID ownerId);
+
+    long countByTypeId(UUID typeId);
+
+    // Used when a type is deleted: its projects move to the fallback before
+    // the row goes, so the foreign key never has to refuse.
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Project p SET p.type.id = :fallbackId WHERE p.type.id = :typeId")
+    void reassignType(@Param("typeId") UUID typeId, @Param("fallbackId") UUID fallbackId);
 }
