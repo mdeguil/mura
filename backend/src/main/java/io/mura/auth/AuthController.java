@@ -2,7 +2,13 @@ package io.mura.auth;
 
 import io.mura.auth.dto.AuthResponse;
 import io.mura.auth.dto.LoginRequest;
+import io.mura.auth.dto.ForgotPasswordRequest;
+import io.mura.auth.dto.ForgotPasswordRequest;
 import io.mura.auth.dto.RegisterRequest;
+import io.mura.auth.dto.ResetPasswordRequest;
+import io.mura.auth.dto.VerifyEmailRequest;
+import io.mura.auth.dto.ResetPasswordRequest;
+import io.mura.auth.dto.VerifyEmailRequest;
 import io.mura.member.dto.AccountResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,5 +46,33 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<AccountResponse> me(@AuthenticationPrincipal UUID userId) {
         return ResponseEntity.ok(authService.me(userId));
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<AccountResponse> verify(
+            @AuthenticationPrincipal UUID userId,
+            @Valid @RequestBody VerifyEmailRequest request
+    ) {
+        return ResponseEntity.ok(authService.verifyEmail(userId, request));
+    }
+
+    @PostMapping("/verify/resend")
+    public ResponseEntity<Void> resend(@AuthenticationPrincipal UUID userId) {
+        authService.resendCode(userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Always answers the same, whether or not the address has an account.
+    // Which addresses are registered is not a stranger's business.
+    @PostMapping("/password/forgot")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -21,6 +21,18 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+    properties:
+      mail:
+        smtp:
+          # The development mailbox wants neither, and demanding them would
+          # only stop the backend from talking to it.
+          auth: false
+          starttls:
+            enable: false
+
 server:
   port: ${BACKEND_PORT:8080}
 
@@ -34,6 +46,11 @@ mura:
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  mail:
+    from: ${MURA_MAIL_FROM:Mura <bonjour@mura.dev>}
+  app:
+    # The address a link in an email has to land on: the browser, not the API.
+    url: ${MURA_APP_URL:http://localhost:5173}
 
 springdoc:
   swagger-ui:

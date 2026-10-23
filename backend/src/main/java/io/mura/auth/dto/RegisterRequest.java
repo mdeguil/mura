@@ -1,5 +1,6 @@
 package io.mura.auth.dto;
 
+import io.mura.auth.validation.StrongPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -25,10 +26,7 @@ public record RegisterRequest(
         String email,
 
         @NotBlank(message = "Le mot de passe est requis.")
-        // 72 is BCrypt's limit, not a policy: beyond it the encoder silently
-        // ignores the rest, so a longer password would authenticate on its
-        // first 72 characters alone. Better to say so than to pretend.
-        @Size(min = 8, max = 72, message = "Le mot de passe doit contenir entre 8 et 72 caractères.")
+        @StrongPassword
         String password
 ) {
     // Normalising here rather than in the service, because this runs at

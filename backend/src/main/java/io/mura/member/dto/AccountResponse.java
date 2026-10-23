@@ -17,6 +17,9 @@ public record AccountResponse(
         String avatarUrl,
         AccountRole accountRole,
         boolean suspended,
+        // The client shows the code screen and nothing else until this
+        // is true, so it has to come back with the account.
+        boolean emailVerified,
         Instant suspendedAt,
         Instant createdAt
 ) {
@@ -28,6 +31,7 @@ public record AccountResponse(
                 user.getAvatarUrl(),
                 user.getAccountRole(),
                 user.isSuspended(),
+                user.isEmailVerified(),
                 user.getSuspendedAt(),
                 user.getCreatedAt()
         );

@@ -63,6 +63,10 @@ public class SecurityConfig {
                                 // would hand it a null caller.
                                 "/api/auth/login",
                                 "/api/auth/register",
+                                // Reached by somebody who cannot sign in --
+                                // that is the whole point of them.
+                                "/api/auth/password/forgot",
+                                "/api/auth/password/reset",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/api-docs/**"

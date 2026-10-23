@@ -54,6 +54,15 @@ public class User {
         return suspendedAt != null;
     }
 
+    // Set when the code mailed at registration came back. Accounts made
+    // before Mura asked for one were stamped verified by the migration.
+    @Column(name = "email_verified_at")
+    private Instant emailVerifiedAt;
+
+    public boolean isEmailVerified() {
+        return emailVerifiedAt != null;
+    }
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

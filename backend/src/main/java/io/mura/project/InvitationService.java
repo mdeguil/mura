@@ -1,6 +1,7 @@
 package io.mura.project;
 
 import io.mura.common.exception.ApiException;
+import io.mura.mail.MailService;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
 import io.mura.project.dto.CreateInvitationRequest;
@@ -22,6 +23,7 @@ public class InvitationService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectInvitationRepository invitationRepository;
     private final UserRepository userRepository;
+    private final MailService mailService;
 
     // Injected rather than hard-coded so the window can be changed without
     // touching the rule that applies it.
@@ -32,12 +34,14 @@ public class InvitationService {
             ProjectMemberRepository projectMemberRepository,
             ProjectInvitationRepository invitationRepository,
             UserRepository userRepository,
+            MailService mailService,
             @Value("${mura.invitations.lifetime-days}") long lifetimeDays
     ) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.invitationRepository = invitationRepository;
         this.userRepository = userRepository;
+        this.mailService = mailService;
         this.lifetime = Duration.ofDays(lifetimeDays);
     }
 
@@ -85,7 +89,14 @@ public class InvitationService {
         // built before Hibernate flushes the insert.
         invitation.setCreatedAt(Instant.now());
 
-        return toResponse(invitationRepository.save(invitation));
+        invitationRepository.save(invitation);
+        // The bell only reaches somebody who is already looking at Mura.
+        // An invitation is exactly the thing they are not yet.
+        mailService.sendProjectInvitation(
+                user.getEmail(), user.getUsername(),
+                project.getOwner().getUsername(), project.getName());
+
+        return toResponse(invitation);
     }
 
 

@@ -16,6 +16,16 @@ services:
       timeout: 5s
       retries: 5
 
+  # Catches every message the backend sends instead of delivering it, and
+  # shows them at http://localhost:8025. Nothing leaves the machine, so a
+  # test registration cannot mail a stranger.
+  mail:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${SMTP_PORT:-1025}:1025"
+
   backend:
     build: ./backend
     restart: unless-stopped
@@ -28,9 +38,16 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       CORS_ALLOWED_ORIGINS: http://localhost:${FRONTEND_PORT:-5173}
+      SPRING_MAIL_HOST: mail
+      SPRING_MAIL_PORT: 1025
+      MURA_MAIL_FROM: ${MURA_MAIL_FROM:-Mura <bonjour@mura.dev>}
+      # Where a link in an email has to land: the browser, not the API.
+      MURA_APP_URL: http://localhost:${FRONTEND_PORT:-5173}
     depends_on:
       db:
         condition: service_healthy
+      mail:
+        condition: service_started
 
   frontend:
     build: ./frontend
