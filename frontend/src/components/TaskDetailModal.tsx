@@ -11,8 +11,7 @@ export default function TaskDetailModal({
     projectId,
     members,
     onClose,
-    onAssigneeChange,
-    onDatesChange,
+    onSave,
     onSubtaskAdded,
     onSubtaskToggled,
     onSubtaskDeleted,
@@ -21,8 +20,10 @@ export default function TaskDetailModal({
     projectId: string
     members: Member[]
     onClose: () => void
-    onAssigneeChange: (taskId: string, assigneeId: string | null) => void
-    onDatesChange: (taskId: string, startDate: string, endDate: string) => Promise<boolean>
+    onSave: (
+        taskId: string,
+        changes: { startDate: string; endDate: string; assigneeId: string | null }
+    ) => Promise<boolean>
     onSubtaskAdded: (taskId: string, subtask: Subtask) => void
     onSubtaskToggled: (taskId: string, subtask: Subtask) => void
     onSubtaskDeleted: (taskId: string, subtaskId: string) => void
@@ -35,6 +36,7 @@ export default function TaskDetailModal({
     // stands between wanting a different date and having one.
     const [start, setStart] = useState(task.startDate)
     const [end, setEnd] = useState(task.endDate)
+    const [assigneeId, setAssigneeId] = useState(task.assignee?.id ?? null)
     const [dateError, setDateError] = useState('')
     const [savingDates, setSavingDates] = useState(false)
 
@@ -43,35 +45,50 @@ export default function TaskDetailModal({
     const startedAt = task.statusHistory.find((c) => c.toStatus === 'EN_COURS')?.changedAt
     const finishedAt = task.statusHistory.find((c) => c.toStatus === 'TERMINE')?.changedAt
 
-    // Both fields are sent together, because the pair is what has to make
-    // sense -- a start on its own can be after an end it has not met yet.
-    async function commit(nextStart: string, nextEnd: string) {
+    // Nothing here changes the task on its own: a half-entered pair of
+    // dates is not a decision, and neither is a responsable picked while
+    // still thinking. The task keeps what it has until Enregistrer.
+    const changed =
+        start !== task.startDate ||
+        end !== task.endDate ||
+        assigneeId !== (task.assignee?.id ?? null)
+
+    function editDates(nextStart: string, nextEnd: string) {
         setStart(nextStart)
         setEnd(nextEnd)
+        setDateError('')
+    }
 
-        if (!nextStart || !nextEnd) {
+    function discard() {
+        setStart(task.startDate)
+        setEnd(task.endDate)
+        setAssigneeId(task.assignee?.id ?? null)
+        setDateError('')
+    }
+
+    // Both fields go together, because the pair is what has to make sense:
+    // a start on its own can be after an end it has not met yet.
+    async function save(e: React.FormEvent) {
+        e.preventDefault()
+
+        if (!start || !end) {
             setDateError('Les deux dates sont requises.')
             return
         }
         // Caught here rather than by the server, which would answer with a
         // less helpful message about the whole task.
-        if (nextEnd < nextStart) {
+        if (end < start) {
             setDateError('La fin ne peut pas précéder le début.')
-            return
-        }
-        if (nextStart === task.startDate && nextEnd === task.endDate) {
-            setDateError('')
             return
         }
 
         setDateError('')
         setSavingDates(true)
         try {
-            const saved = await onDatesChange(task.id, nextStart, nextEnd)
+            const saved = await onSave(task.id, { startDate: start, endDate: end, assigneeId })
             if (!saved) {
-                // The server kept the old dates; the fields should say so.
-                setStart(task.startDate)
-                setEnd(task.endDate)
+                // The server kept what it had; the panel should say so.
+                discard()
             }
         } finally {
             setSavingDates(false)
@@ -106,7 +123,7 @@ export default function TaskDetailModal({
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
-            <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-xl shadow-lg max-h-[85vh] overflow-y-auto">
+            <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-2xl shadow-lg max-h-[85vh] overflow-y-auto">
                 <div className="flex items-start justify-between gap-4">
                     <h2 className="text-base font-semibold text-slate-800">{task.name}</h2>
                     <button
@@ -118,11 +135,12 @@ export default function TaskDetailModal({
                     </button>
                 </div>
 
-                {/* The status and both dates on one line, which is why the
-                    card is wider than a form of this size would otherwise
-                    need. The fields save themselves: no button stands
-                    between wanting a different date and having one. */}
-                <div className="flex flex-wrap items-end gap-3 mt-3">
+                {/* noValidate on purpose: min= greys out the bad days in the
+                    picker, but it also makes the field natively invalid once
+                    the start moves past the end, and the browser would then
+                    block the submit with a tooltip of its own instead of
+                    letting the form say it in French. */}
+                <form id="task-edit" onSubmit={save} noValidate className="flex flex-wrap items-end gap-3 mt-3">
                     <span
                         className={`text-xs font-medium px-2.5 py-1 rounded-full mb-1.5 ${TASK_STATUS_CLASSES[task.status]}`}
                     >
@@ -138,7 +156,7 @@ export default function TaskDetailModal({
                             type="date"
                             value={start}
                             disabled={savingDates}
-                            onChange={(e) => commit(e.target.value, end)}
+                            onChange={(e) => editDates(e.target.value, end)}
                             className="h-9 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 outline-none focus:border-brand-500 transition disabled:opacity-60"
                         />
                     </div>
@@ -155,24 +173,22 @@ export default function TaskDetailModal({
                             value={end}
                             disabled={savingDates}
                             // Nothing before the start is offered by the
-                            // picker, so the mistake is harder to make than
-                            // to correct -- and commit() still says so in
-                            // French for the ways round it.
+                            // picker; saveDates still says so in French for
+                            // the ways round it.
                             min={start}
-                            onChange={(e) => commit(start, e.target.value)}
+                            onChange={(e) => editDates(start, e.target.value)}
                             className="h-9 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 outline-none focus:border-brand-500 transition disabled:opacity-60"
                         />
                     </div>
-                </div>
+                </form>
 
                 {dateError && <p className="text-xs text-red-500 mt-2">{dateError}</p>}
-
                 <div className="flex items-center gap-2 mt-3">
                     <span className="text-xs font-medium text-slate-500">Responsable</span>
                     <AssigneePicker
                         members={members}
-                        value={task.assignee?.id ?? null}
-                        onChange={(assigneeId) => onAssigneeChange(task.id, assigneeId)}
+                        value={assigneeId}
+                        onChange={(next) => setAssigneeId(next)}
                     />
                 </div>
 
@@ -238,6 +254,31 @@ export default function TaskDetailModal({
                     )}
                 </div>
 
+                {/* At the end of everything that can be edited, and before the
+                    history, which only reports. The buttons sit outside the form
+                    and name it instead: the subtasks below carry a form of their
+                    own, and a form inside a form is not a thing. */}
+                <div className="flex items-center gap-2 mt-6 pt-4 border-t border-border">
+                    <button
+                        type="submit"
+                        form="task-edit"
+                        disabled={savingDates || !changed}
+                        className="h-9 px-4 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition disabled:opacity-40"
+                    >
+                        {savingDates ? 'Enregistrement…' : 'Enregistrer'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={discard}
+                        disabled={savingDates || !changed}
+                        className="h-9 px-4 rounded-lg text-xs font-medium text-slate-500 hover:bg-surface-muted transition disabled:opacity-40"
+                    >
+                        Annuler
+                    </button>
+                    {changed && !dateError && (
+                        <span className="text-xs text-slate-400">Modifications non enregistrées</span>
+                    )}
+                </div>
                 <div className="mt-6 pt-6 border-t border-border">
                     <h3 className="text-xs font-medium text-slate-500 mb-3">Historique</h3>
                     <div className="flex flex-col gap-2">

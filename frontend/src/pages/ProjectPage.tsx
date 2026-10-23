@@ -195,12 +195,14 @@ export default function ProjectPage() {
         void saveTask(taskId, { status }, "Impossible de changer le statut de cette tâche.")
     }
 
-    function handleAssigneeChange(taskId: string, assigneeId: string | null) {
-        void saveTask(taskId, { assigneeId }, "Impossible de changer le responsable de cette tâche.")
-    }
-
-    function handleDatesChange(taskId: string, startDate: string, endDate: string) {
-        return saveTask(taskId, { startDate, endDate }, "Impossible de changer les dates de cette tâche.")
+    // One save for the whole task: the detail panel stages every edit and
+    // sends them together, so a responsable and a date changed in the same
+    // visit are one decision rather than two.
+    function handleTaskSave(
+        taskId: string,
+        changes: { startDate: string; endDate: string; assigneeId: string | null }
+    ) {
+        return saveTask(taskId, changes, "Impossible d'enregistrer cette tâche.")
     }
 
     // Both edits go through the same PUT, which replaces the whole task:
@@ -516,8 +518,7 @@ export default function ProjectPage() {
                     task={selectedTask}
                     projectId={id}
                     members={members}
-                    onAssigneeChange={handleAssigneeChange}
-                    onDatesChange={handleDatesChange}
+                    onSave={handleTaskSave}
                     onClose={() => setSelectedTaskId(null)}
                     onSubtaskAdded={handleSubtaskAdded}
                     onSubtaskToggled={handleSubtaskToggled}
