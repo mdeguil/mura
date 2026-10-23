@@ -209,9 +209,9 @@ export default function ProjectPage() {
         taskId: string,
         changes: { status?: TaskStatus; assigneeId?: string | null; startDate?: string; endDate?: string },
         fallbackMessage: string
-    ) {
+    ): Promise<boolean> {
         const task = tasks.find((t) => t.id === taskId)
-        if (!task) return
+        if (!task) return false
 
         try {
             const { data } = await api.put<Task>(
@@ -219,8 +219,12 @@ export default function ProjectPage() {
                 taskPayload(task, changes)
             )
             setTasks((prev) => prev.map((t) => (t.id === taskId ? data : t)))
+            return true
         } catch (err) {
             window.alert(apiErrorMessage(err, fallbackMessage))
+            // Said rather than swallowed: a field edited in place has to
+            // know to show the value the server kept.
+            return false
         }
     }
 

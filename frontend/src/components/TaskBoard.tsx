@@ -39,7 +39,7 @@ export default function TaskBoard({
                 </h3>
                 <div className="flex flex-col gap-2">
                     {archivedTasks.map((task) => (
-                        <div key={task.id} className="bg-surface border border-border rounded-lg p-3">
+                        <div key={task.id} className="bg-surface border border-border rounded-lg p-3 hover:border-brand-500 transition">
                             <p className="text-sm text-slate-800 font-medium">{task.name}</p>
                             <p className="text-xs text-slate-500 mt-1">
                                 {format(new Date(task.startDate), 'dd/MM', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}

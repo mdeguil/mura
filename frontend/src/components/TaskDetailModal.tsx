@@ -22,7 +22,7 @@ export default function TaskDetailModal({
     members: Member[]
     onClose: () => void
     onAssigneeChange: (taskId: string, assigneeId: string | null) => void
-    onDatesChange: (taskId: string, startDate: string, endDate: string) => Promise<void>
+    onDatesChange: (taskId: string, startDate: string, endDate: string) => Promise<boolean>
     onSubtaskAdded: (taskId: string, subtask: Subtask) => void
     onSubtaskToggled: (taskId: string, subtask: Subtask) => void
     onSubtaskDeleted: (taskId: string, subtaskId: string) => void
@@ -31,8 +31,8 @@ export default function TaskDetailModal({
     const [loading, setLoading] = useState(false)
 
     // Edited in place, like the status badge and the responsable pill:
-    // changing a date should not mean opening a form.
-    const [editingDates, setEditingDates] = useState(false)
+    // the fields are simply there, and a change saves itself. No button
+    // stands between wanting a different date and having one.
     const [start, setStart] = useState(task.startDate)
     const [end, setEnd] = useState(task.endDate)
     const [dateError, setDateError] = useState('')
@@ -43,31 +43,36 @@ export default function TaskDetailModal({
     const startedAt = task.statusHistory.find((c) => c.toStatus === 'EN_COURS')?.changedAt
     const finishedAt = task.statusHistory.find((c) => c.toStatus === 'TERMINE')?.changedAt
 
-    function openDates() {
-        setStart(task.startDate)
-        setEnd(task.endDate)
-        setDateError('')
-        setEditingDates(true)
-    }
+    // Both fields are sent together, because the pair is what has to make
+    // sense -- a start on its own can be after an end it has not met yet.
+    async function commit(nextStart: string, nextEnd: string) {
+        setStart(nextStart)
+        setEnd(nextEnd)
 
-    async function saveDates(e: React.FormEvent) {
-        e.preventDefault()
-        if (!start || !end) {
+        if (!nextStart || !nextEnd) {
             setDateError('Les deux dates sont requises.')
             return
         }
         // Caught here rather than by the server, which would answer with a
         // less helpful message about the whole task.
-        if (end < start) {
+        if (nextEnd < nextStart) {
             setDateError('La fin ne peut pas précéder le début.')
+            return
+        }
+        if (nextStart === task.startDate && nextEnd === task.endDate) {
+            setDateError('')
             return
         }
 
         setDateError('')
         setSavingDates(true)
         try {
-            await onDatesChange(task.id, start, end)
-            setEditingDates(false)
+            const saved = await onDatesChange(task.id, nextStart, nextEnd)
+            if (!saved) {
+                // The server kept the old dates; the fields should say so.
+                setStart(task.startDate)
+                setEnd(task.endDate)
+            }
         } finally {
             setSavingDates(false)
         }
@@ -101,7 +106,7 @@ export default function TaskDetailModal({
 
     return (
         <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
-            <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-md shadow-lg max-h-[85vh] overflow-y-auto">
+            <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-xl shadow-lg max-h-[85vh] overflow-y-auto">
                 <div className="flex items-start justify-between gap-4">
                     <h2 className="text-base font-semibold text-slate-800">{task.name}</h2>
                     <button
@@ -113,76 +118,54 @@ export default function TaskDetailModal({
                     </button>
                 </div>
 
-                <div className="flex items-center gap-2 mt-3">
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${TASK_STATUS_CLASSES[task.status]}`}>
+                {/* The status and both dates on one line, which is why the
+                    card is wider than a form of this size would otherwise
+                    need. The fields save themselves: no button stands
+                    between wanting a different date and having one. */}
+                <div className="flex flex-wrap items-end gap-3 mt-3">
+                    <span
+                        className={`text-xs font-medium px-2.5 py-1 rounded-full mb-1.5 ${TASK_STATUS_CLASSES[task.status]}`}
+                    >
                         {TASK_STATUS_LABELS[task.status]}
                     </span>
-                    {!editingDates && (
-                        <button
-                            onClick={openDates}
-                            className="text-xs text-slate-500 hover:text-brand-600 transition flex items-center gap-1.5"
-                            title="Modifier les dates"
-                        >
-                            {format(new Date(task.startDate), 'dd/MM/yyyy', { locale: fr })} →{' '}
-                            {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
-                            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none"
-                                 stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                                 strokeLinejoin="round" aria-hidden="true">
-                                <path d="M12 20h9" />
-                                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                            </svg>
-                        </button>
-                    )}
+
+                    <div>
+                        <label htmlFor="task-start" className="block text-[11px] font-medium text-slate-500 mb-1">
+                            Début
+                        </label>
+                        <input
+                            id="task-start"
+                            type="date"
+                            value={start}
+                            disabled={savingDates}
+                            onChange={(e) => commit(e.target.value, end)}
+                            className="h-9 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 outline-none focus:border-brand-500 transition disabled:opacity-60"
+                        />
+                    </div>
+
+                    <span className="text-slate-400 mb-2">→</span>
+
+                    <div>
+                        <label htmlFor="task-end" className="block text-[11px] font-medium text-slate-500 mb-1">
+                            Fin
+                        </label>
+                        <input
+                            id="task-end"
+                            type="date"
+                            value={end}
+                            disabled={savingDates}
+                            // Nothing before the start is offered by the
+                            // picker, so the mistake is harder to make than
+                            // to correct -- and commit() still says so in
+                            // French for the ways round it.
+                            min={start}
+                            onChange={(e) => commit(start, e.target.value)}
+                            className="h-9 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 outline-none focus:border-brand-500 transition disabled:opacity-60"
+                        />
+                    </div>
                 </div>
 
-                {/* noValidate on the form below is on purpose: min= greys out
-                    the bad days in the picker, but it also makes the field
-                    natively invalid once the start moves past the end, and the
-                    browser would then block the submit with a tooltip of its
-                    own instead of letting the form say it in French. */}
-                {editingDates && (
-                    <form onSubmit={saveDates} noValidate className="mt-3 flex flex-wrap items-end gap-2">
-                        <div>
-                            <label className="block text-[11px] font-medium text-slate-500 mb-1">Début</label>
-                            <input
-                                type="date"
-                                value={start}
-                                onChange={(e) => setStart(e.target.value)}
-                                autoFocus
-                                className="h-9 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 outline-none focus:border-brand-500 transition"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-[11px] font-medium text-slate-500 mb-1">Fin</label>
-                            <input
-                                type="date"
-                                value={end}
-                                onChange={(e) => setEnd(e.target.value)}
-                                // Nothing before the start is selectable, so the
-                                // mistake is harder to make than to correct.
-                                min={start}
-                                className="h-9 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 outline-none focus:border-brand-500 transition"
-                            />
-                        </div>
-                        <button
-                            type="submit"
-                            disabled={savingDates}
-                            className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition disabled:opacity-60"
-                        >
-                            {savingDates ? 'Enregistrement…' : 'Enregistrer'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setEditingDates(false)}
-                            className="h-9 px-3 rounded-lg text-xs font-medium text-slate-500 hover:bg-surface-muted transition"
-                        >
-                            Annuler
-                        </button>
-                        {dateError && (
-                            <p className="w-full text-xs text-red-500">{dateError}</p>
-                        )}
-                    </form>
-                )}
+                {dateError && <p className="text-xs text-red-500 mt-2">{dateError}</p>}
 
                 <div className="flex items-center gap-2 mt-3">
                     <span className="text-xs font-medium text-slate-500">Responsable</span>
