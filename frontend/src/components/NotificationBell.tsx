@@ -125,15 +125,29 @@ export default function NotificationBell() {
         }
     }
 
-    function projectOf(item: Item) {
-        return item.kind === 'invitation' ? item.invitation.projectId : item.notification.projectId
+    // Where a line leads when you double-click it, and what to call the
+    // place. A notification about a project opens the project; one about a
+    // carnet entry opens the carnet. The rest lead nowhere, and say so by
+    // offering nothing.
+    function destinationOf(item: Item): { href: string; label: string } | null {
+        if (item.kind === 'invitation') {
+            return item.invitation.projectId
+                ? { href: `/project/${item.invitation.projectId}`, label: 'le projet' }
+                : null
+        }
+
+        const { type, projectId } = item.notification
+        if (type === 'CONTACT_REQUESTED' || type === 'CONTACT_ACCEPTED') {
+            return { href: '/carnet', label: 'le carnet' }
+        }
+        return projectId ? { href: `/project/${projectId}`, label: 'le projet' } : null
     }
 
-    function openProject(item: Item) {
-        const projectId = projectOf(item)
-        if (!projectId) return
+    function openDestination(item: Item) {
+        const destination = destinationOf(item)
+        if (!destination) return
         setOpen(false)
-        navigate(`/project/${projectId}`)
+        navigate(destination.href)
     }
 
     return (
@@ -192,11 +206,11 @@ export default function NotificationBell() {
                                 >
                                     <button
                                         onClick={() => markRead(item)}
-                                        onDoubleClick={() => openProject(item)}
+                                        onDoubleClick={() => openDestination(item)}
                                         className="flex-1 min-w-0 text-left px-4 py-3 flex gap-3 hover:bg-surface-muted transition"
                                         title={
-                                            projectOf(item)
-                                                ? 'Clic pour marquer comme lu, double-clic pour ouvrir le projet'
+                                            destinationOf(item)
+                                                ? `Clic pour marquer comme lu, double-clic pour ouvrir ${destinationOf(item)!.label}`
                                                 : 'Clic pour marquer comme lu'
                                         }
                                     >
@@ -233,7 +247,8 @@ export default function NotificationBell() {
                                                     addSuffix: true,
                                                     locale: fr,
                                                 })}
-                                                {projectOf(item) && ' · double-clic pour voir le projet'}
+                                                {destinationOf(item) &&
+                                                    ` · double-clic pour voir ${destinationOf(item)!.label}`}
                                             </span>
                                         </span>
                                     </button>
