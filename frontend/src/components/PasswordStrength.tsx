@@ -9,8 +9,16 @@ export function passwordRules(password: string, email: string, username: string)
     const lower = password.toLowerCase()
 
     return [
-        { label: 'Au moins 8 caractères', met: password.length >= 8 },
-        { label: 'Au plus 72 caractères', met: password.length > 0 && password.length <= 72 },
+        { label: 'Au moins 8 caractères', met: password.length >= 8 && password.length <= 72 },
+        { label: 'Une majuscule', met: /\p{Lu}/u.test(password) },
+        { label: 'Une minuscule', met: /\p{Ll}/u.test(password) },
+        { label: 'Un chiffre', met: /\d/.test(password) },
+        {
+            label: 'Un caractère spécial',
+            // Anything that is not a letter, a digit or a space. Spelling out
+            // a list would refuse perfectly good characters nobody thought of.
+            met: /[^\p{L}\p{N}\s]/u.test(password),
+        },
         {
             label: "Différent de ton email et de ton nom d'utilisateur",
             // Unmet only once there is something to compare against, so the
@@ -32,13 +40,15 @@ export default function PasswordStrength({ rules }: { rules: PasswordRule[] }) {
             <div className="h-1 rounded-full bg-surface-muted overflow-hidden" aria-hidden="true">
                 <div
                     className={`h-full rounded-full transition-all duration-300 ${
-                        ratio === 1 ? 'bg-emerald-500' : ratio > 0.4 ? 'bg-amber-400' : 'bg-red-400'
+                        ratio === 1 ? 'bg-emerald-500' : ratio > 0.6 ? 'bg-amber-400' : 'bg-red-400'
                     }`}
                     style={{ width: `${Math.max(ratio * 100, 6)}%` }}
                 />
             </div>
 
-            <ul className="flex flex-col gap-1 mt-2">
+            {/* Two columns: six rules in a single stack pushes the submit
+                button off a short screen. */}
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 mt-2">
                 {rules.map((rule) => (
                     <li
                         key={rule.label}

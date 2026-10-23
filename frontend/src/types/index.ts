@@ -193,6 +193,9 @@ export interface Account {
   avatarUrl?: string
   accountRole: AccountRole
   suspended: boolean
+  // False until the code mailed at registration comes back. The app
+  // shows the code screen and nothing else while it is.
+  emailVerified: boolean
   suspendedAt: string | null
   createdAt: string
 }

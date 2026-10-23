@@ -6,13 +6,23 @@ import DirectoryPage from './pages/DirectoryPage'
 import AdminPage from './pages/AdminPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import VerifyEmailPage from './pages/VerifyEmailPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import api from './services/api'
 import { useAuthStore } from './store/authStore'
 import type { Account } from './types'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token)
-  return token ? <>{children}</> : <Navigate to="/login" replace />
+  const user = useAuthStore((s) => s.user)
+
+  if (!token) return <Navigate to="/login" replace />
+  // Not a redirect: an unverified account has nowhere to be sent, because
+  // the server refuses every other call it could make. The code screen is
+  // what the app is until the address is confirmed.
+  if (user && !user.emailVerified) return <VerifyEmailPage />
+  return <>{children}</>
 }
 
 // The role is checked again on the server for every call this page makes;
@@ -57,6 +67,9 @@ export default function App() {
       <Routes>
         <Route path="/login"    element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
+        {/* The address a reset mail points at. */}
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         {/* The list lives at a name of its own, beside /carnet. The bare
             root still works: a bookmark should not break because the
             address got a name. */}
