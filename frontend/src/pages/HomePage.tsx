@@ -5,11 +5,11 @@ import CreateProjectModal from '../components/CreateProjectModal'
 import InvitedProjectCard from '../components/InvitedProjectCard'
 import ArchivedProjectList from '../components/ArchivedProjectList'
 import api from '../services/api'
-import type { Invitation, Project, ProjectStatus, ProjectType } from '../types'
-import { PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
+import type { Invitation, Project, ProjectStatus } from '../types'
+import { PROJECT_STATUS_LABELS } from '../utils/projectMeta'
+import { useProjectTypes } from '../hooks/useProjectTypes'
 import { apiErrorMessage } from '../utils/apiError'
 
-const TYPE_FILTERS = Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]
 
 // Archived sits alongside the statuses rather than under them: it is where a
 // project goes, not how its work is going. Keeping it as its own tab is also
@@ -26,13 +26,14 @@ const TABS: { key: ProjectTab; label: string }[] = [
 ]
 
 export default function HomePage() {
+    const { types } = useProjectTypes()
     const [projects, setProjects] = useState<Project[]>([])
     const [invitations, setInvitations] = useState<Invitation[]>([])
     const [archived, setArchived] = useState<Project[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
-    const [typeFilter, setTypeFilter] = useState<ProjectType | 'ALL'>('ALL')
+    const [typeFilter, setTypeFilter] = useState<string>('ALL')
     const [tab, setTab] = useState<ProjectTab>('ALL')
     const [showCreateModal, setShowCreateModal] = useState(false)
 
@@ -93,7 +94,7 @@ export default function HomePage() {
         return (list: Project[]) =>
             list
                 .filter((p) => !q || p.name.toLowerCase().includes(q))
-                .filter((p) => typeFilter === 'ALL' || p.type === typeFilter)
+                .filter((p) => typeFilter === 'ALL' || p.type.id === typeFilter)
     }, [query, typeFilter])
 
     const active = useMemo(() => narrow(projects), [narrow, projects])
@@ -194,17 +195,17 @@ export default function HomePage() {
                     >
                         Tous
                     </button>
-                    {TYPE_FILTERS.map((t) => (
+                    {types.map((t) => (
                         <button
-                            key={t}
-                            onClick={() => setTypeFilter(t)}
+                            key={t.id}
+                            onClick={() => setTypeFilter(t.id)}
                             className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
-                                typeFilter === t
+                                typeFilter === t.id
                                     ? 'bg-slate-800 text-white border-slate-800'
                                     : 'bg-surface text-slate-600 border-border-strong hover:border-brand-500'
                             }`}
                         >
-                            {PROJECT_TYPE_LABELS[t]}
+                            {t.emoji} {t.label}
                         </button>
                     ))}
                 </div>

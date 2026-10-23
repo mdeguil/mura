@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
-import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
+import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, projectTypeLabel } from '../utils/projectMeta'
 
 export default function ProjectCard({ project }: { project: Project }) {
     return (
@@ -20,7 +20,7 @@ export default function ProjectCard({ project }: { project: Project }) {
                 )}
             </div>
 
-            <p className="text-xs text-slate-500 mt-1">{PROJECT_TYPE_LABELS[project.type]}</p>
+            <p className="text-xs text-slate-500 mt-1">{projectTypeLabel(project.type)}</p>
             {project.startDate && (
                 <p className="text-xs text-slate-500">
                     Date de début : {format(new Date(project.startDate), 'dd/MM/yyyy', { locale: fr })}

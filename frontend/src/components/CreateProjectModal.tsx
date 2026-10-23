@@ -22,7 +22,7 @@ export default function CreateProjectModal({
         name: '',
         description: '',
         color: PROJECT_COLORS[0],
-        type: 'AUTRE',
+        typeId: '',
         startDate: '',
     })
     // The address is what the server needs; the name is what the chip

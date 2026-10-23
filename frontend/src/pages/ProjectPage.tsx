@@ -13,7 +13,7 @@ import ProjectStatusPicker from '../components/ProjectStatusPicker'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import type { Invitation, Member, Project, ProjectStatus, Subtask, Task, TaskStatus } from '../types'
-import { PROJECT_TYPE_LABELS } from '../utils/projectMeta'
+import { projectTypeLabel } from '../utils/projectMeta'
 import { projectGlassBackground } from '../utils/color'
 import { taskPayload } from '../utils/taskPayload'
 import { apiErrorMessage } from '../utils/apiError'
@@ -300,7 +300,7 @@ export default function ProjectPage() {
                                 />
                                 <div>
                                     <h1 className="text-xl font-semibold text-slate-800">{project.name}</h1>
-                                    <p className="text-sm text-slate-500">{PROJECT_TYPE_LABELS[project.type]}</p>
+                                    <p className="text-sm text-slate-500">{projectTypeLabel(project.type)}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 shrink-0">

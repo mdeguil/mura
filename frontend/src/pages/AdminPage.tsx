@@ -5,6 +5,8 @@ import Navbar from '../components/Navbar'
 import ConfirmDialog from '../components/ConfirmDialog'
 import UserAvatar from '../components/UserAvatar'
 import DeleteAccountDialog from '../components/DeleteAccountDialog'
+import ProjectTypeAdmin from '../components/ProjectTypeAdmin'
+import AdminGroupList from '../components/AdminGroupList'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
@@ -22,6 +24,7 @@ export default function AdminPage() {
     const [error, setError] = useState('')
     const [pending, setPending] = useState<Pending | null>(null)
     const [deleting, setDeleting] = useState<Account | null>(null)
+    const [tab, setTab] = useState<'accounts' | 'types' | 'groups'>('accounts')
 
     useEffect(() => {
         let cancelled = false
@@ -88,9 +91,35 @@ export default function AdminPage() {
             <main className="max-w-5xl mx-auto px-6 py-8">
                 <h1 className="text-xl font-semibold text-slate-800">Administration</h1>
                 <p className="text-sm text-slate-500 mt-1">
-                    Les comptes de Mura et ce qu'ils peuvent faire de l'application. Ce rôle ne donne
-                    aucun droit sur un projet : dans un projet, seul le rôle d'équipe compte.
+                    Ce que les comptes peuvent faire de Mura, les types de projet proposés, et les
+                    groupes et leurs gérants.
                 </p>
+
+                <div className="flex items-center gap-1 mt-5 border-b border-border">
+                    {([
+                        ['accounts', 'Comptes'],
+                        ['types', 'Types de projet'],
+                        ['groups', 'Groupes'],
+                    ] as const).map(([key, label]) => (
+                        <button
+                            key={key}
+                            onClick={() => setTab(key)}
+                            className={`h-9 px-3 -mb-px border-b-2 text-sm font-medium transition ${
+                                tab === key
+                                    ? 'border-brand-500 text-slate-800'
+                                    : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="mt-6">
+                {tab === 'types' && <ProjectTypeAdmin />}
+                {tab === 'groups' && <AdminGroupList />}
+                {tab === 'accounts' && (
+                <>
 
                 {error && (
                     <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mt-4">
@@ -214,6 +243,9 @@ export default function AdminPage() {
                         </ul>
                     </div>
                 )}
+                </>
+                )}
+            </div>
             </main>
 
             {pending && (

@@ -1,11 +1,9 @@
-import type { ProjectStatus, ProjectType } from '../types'
+import type { ProjectStatus } from '../types'
 
-export const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
-    WEB: '🌐 Web',
-    MOBILE: '📱 Mobile',
-    MARKETING: '📣 Marketing',
-    EVENEMENT: '🎉 Événement',
-    AUTRE: '📁 Autre',
+// A type now carries its own emoji and label, so there is nothing left to
+// look up -- and nothing to go stale when an administrator adds one.
+export function projectTypeLabel(type: { emoji: string; label: string }): string {
+    return `${type.emoji} ${type.label}`
 }
 
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {

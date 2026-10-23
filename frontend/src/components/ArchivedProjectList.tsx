@@ -4,7 +4,7 @@ import DeleteProjectDialog from './DeleteProjectDialog'
 import { apiErrorMessage } from '../utils/apiError'
 import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
-import { PROJECT_TYPE_LABELS } from '../utils/projectMeta'
+import { projectTypeLabel } from '../utils/projectMeta'
 
 // Rows rather than cards: these are projects you are deciding about, not
 // ones you are working in, and the two actions matter more than the look.
@@ -62,7 +62,7 @@ export default function ArchivedProjectList({
                         />
                         <div className="min-w-0 flex-1">
                             <p className="text-sm text-slate-600 truncate">{project.name}</p>
-                            <p className="text-xs text-slate-400">{PROJECT_TYPE_LABELS[project.type]}</p>
+                            <p className="text-xs text-slate-400">{projectTypeLabel(project.type)}</p>
                         </div>
                         <button
                             onClick={() => restore(project)}

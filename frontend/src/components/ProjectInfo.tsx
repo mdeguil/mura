@@ -2,7 +2,7 @@ import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import MemberList from './MemberList'
 import type { Invitation, Member, Project, Task } from '../types'
-import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, PROJECT_TYPE_LABELS } from '../utils/projectMeta'
+import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, projectTypeLabel } from '../utils/projectMeta'
 import { TASK_STATUS_BAR_CLASSES, TASK_STATUS_LABELS, TASK_STATUSES } from '../utils/taskMeta'
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
@@ -81,7 +81,7 @@ export default function ProjectInfo({
 
                 <section className="bg-surface border border-border rounded-xl p-5">
                     <dl className="grid grid-cols-2 sm:grid-cols-3 gap-5">
-                        <Fact label="Type">{PROJECT_TYPE_LABELS[project.type]}</Fact>
+                        <Fact label="Type">{projectTypeLabel(project.type)}</Fact>
                         <Fact label="Statut">
                             <span
                                 className={`text-xs font-medium px-2 py-0.5 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}
@@ -193,7 +193,7 @@ export default function ProjectInfo({
                 <div className="lg:col-span-2 flex flex-col gap-4">
                     <section className="bg-surface border border-border rounded-xl p-5">
                         <dl className="grid grid-cols-2 sm:grid-cols-3 gap-5">
-                            <Fact label="Type">{PROJECT_TYPE_LABELS[project.type]}</Fact>
+                            <Fact label="Type">{projectTypeLabel(project.type)}</Fact>
                             <Fact label="Statut">
                                 <span
                                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}

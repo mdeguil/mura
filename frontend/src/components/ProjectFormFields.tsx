@@ -1,9 +1,8 @@
-import type { ProjectType } from '../types'
+import { useEffect } from 'react'
+import { useProjectTypes } from '../hooks/useProjectTypes'
 import { projectGlassBackground } from '../utils/color'
-import { PROJECT_TYPE_LABELS } from '../utils/projectMeta'
 
 export const PROJECT_COLORS = ['#06b6d4', '#3b82f6', '#a855f7', '#ec4899', '#f97316', '#22c55e']
-const TYPES = Object.keys(PROJECT_TYPE_LABELS) as ProjectType[]
 
 export const FIELD =
     'w-full h-10 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition'
@@ -13,7 +12,7 @@ export type ProjectFormValues = {
     name: string
     description: string
     color: string
-    type: ProjectType
+    typeId: string
     startDate: string
 }
 
@@ -28,6 +27,16 @@ export default function ProjectFormFields({
     onChange: (patch: Partial<ProjectFormValues>) => void
     autoFocus?: boolean
 }) {
+    const { types, loading: loadingTypes } = useProjectTypes()
+
+    // A select whose value matches no option still shows the first one, so a
+    // form opened before the types arrived would read "Web" and submit
+    // nothing. Choosing one as soon as they land keeps the two honest.
+    useEffect(() => {
+        if (!values.typeId && types.length > 0) {
+            onChange({ typeId: types[0].id })
+        }
+    }, [types, values.typeId, onChange])
     return (
         <>
             <div>
@@ -48,13 +57,18 @@ export default function ProjectFormFields({
                 <div>
                     <label className={LABEL}>Type</label>
                     <select
-                        value={values.type}
-                        onChange={(e) => onChange({ type: e.target.value as ProjectType })}
+                        value={values.typeId}
+                        onChange={(e) => onChange({ typeId: e.target.value })}
+                        disabled={loadingTypes}
                         className={FIELD}
                     >
-                        {TYPES.map((t) => (
-                            <option key={t} value={t}>
-                                {PROJECT_TYPE_LABELS[t]}
+                        {/* Empty only while the list is on its way: a project
+                            cannot be saved without a type, and the form would
+                            otherwise show the first one as if it were chosen. */}
+                        {loadingTypes && <option value="">Chargement…</option>}
+                        {types.map((t) => (
+                            <option key={t.id} value={t.id}>
+                                {t.emoji} {t.label}
                             </option>
                         ))}
                     </select>

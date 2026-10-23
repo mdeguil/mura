@@ -21,7 +21,7 @@ export default function EditProjectModal({
         name: project.name,
         description: project.description ?? '',
         color: project.color,
-        type: project.type,
+        typeId: project.type.id,
         startDate: project.startDate ?? '',
     })
     const [status, setStatus] = useState<ProjectStatus>(project.status)

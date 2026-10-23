@@ -95,7 +95,18 @@ export interface Member extends User {
   role: ProjectRole
 }
 
-export type ProjectType = 'WEB' | 'MOBILE' | 'MARKETING' | 'EVENEMENT' | 'AUTRE'
+// A row an administrator owns, not a constant: the label and the emoji
+// come from the server, because that is where they can be changed.
+export interface ProjectType {
+  id: string
+  label: string
+  emoji: string
+  position: number
+  // The one that cannot be deleted; the others fall back to it.
+  fallback: boolean
+  // How many projects hold it. Only the administration listing has it.
+  projectCount?: number
+}
 
 export type ProjectStatus = 'A_VENIR' | 'EN_COURS' | 'ACHEVE'
 
@@ -208,4 +219,14 @@ export interface AccountDeletionPreview {
   projectsDeleted: string[]
   groupsDeleted: string[]
   tasksUnassigned: number
+}
+
+// A group as an administrator sees it: who runs it and how many people
+// are in it. Not who they are -- that is the gérant's list.
+export interface AdminGroup {
+  id: string
+  name: string
+  manager: User
+  memberCount: number
+  createdAt: string
 }
