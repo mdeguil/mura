@@ -3,6 +3,8 @@ import type { Task, TaskStatus } from '../types'
 type TaskChanges = {
     status?: TaskStatus
     assigneeId?: string | null
+    startDate?: string
+    endDate?: string
 }
 
 // The task endpoint takes a full representation, so every field has to be
@@ -13,8 +15,8 @@ export function taskPayload(task: Task, changes: TaskChanges = {}) {
         name: task.name,
         description: task.description,
         status: changes.status ?? task.status,
-        startDate: task.startDate,
-        endDate: task.endDate,
+        startDate: changes.startDate ?? task.startDate,
+        endDate: changes.endDate ?? task.endDate,
         assigneeId: changes.assigneeId !== undefined ? changes.assigneeId : (task.assignee?.id ?? null),
     }
 }

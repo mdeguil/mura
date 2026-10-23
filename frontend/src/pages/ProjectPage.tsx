@@ -199,11 +199,15 @@ export default function ProjectPage() {
         void saveTask(taskId, { assigneeId }, "Impossible de changer le responsable de cette tâche.")
     }
 
+    function handleDatesChange(taskId: string, startDate: string, endDate: string) {
+        return saveTask(taskId, { startDate, endDate }, "Impossible de changer les dates de cette tâche.")
+    }
+
     // Both edits go through the same PUT, which replaces the whole task:
     // taskPayload resends the fields this change does not touch.
     async function saveTask(
         taskId: string,
-        changes: { status?: TaskStatus; assigneeId?: string | null },
+        changes: { status?: TaskStatus; assigneeId?: string | null; startDate?: string; endDate?: string },
         fallbackMessage: string
     ) {
         const task = tasks.find((t) => t.id === taskId)
@@ -509,6 +513,7 @@ export default function ProjectPage() {
                     projectId={id}
                     members={members}
                     onAssigneeChange={handleAssigneeChange}
+                    onDatesChange={handleDatesChange}
                     onClose={() => setSelectedTaskId(null)}
                     onSubtaskAdded={handleSubtaskAdded}
                     onSubtaskToggled={handleSubtaskToggled}

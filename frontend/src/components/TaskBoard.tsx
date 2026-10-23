@@ -4,11 +4,13 @@ import UserAvatar from './UserAvatar'
 import type { Task, TaskStatus } from '../types'
 import {
     NEXT_TASK_STATUS,
+    TASK_STATUS_HEX,
     TASK_STATUS_ICON_ACTIVE_CLASSES,
     TASK_STATUS_ICONS,
     TASK_STATUS_LABELS,
     TASK_STATUSES,
 } from '../utils/taskMeta'
+import { projectGlassBackground } from '../utils/color'
 
 export default function TaskBoard({
     tasks,
@@ -35,7 +37,7 @@ export default function TaskBoard({
                 </h3>
                 <div className="flex flex-col gap-2">
                     {archivedTasks.map((task) => (
-                        <div key={task.id} className="bg-surface border border-border rounded-lg p-3">
+                        <div key={task.id} className="relative overflow-hidden bg-surface border border-border rounded-lg p-3 pb-6">
                             <p className="text-sm text-slate-800 font-medium">{task.name}</p>
                             <p className="text-xs text-slate-500 mt-1">
                                 {format(new Date(task.startDate), 'dd/MM', { locale: fr })} → {format(new Date(task.endDate), 'dd/MM/yyyy', { locale: fr })}
@@ -56,6 +58,14 @@ export default function TaskBoard({
                                     🗑 Supprimer
                                 </button>
                             </div>
+
+                            {/* Archived, but still the state it reached. The
+                                column header says the rest. */}
+                            <span
+                                className="absolute inset-x-0 bottom-0 h-3 border-t border-white/40"
+                                style={{ background: projectGlassBackground(TASK_STATUS_HEX[task.status]) }}
+                                aria-hidden="true"
+                            />
                         </div>
                     ))}
                     {archivedTasks.length === 0 && (
@@ -82,7 +92,7 @@ export default function TaskBoard({
                                     <div
                                         key={task.id}
                                         onClick={() => onOpenTask(task)}
-                                        className="bg-surface border border-border rounded-lg p-3 flex items-stretch gap-2 cursor-pointer hover:border-brand-500 transition"
+                                        className="relative overflow-hidden bg-surface border border-border rounded-lg p-3 pb-6 flex items-stretch gap-2 cursor-pointer hover:border-brand-500 transition"
                                     >
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm text-slate-800 font-medium">{task.name}</p>
@@ -150,6 +160,16 @@ export default function TaskBoard({
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* The state, readable from across the
+                                            board: the same glazed band a project
+                                            card wears, in the colour of the
+                                            column it is sitting in. */}
+                                        <span
+                                            className="absolute inset-x-0 bottom-0 h-3 border-t border-white/40"
+                                            style={{ background: projectGlassBackground(TASK_STATUS_HEX[task.status]) }}
+                                            aria-hidden="true"
+                                        />
                                     </div>
                                 )
                             })}
