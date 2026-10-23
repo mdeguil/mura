@@ -39,6 +39,13 @@ public class UserGroupMember {
     @Column(name = "joined_at", nullable = false, updatable = false)
     private Instant joinedAt;
 
+    // Set aside by the gérant without being removed: still on the list, and
+    // left out when the group is used to invite everybody. Nothing to do
+    // with a suspended account, which is an administrator's doing and shuts
+    // the person out of Mura entirely.
+    @Column(name = "on_hold_at")
+    private Instant onHoldAt;
+
     public UserGroupMember(UserGroup group, User user) {
         this.group = group;
         this.user = user;
@@ -48,5 +55,9 @@ public class UserGroupMember {
     @PrePersist
     void onCreate() {
         joinedAt = Instant.now();
+    }
+
+    public boolean isOnHold() {
+        return onHoldAt != null;
     }
 }

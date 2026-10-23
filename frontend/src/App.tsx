@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import ProjectPage from './pages/ProjectPage'
+import GroupPage from './pages/GroupPage'
 import DirectoryPage from './pages/DirectoryPage'
 import AdminPage from './pages/AdminPage'
 import LoginPage from './pages/LoginPage'
@@ -78,6 +79,9 @@ export default function App() {
         <Route path="/carnet" element={<PrivateRoute><DirectoryPage /></PrivateRoute>} />
         <Route path="/administration" element={<PrivateRoute><AdminRoute><AdminPage /></AdminRoute></PrivateRoute>} />
         <Route path="/project/:id" element={<PrivateRoute><ProjectPage /></PrivateRoute>} />
+        {/* A group gets a page like a project: /groupe/:id, where its
+            gérant manages who is in it. */}
+        <Route path="/groupe/:id" element={<PrivateRoute><GroupPage /></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
   )

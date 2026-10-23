@@ -11,6 +11,7 @@ public record NotificationResponse(
         NotificationType type,
         UUID projectId,
         String projectName,
+        UUID groupId,
         String groupName,
         String actorName,
         String message,
@@ -27,6 +28,9 @@ public record NotificationResponse(
                         ? null
                         : notification.getProject().getId(),
                 notification.getProjectName(),
+                // Carried only when the sender attached the group, which it
+                // does not for a reader with nothing left to open.
+                notification.getGroup() == null ? null : notification.getGroup().getId(),
                 notification.getGroupName(),
                 notification.getActorName(),
                 notification.getMessage(),

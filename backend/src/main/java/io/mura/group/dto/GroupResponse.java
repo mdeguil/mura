@@ -4,6 +4,7 @@ import io.mura.member.dto.UserResponse;
 import io.mura.group.UserGroup;
 import io.mura.group.UserGroupMember;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,7 +13,8 @@ public record GroupResponse(
         String name,
         UserResponse owner,
         boolean owned,
-        List<UserResponse> members
+        Instant createdAt,
+        List<GroupMemberResponse> members
 ) {
     public static GroupResponse from(UserGroup group, UUID viewerId, List<UserGroupMember> members) {
         return new GroupResponse(
@@ -20,7 +22,8 @@ public record GroupResponse(
                 group.getName(),
                 UserResponse.from(group.getOwner()),
                 group.getOwner().getId().equals(viewerId),
-                members.stream().map(m -> UserResponse.from(m.getUser())).toList()
+                group.getCreatedAt(),
+                members.stream().map(GroupMemberResponse::from).toList()
         );
     }
 }

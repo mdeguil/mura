@@ -1,5 +1,6 @@
 package io.mura.notification;
 
+import io.mura.group.UserGroup;
 import io.mura.member.User;
 import io.mura.project.Project;
 import jakarta.persistence.Column;
@@ -53,6 +54,12 @@ public class Notification {
     // database enforces.
     @Column(name = "group_name")
     private String groupName;
+
+    // The way back to it, carried only while the reader still has a group to
+    // open: null once they are out of it, or once it is gone.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private UserGroup group;
 
     // Who the line is about: the person who acted for a project, or the
     // person whose account changed for a group.

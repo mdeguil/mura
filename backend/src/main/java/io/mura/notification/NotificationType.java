@@ -18,5 +18,24 @@ public enum NotificationType {
     // neither a project nor a group -- who it is about is the actor.
     CONTACT_REQUESTED,
     // And they said yes to yours.
-    CONTACT_ACCEPTED
+    CONTACT_ACCEPTED,
+    // A group is yours to run: an administrator created one and put you in
+    // charge, or handed an existing one over to you.
+    GROUP_ENTRUSTED,
+    // The other side of a handover: a group you were running is now someone
+    // else's. You stay a member of it.
+    GROUP_MANAGER_CHANGED,
+    // A group you belonged to is gone. Nothing happens to the people who
+    // were in it, which is what the line says.
+    GROUP_DELETED,
+    // The gérant put you in one of their groups, or took you out of it.
+    ADDED_TO_GROUP,
+    REMOVED_FROM_GROUP,
+    // Someone showed themselves out of a group you run.
+    MEMBER_LEFT_GROUP,
+    // Set aside inside the group, then brought back. Still a member either
+    // way -- this is not account suspension and never means being locked
+    // out of Mura.
+    HELD_IN_GROUP,
+    RESTORED_IN_GROUP
 }

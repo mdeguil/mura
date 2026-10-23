@@ -2,6 +2,7 @@ package io.mura.group;
 
 import io.mura.group.dto.AddGroupMemberRequest;
 import io.mura.group.dto.GroupResponse;
+import io.mura.group.dto.HoldGroupMemberRequest;
 import io.mura.group.dto.SaveGroupRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,16 @@ public class GroupController {
     @GetMapping
     public ResponseEntity<List<GroupResponse>> list(@AuthenticationPrincipal UUID userId) {
         return ResponseEntity.ok(groupService.listForUser(userId));
+    }
+
+    // One group, for its own page. Any member may read it; what they can do
+    // with it is decided by the owned flag it carries back.
+    @GetMapping("/{groupId}")
+    public ResponseEntity<GroupResponse> get(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID groupId
+    ) {
+        return ResponseEntity.ok(groupService.get(userId, groupId));
     }
 
     @PostMapping
@@ -65,6 +76,17 @@ public class GroupController {
             @Valid @RequestBody AddGroupMemberRequest request
     ) {
         return ResponseEntity.ok(groupService.addMember(userId, groupId, request));
+    }
+
+    @PutMapping("/{groupId}/members/{memberId}/hold")
+    public ResponseEntity<GroupResponse> setMemberHold(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID groupId,
+            @PathVariable UUID memberId,
+            @Valid @RequestBody HoldGroupMemberRequest request
+    ) {
+        return ResponseEntity.ok(
+                groupService.setMemberHold(userId, groupId, memberId, request.onHold()));
     }
 
     @DeleteMapping("/{groupId}/members/{memberId}")

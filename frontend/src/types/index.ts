@@ -53,6 +53,17 @@ export type NotificationType =
   // in their carnet, or said yes to you.
   | 'CONTACT_REQUESTED'
   | 'CONTACT_ACCEPTED'
+  // About a group: who runs it, who is in it, and who was set aside in it.
+  // Being on hold is not account suspension — the member stays, and their
+  // account is untouched.
+  | 'GROUP_ENTRUSTED'
+  | 'GROUP_MANAGER_CHANGED'
+  | 'GROUP_DELETED'
+  | 'ADDED_TO_GROUP'
+  | 'REMOVED_FROM_GROUP'
+  | 'MEMBER_LEFT_GROUP'
+  | 'HELD_IN_GROUP'
+  | 'RESTORED_IN_GROUP'
 
 // Named around the DOM's own Notification. Unlike an invitation there is
 // nothing to answer: clearing one deletes it.
@@ -64,6 +75,8 @@ export interface AppNotification {
   // Exactly one of the two is set: a notification is about a project or
   // about a group, never both.
   projectName: string | null
+  // Same rule as projectId: null once there is no group left to open.
+  groupId: string | null
   groupName: string | null
   actorName: string
   message: string | null
@@ -180,7 +193,17 @@ export interface Group {
   owner: User
   // True when the viewer owns it, and so may rename, delete and manage it.
   owned: boolean
-  members: User[]
+  createdAt: string
+  members: GroupMember[]
+}
+
+// A person in a group, with what belongs to the membership rather than to
+// them. onHold is the gérant setting someone aside — on leave, between
+// assignments — and concerns this group alone; suspended comes from the
+// account and means they cannot sign in at all.
+export interface GroupMember extends User {
+  onHold: boolean
+  joinedAt: string
 }
 
 export interface AuthResponse {

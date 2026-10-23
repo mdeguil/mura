@@ -136,10 +136,14 @@ export default function NotificationBell() {
                 : null
         }
 
-        const { type, projectId } = item.notification
+        const { type, projectId, groupId, groupName } = item.notification
         if (type === 'CONTACT_REQUESTED' || type === 'CONTACT_ACCEPTED') {
             return { href: '/carnet', label: 'le carnet' }
         }
+        // A group still yours to open leads to its page; one you have left
+        // or that is gone leads to the carnet, which is what is left of it.
+        if (groupId) return { href: `/groupe/${groupId}`, label: 'le groupe' }
+        if (groupName) return { href: '/carnet', label: 'le carnet' }
         return projectId ? { href: `/project/${projectId}`, label: 'le projet' } : null
     }
 
@@ -317,6 +321,55 @@ function NotificationLine({ notification }: { notification: AppNotification }) {
             return (
                 <>
                     Le compte de {who} a été supprimé — il était {where}
+                </>
+            )
+        case 'GROUP_ENTRUSTED':
+            return (
+                <>
+                    {who} t’a confié la gestion du groupe {name}
+                </>
+            )
+        case 'GROUP_MANAGER_CHANGED':
+            return (
+                <>
+                    Le groupe {name} est désormais géré par {who}
+                </>
+            )
+        case 'GROUP_DELETED':
+            return (
+                <>
+                    {who} a supprimé le groupe {name}
+                </>
+            )
+        case 'ADDED_TO_GROUP':
+            return (
+                <>
+                    {who} t’a ajouté au groupe {name}
+                </>
+            )
+        case 'REMOVED_FROM_GROUP':
+            return (
+                <>
+                    {who} t’a retiré du groupe {name}
+                </>
+            )
+        case 'MEMBER_LEFT_GROUP':
+            return (
+                <>
+                    {who} a quitté ton groupe {name}
+                </>
+            )
+        // « En retrait », jamais « suspendu » : le compte n'est pas touché.
+        case 'HELD_IN_GROUP':
+            return (
+                <>
+                    {who} t’a mis en retrait du groupe {name}
+                </>
+            )
+        case 'RESTORED_IN_GROUP':
+            return (
+                <>
+                    {who} a levé ton retrait du groupe {name}
                 </>
             )
         default:

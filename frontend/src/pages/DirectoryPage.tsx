@@ -455,7 +455,7 @@ export default function DirectoryPage() {
                     )}
                     </>
                 ) : (
-                    <GroupList currentUserId={currentUserId} carnet={people} />
+                    <GroupList />
                 )}
             </main>
 

@@ -99,7 +99,7 @@ public class AccountService {
                 : NotificationType.MEMBER_RESTORED;
 
         ownedGroupsHolding(target, actorId).forEach(group -> notificationService.notifyAboutGroup(
-                group.getOwner(), type, group.getName(), target));
+                group.getOwner(), type, group, target));
 
         projectsHolding(target, actorId).forEach(project -> notificationService.notify(
                 project.getOwner(), type, project, target, null));
@@ -239,7 +239,7 @@ public class AccountService {
         theyBelongTo.forEach(project -> notificationService.notify(
                 project.getOwner(), NotificationType.MEMBER_DELETED, project, target, null));
         groupsHoldingThem.forEach(group -> notificationService.notifyAboutGroup(
-                group.getOwner(), NotificationType.MEMBER_DELETED, group.getName(), target));
+                group.getOwner(), NotificationType.MEMBER_DELETED, group, target));
 
         // Whatever is still owned by this account is, by definition, a
         // project nobody else belongs to, and the foreign key takes those

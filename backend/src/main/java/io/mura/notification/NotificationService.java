@@ -1,6 +1,7 @@
 package io.mura.notification;
 
 import io.mura.common.exception.ApiException;
+import io.mura.group.UserGroup;
 import io.mura.mail.MailService;
 import io.mura.member.User;
 import io.mura.notification.dto.NotificationResponse;
@@ -42,7 +43,20 @@ public class NotificationService {
     // changed -- not the administrator who changed it, whose identity is
     // nobody else's business.
     @Transactional
-    public void notifyAboutGroup(User recipient, NotificationType type, String groupName, User subject) {
+    public void notifyAboutGroup(User recipient, NotificationType type, UserGroup group, User subject) {
+        Notification notification = new Notification();
+        notification.setGroup(group);
+        notification.setGroupName(group.getName());
+        record(notification, recipient, type, subject.getUsername());
+    }
+
+    // The name without the group behind it, for a reader who has nothing
+    // left to open: they were taken out of it, or it no longer exists. The
+    // name is a snapshot, which is why the line still reads correctly.
+    @Transactional
+    public void notifyAboutFormerGroup(
+            User recipient, NotificationType type, String groupName, User subject
+    ) {
         Notification notification = new Notification();
         notification.setGroupName(groupName);
         record(notification, recipient, type, subject.getUsername());

@@ -41,7 +41,7 @@ public class AdminGroupController {
             @Valid @RequestBody SaveAdminGroupRequest request
     ) {
         accountService.requireAdmin(userId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(adminGroupService.create(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminGroupService.create(userId, request));
     }
 
     @PutMapping("/{groupId}")
@@ -51,7 +51,7 @@ public class AdminGroupController {
             @Valid @RequestBody SaveAdminGroupRequest request
     ) {
         accountService.requireAdmin(userId);
-        return ResponseEntity.ok(adminGroupService.update(groupId, request));
+        return ResponseEntity.ok(adminGroupService.update(userId, groupId, request));
     }
 
     @DeleteMapping("/{groupId}")
@@ -60,7 +60,7 @@ public class AdminGroupController {
             @PathVariable UUID groupId
     ) {
         accountService.requireAdmin(userId);
-        adminGroupService.delete(groupId);
+        adminGroupService.delete(userId, groupId);
         return ResponseEntity.noContent().build();
     }
 }

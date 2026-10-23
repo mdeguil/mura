@@ -24,11 +24,15 @@ final class NotificationWording {
         // to open, so that one lands on the list.
         boolean aboutGroup = notification.getGroupName() != null;
         String destination = aboutGroup
-                ? "/carnet"
+                ? notification.getGroup() == null
+                        ? "/carnet"
+                        : "/groupe/" + notification.getGroup().getId()
                 : notification.getProject() == null
                         ? "/projets"
                         : "/project/" + notification.getProject().getId();
-        String open = aboutGroup ? "Ouvrir le carnet" : "Ouvrir le projet";
+        String open = aboutGroup
+                ? notification.getGroup() == null ? "Ouvrir le carnet" : "Ouvrir le groupe"
+                : "Ouvrir le projet";
 
         return switch (notification.getType()) {
             case REMOVED_FROM_PROJECT -> new Lines(
@@ -75,6 +79,63 @@ final class NotificationWording {
                     who + " a accepté ta demande de contact. Vous êtes maintenant dans le carnet "
                             + "l'un de l'autre.",
                     "/carnet", "Voir mon carnet"
+            );
+            case GROUP_ENTRUSTED -> new Lines(
+                    "Tu gères le groupe " + name,
+                    "Le groupe " + name + " est à toi",
+                    who + " t'a confié la gestion du groupe " + name
+                            + ". À toi d'y ajouter ou d'en retirer des personnes.",
+                    destination, open
+            );
+            case GROUP_MANAGER_CHANGED -> new Lines(
+                    "Le groupe " + name + " change de gérant",
+                    "Le groupe " + name + " est désormais géré par " + who,
+                    "La gestion du groupe " + name + " a été confiée à " + who
+                            + ". Tu en restes membre.",
+                    destination, open
+            );
+            case GROUP_DELETED -> new Lines(
+                    "Le groupe " + name + " a été supprimé",
+                    "Le groupe " + name + " a été supprimé",
+                    who + " a supprimé le groupe " + name
+                            + ". Les personnes qui en faisaient partie ne sont pas touchées.",
+                    "/carnet", "Ouvrir le carnet"
+            );
+            case ADDED_TO_GROUP -> new Lines(
+                    who + " t'a ajouté au groupe " + name,
+                    "Tu fais partie du groupe " + name,
+                    who + " t'a ajouté au groupe " + name + ". Un groupe n'ouvre aucun projet "
+                            + "par lui-même : il sert à vous réunir pour les invitations.",
+                    destination, open
+            );
+            case REMOVED_FROM_GROUP -> new Lines(
+                    who + " t'a retiré du groupe " + name,
+                    "Tu ne fais plus partie du groupe " + name,
+                    who + " t'a retiré du groupe " + name
+                            + ". Tes projets et tes tâches ne changent pas.",
+                    "/carnet", "Ouvrir le carnet"
+            );
+            case MEMBER_LEFT_GROUP -> new Lines(
+                    who + " a quitté ton groupe " + name,
+                    who + " a quitté le groupe " + name,
+                    who + " a quitté le groupe " + name + ", que tu gères.",
+                    destination, open
+            );
+            // "En retrait", never "suspendu": the account is untouched and
+            // the line must not let anyone think otherwise.
+            case HELD_IN_GROUP -> new Lines(
+                    "Tu es en retrait du groupe " + name,
+                    "Mis en retrait du groupe " + name,
+                    who + " t'a mis en retrait du groupe " + name + ". Tu en restes membre, "
+                            + "mais tu ne seras pas invité quand le groupe l'est. Ton compte "
+                            + "n'est pas touché.",
+                    destination, open
+            );
+            case RESTORED_IN_GROUP -> new Lines(
+                    "Tu es de retour dans le groupe " + name,
+                    "De retour dans le groupe " + name,
+                    who + " a levé ton retrait du groupe " + name + ".",
+                    destination, open
             );
         };
     }
