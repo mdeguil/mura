@@ -2,7 +2,7 @@ import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import CarnetCombobox from './CarnetCombobox'
-import GroupMemberPicker, { type GroupSelection } from './GroupMemberPicker'
+import GroupPicker, { type GroupSelection } from './GroupPicker'
 import { useAuthStore } from '../store/authStore'
 import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
@@ -72,7 +72,6 @@ export default function CreateProjectModal({
                 startDate: values.startDate || null,
                 invitedEmails: invited.map((p) => p.email),
                 groupId: fromGroup?.groupId ?? null,
-                groupMemberIds: fromGroup?.memberIds ?? null,
             })
             onCreated(data)
             onClose()
@@ -137,14 +136,17 @@ export default function CreateProjectModal({
                                 </div>
 
                                 {/* Hidden rather than unmounted: switching back
-                                    to a person must not lose the group ticked. */}
+                                    to a person must not lose the group chosen.
+                                    It starts on no group, so nothing comes
+                                    along unless somebody picks one. */}
                                 <div className={mode === 'group' ? '' : 'hidden'}>
-                                    <GroupMemberPicker
+                                    <GroupPicker
                                         leftOut={(person) => (person.id === currentUserId ? 'Toi' : null)}
+                                        allowNone
                                         onChange={setFromGroup}
                                     />
                                     <p className="text-xs text-slate-400 mt-2">
-                                        Les personnes cochées rejoignent le projet dès sa création, sans
+                                        Les personnes du groupe rejoignent le projet dès sa création, sans
                                         invitation, et en sont prévenues.
                                     </p>
                                 </div>
@@ -230,10 +232,7 @@ export default function CreateProjectModal({
                                     hides what the other one holds. */}
                                 {mode === 'person' && fromGroup && (
                                     <p className="text-xs text-slate-500 mt-2">
-                                        + {fromGroup.memberIds.length} personne
-                                        {fromGroup.memberIds.length > 1 ? 's' : ''} du groupe{' '}
-                                        {fromGroup.groupName}, ajoutée
-                                        {fromGroup.memberIds.length > 1 ? 's' : ''} directement.
+                                        + le groupe {fromGroup.groupName}, ajouté directement.
                                     </p>
                                 )}
                                 {mode === 'group' && invited.length > 0 && (

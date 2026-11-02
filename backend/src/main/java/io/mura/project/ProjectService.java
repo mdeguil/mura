@@ -1,7 +1,6 @@
 package io.mura.project;
 
 import io.mura.common.exception.ApiException;
-import io.mura.group.UserGroup;
 import io.mura.group.UserGroupMember;
 import io.mura.group.UserGroupMemberRepository;
 import io.mura.group.UserGroupRepository;
@@ -21,13 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -192,12 +188,12 @@ public class ProjectService {
         // The group's people are checked first and brought on last: an
         // unknown address in the invitations rolls the creation back, and by
         // then nobody must have been mailed about a project that is not there.
-        List<User> fromGroup = request.groupId() == null || request.groupMemberIds() == null
+        List<User> fromGroup = request.groupId() == null
                 ? List.of()
-                : joinersFromGroup(ownerId, project.getId(), request.groupId(), request.groupMemberIds());
+                : joinersFromGroup(ownerId, project.getId(), request.groupId());
 
-        // Someone both ticked in the group and typed in by address is simply
-        // in: there is nothing left to invite them to.
+        // Someone both in the group and typed in by address is simply in:
+        // there is nothing left to invite them to.
         Set<String> joiningEmails = fromGroup.stream()
                 .map(user -> user.getEmail().toLowerCase())
                 .collect(Collectors.toSet());
@@ -267,16 +263,23 @@ public class ProjectService {
     // of the project, who is also in the group -- and everyone added is told
     // at once, bell and mail, and can show themselves out as usual.
     //
-    // Members set aside by the gérant are refused, not skipped: the gérant
-    // set them aside precisely so they would not be brought along with the
-    // group. So are suspended accounts, which cannot sign in to use it.
+    // The group comes whole: nobody is picked one by one. Whole means
+    // everyone who can come -- not those the gérant set aside, which is
+    // what being set aside is for, not suspended accounts, which cannot sign
+    // in to use it, and not those already on the team.
     @Transactional
-    public List<MemberResponse> addFromGroup(UUID actorId, UUID projectId, UUID groupId, List<UUID> memberIds) {
+    public List<MemberResponse> addFromGroup(UUID actorId, UUID projectId, UUID groupId) {
         requireManager(actorId, projectId);
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
 
-        List<User> joining = joinersFromGroup(actorId, projectId, groupId, memberIds);
+        List<User> joining = joinersFromGroup(actorId, projectId, groupId);
+        if (joining.isEmpty()) {
+            throw new ApiException(
+                    HttpStatus.CONFLICT,
+                    "Personne à ajouter : tout le groupe est déjà dans le projet, en retrait ou suspendu."
+            );
+        }
         User actor = userRepository.findById(actorId)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
         bringOn(project, actor, joining);
@@ -290,49 +293,20 @@ public class ProjectService {
     // anything. Everything is checked before anything is written: a
     // notification sends its mail on the spot, so a refusal halfway through
     // would roll the memberships back but not the mails already gone.
-    private List<User> joinersFromGroup(UUID actorId, UUID projectId, UUID groupId, List<UUID> memberIds) {
-        UserGroup group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Groupe introuvable."));
+    private List<User> joinersFromGroup(UUID actorId, UUID projectId, UUID groupId) {
+        if (!groupRepository.existsById(groupId)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Groupe introuvable.");
+        }
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, actorId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Tu ne fais pas partie de ce groupe.");
         }
 
-        Map<UUID, UserGroupMember> inGroup = groupMemberRepository.findAllForGroups(List.of(groupId)).stream()
-                .collect(Collectors.toMap(m -> m.getId().getUserId(), Function.identity()));
-
-        List<User> joining = new ArrayList<>();
-        for (UUID memberId : new LinkedHashSet<>(memberIds)) {
-            UserGroupMember membership = inGroup.get(memberId);
-            if (membership == null) {
-                throw new ApiException(
-                        HttpStatus.BAD_REQUEST,
-                        "Une des personnes choisies ne fait pas partie du groupe " + group.getName() + "."
-                );
-            }
-
-            User user = membership.getUser();
-            if (membership.isOnHold()) {
-                throw new ApiException(
-                        HttpStatus.CONFLICT,
-                        user.getUsername() + " est en retrait du groupe " + group.getName()
-                                + " : le gérant l'a mis de côté."
-                );
-            }
-            if (user.isSuspended()) {
-                throw new ApiException(
-                        HttpStatus.CONFLICT,
-                        "Le compte de " + user.getUsername() + " est suspendu."
-                );
-            }
-
-            // Already on the team: nothing to do, and no reason to refuse
-            // the rest of the selection over it.
-            if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, memberId)) {
-                joining.add(user);
-            }
-        }
-
-        return joining;
+        return groupMemberRepository.findAllForGroups(List.of(groupId)).stream()
+                .filter(membership -> !membership.isOnHold())
+                .map(UserGroupMember::getUser)
+                .filter(user -> !user.isSuspended())
+                .filter(user -> !projectMemberRepository.existsByProjectIdAndUserId(projectId, user.getId()))
+                .toList();
     }
 
     // The writing half, once joinersFromGroup has said yes to everyone.

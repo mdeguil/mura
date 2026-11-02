@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import api from '../services/api'
-import GroupMemberPicker, { type GroupSelection } from './GroupMemberPicker'
+import GroupPicker, { type GroupSelection } from './GroupPicker'
 import { apiErrorMessage } from '../utils/apiError'
 import type { Member } from '../types'
 
@@ -22,7 +22,7 @@ export default function GroupAddPanel({
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
 
-    const count = selection?.memberIds.length ?? 0
+    const count = selection?.joiningCount ?? 0
 
     async function add() {
         if (!selection) return
@@ -32,9 +32,11 @@ export default function GroupAddPanel({
         try {
             const { data } = await api.post<Member[]>(`/projects/${projectId}/members/from-group`, {
                 groupId: selection.groupId,
-                memberIds: selection.memberIds,
             })
-            onAdded(data, selection.memberIds)
+            // Who joined is read from the answer: the server decides who in
+            // the group could come, not this page.
+            const joinedIds = data.filter((m) => !members.some((old) => old.id === m.id)).map((m) => m.id)
+            onAdded(data, joinedIds)
         } catch (err) {
             setError(apiErrorMessage(err, "Ces personnes n'ont pas pu être ajoutées."))
         } finally {
@@ -45,7 +47,7 @@ export default function GroupAddPanel({
     return (
         <div className="mb-4">
             <div className="mb-3">
-                <GroupMemberPicker
+                <GroupPicker
                     leftOut={(person) =>
                         members.some((m) => m.id === person.id) ? 'Déjà dans le projet' : null
                     }
@@ -78,11 +80,7 @@ export default function GroupAddPanel({
                     disabled={saving || count === 0}
                     className="h-9 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition disabled:opacity-60"
                 >
-                    {saving
-                        ? 'Ajout…'
-                        : count === 0
-                          ? 'Ajouter'
-                          : `Ajouter ${count} personne${count > 1 ? 's' : ''}`}
+                    {saving ? 'Ajout…' : 'Ajouter le groupe'}
                 </button>
             </div>
         </div>
