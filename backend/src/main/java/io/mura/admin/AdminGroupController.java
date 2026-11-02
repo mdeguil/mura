@@ -19,8 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-// Creating, renaming, handing over and removing. There is deliberately no
-// endpoint here for members: that is the gérant's list.
+// Creating, renaming, handing over and removing. The listing shows who is in
+// each group, but there is deliberately no endpoint here that changes it:
+// that is the gérant's list.
 @RestController
 @RequestMapping("/api/admin/groups")
 @RequiredArgsConstructor

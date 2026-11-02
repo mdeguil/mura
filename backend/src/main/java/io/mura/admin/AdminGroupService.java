@@ -18,11 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-// An administrator sets a group up and says who runs it. Who is in it stays
-// the gérant's business: two people editing the same list is how a list
-// stops meaning anything.
+// An administrator sets a group up and says who runs it. They may see who is
+// in it, but changing that stays the gérant's business: two people editing
+// the same list is how a list stops meaning anything.
 @Service
 @RequiredArgsConstructor
 public class AdminGroupService {
@@ -34,10 +36,21 @@ public class AdminGroupService {
 
     @Transactional(readOnly = true)
     public List<AdminGroupResponse> list() {
-        return groupRepository.findAll().stream()
+        List<UserGroup> groups = groupRepository.findAll();
+        if (groups.isEmpty()) {
+            return List.of();
+        }
+
+        // One query for the members of every group rather than one per row.
+        Map<UUID, List<UserGroupMember>> byGroup = memberRepository
+                .findAllForGroups(groups.stream().map(UserGroup::getId).toList())
+                .stream()
+                .collect(Collectors.groupingBy(m -> m.getId().getGroupId()));
+
+        return groups.stream()
                 .sorted(Comparator.comparing(g -> g.getName().toLowerCase()))
                 .map(group -> AdminGroupResponse.of(
-                        group, memberRepository.countByGroupId(group.getId())))
+                        group, byGroup.getOrDefault(group.getId(), List.of())))
                 .toList();
     }
 
@@ -53,7 +66,7 @@ public class AdminGroupService {
 
         // The gérant is in their own group: one they are not part of would
         // not appear in their carnet, which is where they manage it from.
-        memberRepository.save(new UserGroupMember(group, manager));
+        UserGroupMember founder = memberRepository.save(new UserGroupMember(group, manager));
 
         // A group appearing in your carnet with your name on it, out of
         // nowhere, deserves an explanation. The administrator is named here
@@ -64,7 +77,7 @@ public class AdminGroupService {
                     manager, NotificationType.GROUP_ENTRUSTED, group, actor);
         }
 
-        return AdminGroupResponse.of(group, 1L);
+        return AdminGroupResponse.of(group, List.of(founder));
     }
 
     @Transactional
@@ -99,7 +112,7 @@ public class AdminGroupService {
             }
         }
 
-        return AdminGroupResponse.of(group, memberRepository.countByGroupId(groupId));
+        return AdminGroupResponse.of(group, memberRepository.findAllForGroups(List.of(groupId)));
     }
 
     @Transactional

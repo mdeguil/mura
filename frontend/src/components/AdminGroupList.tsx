@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import ConfirmDialog from './ConfirmDialog'
-import UserAvatar from './UserAvatar'
+import UserAvatar, { SuspendedPill } from './UserAvatar'
 import type { Account, AdminGroup } from '../types'
 
 export default function AdminGroupList() {
@@ -17,6 +17,18 @@ export default function AdminGroupList() {
     const [managerId, setManagerId] = useState('')
     const [saving, setSaving] = useState(false)
     const [removing, setRemoving] = useState<AdminGroup | null>(null)
+    // Groups whose members are unfolded. Several can be open at once, to
+    // compare two lists side by side.
+    const [expanded, setExpanded] = useState<Set<string>>(new Set())
+
+    function toggleMembers(groupId: string) {
+        setExpanded((prev) => {
+            const next = new Set(prev)
+            if (next.has(groupId)) next.delete(groupId)
+            else next.add(groupId)
+            return next
+        })
+    }
 
     useEffect(() => {
         let cancelled = false
@@ -113,8 +125,8 @@ export default function AdminGroupList() {
         <div>
             <div className="flex items-center justify-between gap-4 mb-4">
                 <p className="text-sm text-slate-500">
-                    Monte un groupe et désigne qui le gère. Les membres sont ensuite l'affaire du
-                    gérant, depuis son carnet.
+                    Monte un groupe et désigne qui le gère. Tu vois qui en fait partie, mais les
+                    membres restent l'affaire du gérant, depuis la page du groupe.
                 </p>
                 <button
                     onClick={creating ? close : openCreate}
@@ -203,44 +215,101 @@ export default function AdminGroupList() {
                 </div>
             ) : (
                 <ul className="bg-surface border border-border rounded-2xl overflow-hidden">
-                    {groups.map((group) => (
-                        <li
-                            key={group.id}
-                            className="px-5 py-4 border-b border-border last:border-b-0 flex items-center gap-4"
-                        >
-                            <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-slate-800 truncate">{group.name}</p>
-                                <p className="text-xs text-slate-400">
-                                    {group.memberCount} membre{group.memberCount > 1 ? 's' : ''}
-                                </p>
-                            </div>
+                    {groups.map((group) => {
+                        const open = expanded.has(group.id)
+                        const onHoldCount = group.members.filter((m) => m.onHold).length
+                        return (
+                            <li key={group.id} className="border-b border-border last:border-b-0">
+                                <div className="px-5 py-4 flex items-center gap-4">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium text-slate-800 truncate">{group.name}</p>
+                                        <button
+                                            onClick={() => toggleMembers(group.id)}
+                                            aria-expanded={open}
+                                            className="text-xs text-slate-400 hover:text-brand-600 transition flex items-center gap-1"
+                                        >
+                                            <span
+                                                className={`inline-block transition-transform ${open ? 'rotate-90' : ''}`}
+                                                aria-hidden
+                                            >
+                                                ›
+                                            </span>
+                                            {group.memberCount} membre{group.memberCount > 1 ? 's' : ''}
+                                            {onHoldCount > 0 && <> · {onHoldCount} en retrait</>}
+                                        </button>
+                                    </div>
 
-                            <div className="flex items-center gap-2 shrink-0 w-44">
-                                <UserAvatar user={group.manager} size="sm" />
-                                <span className="min-w-0">
-                                    <span className="block text-xs text-slate-700 truncate">
-                                        {group.manager.username}
-                                    </span>
-                                    <span className="block text-[10px] text-slate-400">gérant</span>
-                                </span>
-                            </div>
+                                    <div className="flex items-center gap-2 shrink-0 w-44">
+                                        <UserAvatar user={group.manager} size="sm" />
+                                        <span className="min-w-0">
+                                            <span className="block text-xs text-slate-700 truncate">
+                                                {group.manager.username}
+                                            </span>
+                                            <span className="block text-[10px] text-slate-400">gérant</span>
+                                        </span>
+                                    </div>
 
-                            <div className="flex items-center gap-2 shrink-0">
-                                <button
-                                    onClick={() => openEdit(group)}
-                                    className="h-8 px-3 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-medium transition"
-                                >
-                                    Modifier
-                                </button>
-                                <button
-                                    onClick={() => setRemoving(group)}
-                                    className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition"
-                                >
-                                    Supprimer
-                                </button>
-                            </div>
-                        </li>
-                    ))}
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            onClick={() => openEdit(group)}
+                                            className="h-8 px-3 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-medium transition"
+                                        >
+                                            Modifier
+                                        </button>
+                                        <button
+                                            onClick={() => setRemoving(group)}
+                                            className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition"
+                                        >
+                                            Supprimer
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Read only on purpose: nothing here adds, removes or
+                                    sets anyone aside. That is the gérant's list. */}
+                                {open && (
+                                    <ul className="mx-5 mb-4 -mt-1 bg-surface-muted border border-border rounded-xl divide-y divide-border">
+                                        {group.members.map((member) => (
+                                            <li key={member.id} className="px-4 py-2 flex items-center gap-3">
+                                                <div
+                                                    className={`flex items-center gap-3 min-w-0 flex-1 ${
+                                                        member.onHold ? 'opacity-50' : ''
+                                                    }`}
+                                                >
+                                                    <UserAvatar user={member} size="sm" />
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-xs text-slate-700 truncate flex items-center gap-1.5">
+                                                            <span className="truncate">{member.username}</span>
+                                                            {member.suspended && <SuspendedPill />}
+                                                        </p>
+                                                        {member.email && (
+                                                            <p className="text-[11px] text-slate-400 truncate">
+                                                                {member.email}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {member.id === group.manager.id ? (
+                                                    <span className="text-[10px] font-medium text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full shrink-0">
+                                                        Gérant
+                                                    </span>
+                                                ) : (
+                                                    member.onHold && (
+                                                        <span
+                                                            className="text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full shrink-0"
+                                                            title="Mis de côté par le gérant dans ce groupe. Son compte n'est pas touché."
+                                                        >
+                                                            En retrait
+                                                        </span>
+                                                    )
+                                                )}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </li>
+                        )
+                    })}
                 </ul>
             )}
 

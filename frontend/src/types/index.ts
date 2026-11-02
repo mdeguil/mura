@@ -244,12 +244,13 @@ export interface AccountDeletionPreview {
   tasksUnassigned: number
 }
 
-// A group as an administrator sees it: who runs it and how many people
-// are in it. Not who they are -- that is the gérant's list.
+// A group as an administrator sees it: who runs it and who is in it. The
+// members are there to be read; changing them stays the gérant's business.
 export interface AdminGroup {
   id: string
   name: string
   manager: User
   memberCount: number
   createdAt: string
+  members: GroupMember[]
 }
