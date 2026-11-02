@@ -29,5 +29,12 @@ public record CreateProjectRequest(
         // People to invite right away. They are invited, not added: the
         // project opens to them only once they accept.
         @Size(max = 20, message = "Pas plus de 20 personnes à inviter à la création.")
-        List<@Email(message = "Un des emails n'est pas valide.") String> invitedEmails
+        List<@Email(message = "Un des emails n'est pas valide.") String> invitedEmails,
+
+        // People brought over from one of the creator's groups. Unlike the
+        // invitations above, these are added: they are on the team as soon
+        // as the project exists, and told so. Both optional, and ignored
+        // unless both are given.
+        UUID groupId,
+        List<UUID> groupMemberIds
 ) {}

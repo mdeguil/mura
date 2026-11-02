@@ -2,6 +2,8 @@ import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import CarnetCombobox from './CarnetCombobox'
+import GroupMemberPicker, { type GroupSelection } from './GroupMemberPicker'
+import { useAuthStore } from '../store/authStore'
 import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
 import ProjectFormFields, {
@@ -30,6 +32,11 @@ export default function CreateProjectModal({
     // keyboard.
     const [invited, setInvited] = useState<{ email: string; username?: string; id?: string }[]>([])
     const [emailDraft, setEmailDraft] = useState('')
+    // People typed in are invited; people ticked in a group are added. Both
+    // can be used for the same project.
+    const [mode, setMode] = useState<'person' | 'group'>('person')
+    const [fromGroup, setFromGroup] = useState<GroupSelection | null>(null)
+    const currentUserId = useAuthStore((s) => s.user?.id) ?? ''
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
@@ -64,6 +71,8 @@ export default function CreateProjectModal({
                 ...values,
                 startDate: values.startDate || null,
                 invitedEmails: invited.map((p) => p.email),
+                groupId: fromGroup?.groupId ?? null,
+                groupMemberIds: fromGroup?.memberIds ?? null,
             })
             onCreated(data)
             onClose()
@@ -87,7 +96,7 @@ export default function CreateProjectModal({
                 <div className="px-6 pt-5 pb-4 border-b border-border shrink-0">
                     <h2 className="text-base font-semibold text-slate-800">Créer un projet</h2>
                     <p className="text-sm text-slate-500 mt-0.5">
-                        Donne-lui un nom, et invite déjà celles et ceux qui vont y travailler.
+                        Donne-lui un nom, et réunis déjà celles et ceux qui vont y travailler.
                     </p>
                 </div>
 
@@ -103,80 +112,134 @@ export default function CreateProjectModal({
                             <ColorPicker color={values.color} onChange={(color) => patch({ color })} />
 
                             <div>
-                                <label className={LABEL}>Inviter des personnes (optionnel)</label>
+                                <label className={LABEL}>L'équipe (optionnel)</label>
 
-                                <div className="flex gap-2">
-                                    {/* Typing a name searches the carnet; typing
-                                        an address invites somebody not in it. */}
-                                    <CarnetCombobox
-                                        className="flex-1 min-w-0"
-                                        value={emailDraft}
-                                        onChange={setEmailDraft}
-                                        onPick={(person) => {
-                                            if (!person.email) return
-                                            add({
-                                                email: person.email.toLowerCase(),
-                                                username: person.username,
-                                                id: person.id,
-                                            })
-                                            setEmailDraft('')
-                                        }}
-                                        placeholder="Un nom du carnet, ou prenom@exemple.com"
-                                        excludeEmails={invited.map((p) => p.email)}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={addEmail}
-                                        disabled={!emailDraft.trim()}
-                                        className="w-10 h-10 rounded-lg bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center transition disabled:opacity-40 shrink-0"
-                                        aria-label="Ajouter cette personne à la liste"
-                                    >
-                                        <svg
-                                            viewBox="0 0 16 16"
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            aria-hidden="true"
+                                <div className="flex items-center gap-1 mb-2.5 w-fit bg-surface-muted border border-border rounded-lg p-0.5">
+                                    {(
+                                        [
+                                            ['person', 'Une personne'],
+                                            ['group', 'Un groupe'],
+                                        ] as const
+                                    ).map(([key, label]) => (
+                                        <button
+                                            key={key}
+                                            type="button"
+                                            onClick={() => setMode(key)}
+                                            className={`h-7 px-3 rounded-md text-xs font-medium transition ${
+                                                mode === key
+                                                    ? 'bg-surface text-slate-800 shadow-sm'
+                                                    : 'text-slate-500 hover:text-slate-700'
+                                            }`}
                                         >
-                                            <path d="M8 3.5v9M3.5 8h9" />
-                                        </svg>
-                                    </button>
+                                            {label}
+                                        </button>
+                                    ))}
                                 </div>
 
-                                {invited.length > 0 ? (
-                                    <ul className="flex flex-wrap gap-1.5 mt-2.5">
-                                        {invited.map((person) => (
-                                            <li
-                                                key={person.email}
-                                                className="flex items-center gap-1.5 bg-surface-muted border border-border rounded-full pl-2.5 pr-1.5 py-1"
-                                            >
-                                                <span
-                                                    className="text-xs text-slate-600"
-                                                    title={person.email}
-                                                >
-                                                    {person.username ?? person.email}
-                                                </span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setInvited((prev) =>
-                                                            prev.filter((p) => p.email !== person.email)
-                                                        )
-                                                    }
-                                                    className="text-slate-300 hover:text-red-500 transition text-xs leading-none"
-                                                    aria-label={`Retirer ${person.username ?? person.email}`}
-                                                >
-                                                    ✕
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
+                                {/* Hidden rather than unmounted: switching back
+                                    to a person must not lose the group ticked. */}
+                                <div className={mode === 'group' ? '' : 'hidden'}>
+                                    <GroupMemberPicker
+                                        leftOut={(person) => (person.id === currentUserId ? 'Toi' : null)}
+                                        onChange={setFromGroup}
+                                    />
                                     <p className="text-xs text-slate-400 mt-2">
-                                        Elles recevront une invitation et rejoindront le projet si elles
-                                        l'acceptent.
+                                        Les personnes cochées rejoignent le projet dès sa création, sans
+                                        invitation, et en sont prévenues.
+                                    </p>
+                                </div>
+
+                                <div className={mode === 'person' ? '' : 'hidden'}>
+                                    <div className="flex gap-2">
+                                        {/* Typing a name searches the carnet; typing
+                                            an address invites somebody not in it. */}
+                                        <CarnetCombobox
+                                            className="flex-1 min-w-0"
+                                            value={emailDraft}
+                                            onChange={setEmailDraft}
+                                            onPick={(person) => {
+                                                if (!person.email) return
+                                                add({
+                                                    email: person.email.toLowerCase(),
+                                                    username: person.username,
+                                                    id: person.id,
+                                                })
+                                                setEmailDraft('')
+                                            }}
+                                            placeholder="Un nom du carnet, ou prenom@exemple.com"
+                                            excludeEmails={invited.map((p) => p.email)}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={addEmail}
+                                            disabled={!emailDraft.trim()}
+                                            className="w-10 h-10 rounded-lg bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center transition disabled:opacity-40 shrink-0"
+                                            aria-label="Ajouter cette personne à la liste"
+                                        >
+                                            <svg
+                                                viewBox="0 0 16 16"
+                                                className="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                aria-hidden="true"
+                                            >
+                                                <path d="M8 3.5v9M3.5 8h9" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    {invited.length > 0 ? (
+                                        <ul className="flex flex-wrap gap-1.5 mt-2.5">
+                                            {invited.map((person) => (
+                                                <li
+                                                    key={person.email}
+                                                    className="flex items-center gap-1.5 bg-surface-muted border border-border rounded-full pl-2.5 pr-1.5 py-1"
+                                                >
+                                                    <span
+                                                        className="text-xs text-slate-600"
+                                                        title={person.email}
+                                                    >
+                                                        {person.username ?? person.email}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setInvited((prev) =>
+                                                                prev.filter((p) => p.email !== person.email)
+                                                            )
+                                                        }
+                                                        className="text-slate-300 hover:text-red-500 transition text-xs leading-none"
+                                                        aria-label={`Retirer ${person.username ?? person.email}`}
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-xs text-slate-400 mt-2">
+                                            Elles recevront une invitation et rejoindront le projet si elles
+                                            l'acceptent.
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* The other half of the team, so neither mode
+                                    hides what the other one holds. */}
+                                {mode === 'person' && fromGroup && (
+                                    <p className="text-xs text-slate-500 mt-2">
+                                        + {fromGroup.memberIds.length} personne
+                                        {fromGroup.memberIds.length > 1 ? 's' : ''} du groupe{' '}
+                                        {fromGroup.groupName}, ajoutée
+                                        {fromGroup.memberIds.length > 1 ? 's' : ''} directement.
+                                    </p>
+                                )}
+                                {mode === 'group' && invited.length > 0 && (
+                                    <p className="text-xs text-slate-500 mt-2">
+                                        + {invited.length} personne{invited.length > 1 ? 's' : ''} à
+                                        inviter.
                                     </p>
                                 )}
                             </div>

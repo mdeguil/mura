@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -186,13 +187,31 @@ public class ProjectService {
         project.setOwner(owner);
         projectRepository.save(project);
 
-        ProjectMember membership = projectMemberRepository.save(
-                new ProjectMember(project, owner, ProjectRole.OWNER)
-        );
+        projectMemberRepository.save(new ProjectMember(project, owner, ProjectRole.OWNER));
 
-        invitationService.inviteAll(project, owner, request.invitedEmails());
+        // The group's people are checked first and brought on last: an
+        // unknown address in the invitations rolls the creation back, and by
+        // then nobody must have been mailed about a project that is not there.
+        List<User> fromGroup = request.groupId() == null || request.groupMemberIds() == null
+                ? List.of()
+                : joinersFromGroup(ownerId, project.getId(), request.groupId(), request.groupMemberIds());
 
-        return ProjectResponse.from(project, ProjectAccess.MEMBER, List.of(membership));
+        // Someone both ticked in the group and typed in by address is simply
+        // in: there is nothing left to invite them to.
+        Set<String> joiningEmails = fromGroup.stream()
+                .map(user -> user.getEmail().toLowerCase())
+                .collect(Collectors.toSet());
+        List<String> toInvite = request.invitedEmails() == null
+                ? List.of()
+                : request.invitedEmails().stream()
+                        .filter(email -> !joiningEmails.contains(email.trim().toLowerCase()))
+                        .toList();
+        invitationService.inviteAll(project, owner, toInvite);
+
+        bringOn(project, owner, fromGroup);
+
+        return ProjectResponse.from(
+                project, ProjectAccess.MEMBER, projectMemberRepository.findAllForProject(project.getId()));
     }
 
 
@@ -257,6 +276,21 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
 
+        List<User> joining = joinersFromGroup(actorId, projectId, groupId, memberIds);
+        User actor = userRepository.findById(actorId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
+        bringOn(project, actor, joining);
+
+        return projectMemberRepository.findAllForProject(projectId).stream()
+                .map(MemberResponse::from)
+                .toList();
+    }
+
+    // Who from a group can come onto the project, worked out without writing
+    // anything. Everything is checked before anything is written: a
+    // notification sends its mail on the spot, so a refusal halfway through
+    // would roll the memberships back but not the mails already gone.
+    private List<User> joinersFromGroup(UUID actorId, UUID projectId, UUID groupId, List<UUID> memberIds) {
         UserGroup group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Groupe introuvable."));
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, actorId)) {
@@ -266,9 +300,6 @@ public class ProjectService {
         Map<UUID, UserGroupMember> inGroup = groupMemberRepository.findAllForGroups(List.of(groupId)).stream()
                 .collect(Collectors.toMap(m -> m.getId().getUserId(), Function.identity()));
 
-        // Everything is checked before anything is written. A notification
-        // sends its mail on the spot, so a refusal halfway through would
-        // roll the memberships back but not the mails already gone.
         List<User> joining = new ArrayList<>();
         for (UUID memberId : new LinkedHashSet<>(memberIds)) {
             UserGroupMember membership = inGroup.get(memberId);
@@ -301,8 +332,12 @@ public class ProjectService {
             }
         }
 
-        User actor = userRepository.findById(actorId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
+        return joining;
+    }
+
+    // The writing half, once joinersFromGroup has said yes to everyone.
+    private void bringOn(Project project, User actor, List<User> joining) {
+        UUID projectId = project.getId();
 
         for (User user : joining) {
             // Whatever invitation they still had -- waiting, refused or
@@ -318,13 +353,9 @@ public class ProjectService {
         }
 
         joining.stream()
-                .filter(user -> !user.getId().equals(actorId))
+                .filter(user -> !user.getId().equals(actor.getId()))
                 .forEach(user -> notificationService.notify(
                         user, NotificationType.ADDED_TO_PROJECT, project, actor, null));
-
-        return projectMemberRepository.findAllForProject(projectId).stream()
-                .map(MemberResponse::from)
-                .toList();
     }
 
     @Transactional
