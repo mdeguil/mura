@@ -109,7 +109,11 @@ public class InvitationService {
             return List.of();
         }
 
-        return emails.stream()
+        // Every address is resolved before the first mail goes out. A mail
+        // cannot be rolled back: an unknown address at the end of the list
+        // would otherwise cancel the project after the first people had
+        // already been told about it.
+        List<User> invitees = emails.stream()
                 .map(String::trim)
                 .filter(email -> !email.isEmpty())
                 .map(String::toLowerCase)
@@ -122,20 +126,32 @@ public class InvitationService {
                         );
                     }
 
-                    User user = userRepository.findByEmailIgnoreCase(email)
+                    return userRepository.findByEmailIgnoreCase(email)
                             .orElseThrow(() -> new ApiException(
                                     HttpStatus.NOT_FOUND,
                                     "Aucun compte Mura n'utilise l'email " + email + "."
                             ));
+                })
+                .toList();
 
+        return invitees.stream()
+                .map(user -> {
                     ProjectInvitation invitation = new ProjectInvitation();
                     invitation.setProject(project);
                     invitation.setInvitedUser(user);
                     invitation.setInvitedBy(owner);
                     invitation.setStatus(InvitationStatus.PENDING);
                     invitation.setCreatedAt(Instant.now());
+                    invitationRepository.save(invitation);
 
-                    return toResponse(invitationRepository.save(invitation));
+                    // The same mail as an invitation sent from the project
+                    // page: being listed at creation is no reason to learn
+                    // about it only by happening to open Mura.
+                    mailService.sendProjectInvitation(
+                            user.getEmail(), user.getUsername(),
+                            owner.getUsername(), project.getName());
+
+                    return toResponse(invitation);
                 })
                 .toList();
     }
