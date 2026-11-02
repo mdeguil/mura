@@ -1,5 +1,6 @@
 package io.mura.group;
 
+import io.mura.common.exception.ApiException;
 import io.mura.group.dto.AddGroupMemberRequest;
 import io.mura.group.dto.GroupResponse;
 import io.mura.group.dto.HoldGroupMemberRequest;
@@ -43,12 +44,12 @@ public class GroupController {
         return ResponseEntity.ok(groupService.get(userId, groupId));
     }
 
+    // Only an administrator creates a group, from /api/admin/groups, and
+    // names who runs it. Answered here rather than left unmapped, so a
+    // client still trying gets a reason instead of a server error.
     @PostMapping
-    public ResponseEntity<GroupResponse> create(
-            @AuthenticationPrincipal UUID userId,
-            @Valid @RequestBody SaveGroupRequest request
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(groupService.create(userId, request));
+    public ResponseEntity<Void> create() {
+        throw new ApiException(HttpStatus.FORBIDDEN, "Seul un administrateur peut créer un groupe.");
     }
 
     @PutMapping("/{groupId}")

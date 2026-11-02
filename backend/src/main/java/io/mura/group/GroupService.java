@@ -62,25 +62,6 @@ public class GroupService {
     }
 
     @Transactional
-    public GroupResponse create(UUID ownerId, SaveGroupRequest request) {
-        User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
-
-        UserGroup group = new UserGroup();
-        group.setName(request.name().trim());
-        group.setOwner(owner);
-        groupRepository.save(group);
-
-        // Whoever creates a group is in it: a group you are not part of would
-        // not show up in your own carnet.
-        UserGroupMember membership = memberRepository.save(new UserGroupMember(group, owner));
-
-        // Nobody is notified here, unlike a group an administrator sets up:
-        // being told about something you have just done yourself is noise.
-        return GroupResponse.from(group, ownerId, List.of(membership));
-    }
-
-    @Transactional
     public GroupResponse rename(UUID actorId, UUID groupId, SaveGroupRequest request) {
         UserGroup group = requireOwner(actorId, groupId);
         group.setName(request.name().trim());

@@ -8,13 +8,13 @@ import type { Group } from '../types'
 // The list, and nothing else: a card opens the group's own page, the way a
 // project card opens the project. Managing a list of people from inside a
 // row was never going to fit once the row had to hold a hold button too.
+//
+// No way to create one from here: groups are set up by an administrator,
+// who names the gérant, from the Administration page.
 export default function GroupList() {
     const [groups, setGroups] = useState<Group[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-
-    const [creating, setCreating] = useState(false)
-    const [newName, setNewName] = useState('')
 
     useEffect(() => {
         let cancelled = false
@@ -35,63 +35,15 @@ export default function GroupList() {
         }
     }, [])
 
-    async function create(e: React.FormEvent) {
-        e.preventDefault()
-        if (!newName.trim()) return
-
-        setError('')
-        try {
-            const { data } = await api.post<Group>('/groups', { name: newName.trim() })
-            setGroups((prev) => [...prev, data])
-            setNewName('')
-            setCreating(false)
-        } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible de créer ce groupe.'))
-        }
-    }
-
     if (loading) return <div className="text-sm text-slate-500">Chargement…</div>
 
     return (
         <div>
-            <div className="flex items-center justify-between gap-4 mb-4">
-                <p className="text-sm text-slate-500">
-                    Un groupe garde une équipe sous la main. Il n’ouvre aucun projet par lui-même : il
-                    sert à ajouter tout le monde à un projet d’un coup.
-                </p>
-                <button
-                    onClick={() => setCreating((v) => !v)}
-                    className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition shrink-0"
-                >
-                    {creating ? 'Annuler' : '+ Nouveau groupe'}
-                </button>
-            </div>
-
-            {creating && (
-                <form onSubmit={create} className="mb-5 bg-surface border border-border rounded-xl p-4 max-w-md">
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Nom du groupe</label>
-                    <div className="flex gap-2">
-                        <input
-                            type="text"
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Escape' && setCreating(false)}
-                            placeholder="Ex : Pôle design"
-                            maxLength={100}
-                            required
-                            autoFocus
-                            className="flex-1 min-w-0 h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
-                        />
-                        <button
-                            type="submit"
-                            disabled={!newName.trim()}
-                            className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition disabled:opacity-60 shrink-0"
-                        >
-                            Créer
-                        </button>
-                    </div>
-                </form>
-            )}
+            <p className="text-sm text-slate-500 mb-4">
+                Un groupe garde une équipe sous la main. Il n’ouvre aucun projet par lui-même : il
+                sert à ajouter tout le monde à un projet d’un coup. Les groupes sont créés par un
+                administrateur.
+            </p>
 
             {error && <p className="text-xs text-red-500 mb-4">{error}</p>}
 
@@ -102,7 +54,8 @@ export default function GroupList() {
                     </div>
                     <h2 className="text-base font-semibold text-slate-800 mb-1">Aucun groupe</h2>
                     <p className="text-sm text-slate-500 max-w-sm">
-                        Réunis les personnes avec qui tu travailles souvent, et ajoute-les ensemble à tes projets.
+                        Tu ne fais partie d’aucun groupe. Quand un administrateur t’en confie un ou
+                        que son gérant t’y ajoute, il apparaît ici.
                     </p>
                 </div>
             ) : (
