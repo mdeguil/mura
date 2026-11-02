@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
+import PasswordInput from '../components/PasswordInput'
 import logo from '../assets/logo-icon.png'
 
 export default function LoginPage() {
@@ -59,13 +60,11 @@ export default function LoginPage() {
                                 <label className="text-xs font-medium text-slate-600">Mot de passe</label>
                                 <Link to="/mot-de-passe-oublie" className="text-xs text-brand-600 hover:text-brand-700">Mot de passe oublié ?</Link>
                             </div>
-                            <input
-                                type="password"
+                            <PasswordInput
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                                className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
+                                onChange={setPassword}
+                                autoComplete="current-password"
+                                compact
                             />
                         </div>
 

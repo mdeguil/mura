@@ -10,6 +10,7 @@ export default function PasswordInput({
     invalid = false,
     autoComplete,
     id,
+    compact = false,
 }: {
     value: string
     onChange: (value: string) => void
@@ -17,8 +18,12 @@ export default function PasswordInput({
     invalid?: boolean
     autoComplete?: string
     id?: string
+    // The login form runs one size smaller than the signup form; the field
+    // follows whichever form it sits in.
+    compact?: boolean
 }) {
     const [shown, setShown] = useState(false)
+    const height = compact ? 'h-9' : 'h-10'
 
     return (
         <div className="relative">
@@ -30,7 +35,7 @@ export default function PasswordInput({
                 placeholder={placeholder}
                 autoComplete={autoComplete}
                 required
-                className={`w-full h-10 rounded-lg border bg-surface-muted pl-3 pr-10 text-sm text-slate-800 placeholder-slate-400 outline-none transition ${
+                className={`w-full ${height} rounded-lg border bg-surface-muted pl-3 pr-10 text-sm text-slate-800 placeholder-slate-400 outline-none transition ${
                     invalid
                         ? 'border-red-300 focus:border-red-400'
                         : 'border-border-strong focus:border-brand-500'
@@ -43,7 +48,7 @@ export default function PasswordInput({
                 // next field, not this toggle.
                 tabIndex={-1}
                 aria-label={shown ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                className="absolute right-0 top-0 h-10 w-10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition"
+                className={`absolute right-0 top-0 ${height} w-10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition`}
             >
                 <svg
                     viewBox="0 0 24 24"
