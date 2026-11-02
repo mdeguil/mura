@@ -2,6 +2,7 @@ import { useState } from 'react'
 import api from '../services/api'
 import UserAvatar, { SuspendedPill } from './UserAvatar'
 import CarnetCombobox from './CarnetCombobox'
+import GroupAddPanel from './GroupAddPanel'
 import MemberDepartureDialog, { type Departure } from './MemberDepartureDialog'
 import type { Invitation, Member, ProjectRole } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
@@ -40,6 +41,8 @@ export default function MemberList({
     onMembersChanged: (members: Member[]) => void
 }) {
     const [inviting, setInviting] = useState(false)
+    // One person is asked and answers; a group is brought straight in.
+    const [mode, setMode] = useState<'person' | 'group'>('person')
     const [email, setEmail] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
@@ -57,8 +60,19 @@ export default function MemberList({
 
     function closeInvite() {
         setInviting(false)
+        setMode('person')
         setEmail('')
         setError('')
+    }
+
+    // Whatever invitation the newcomers still had is gone on the server,
+    // so it goes from the list here too.
+    function handleGroupAdded(updated: Member[], joinedIds: string[]) {
+        onMembersChanged(updated)
+        invitations
+            .filter((i) => joinedIds.includes(i.invitedUser.id))
+            .forEach((i) => onInvitationCancelled(i.id))
+        closeInvite()
     }
 
     async function invite(address: string) {
@@ -138,8 +152,8 @@ export default function MemberList({
                                 ? 'bg-surface-muted text-slate-500 rotate-45'
                                 : 'bg-brand-500 text-white hover:bg-brand-600'
                         }`}
-                        title={inviting ? 'Annuler' : 'Inviter une personne'}
-                        aria-label={inviting ? 'Annuler' : 'Inviter une personne'}
+                        title={inviting ? 'Annuler' : 'Inviter une personne ou ajouter un groupe'}
+                        aria-label={inviting ? 'Annuler' : 'Inviter une personne ou ajouter un groupe'}
                         aria-expanded={inviting}
                     >
                         {/* Drawn rather than typed: the + glyph sits off the
@@ -161,6 +175,42 @@ export default function MemberList({
             </div>
 
             {inviting && (
+                <div className="flex items-center gap-1 mb-3 w-fit bg-surface-muted border border-border rounded-lg p-0.5">
+                    {(
+                        [
+                            ['person', 'Une personne'],
+                            ['group', 'Un groupe'],
+                        ] as const
+                    ).map(([key, label]) => (
+                        <button
+                            key={key}
+                            type="button"
+                            onClick={() => {
+                                setMode(key)
+                                setError('')
+                            }}
+                            className={`h-7 px-3 rounded-md text-xs font-medium transition ${
+                                mode === key
+                                    ? 'bg-surface text-slate-800 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {inviting && mode === 'group' && (
+                <GroupAddPanel
+                    projectId={projectId}
+                    members={members}
+                    onAdded={handleGroupAdded}
+                    onCancel={closeInvite}
+                />
+            )}
+
+            {inviting && mode === 'person' && (
                 <form
                     onSubmit={(e) => {
                         e.preventDefault()

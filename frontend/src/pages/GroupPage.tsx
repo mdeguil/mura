@@ -243,7 +243,7 @@ export default function GroupPage() {
 
                         <p className="text-xs text-slate-400 mt-3">
                             Un groupe n'ouvre aucun projet par lui-même : il réunit des personnes pour
-                            les inviter ensemble. Créé le{' '}
+                            les ajouter ensemble à un projet. Créé le{' '}
                             {format(new Date(group.createdAt), 'd MMMM yyyy', { locale: fr })}.
                         </p>
 
@@ -367,7 +367,7 @@ export default function GroupPage() {
                                                 member.onHold && (
                                                     <span
                                                         className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full shrink-0"
-                                                        title="Reste dans le groupe, mais ne sera pas invité avec lui. Son compte n'est pas touché."
+                                                        title="Reste dans le groupe, mais ne sera pas ajouté aux projets avec lui. Son compte n'est pas touché."
                                                     >
                                                         En retrait
                                                     </span>
@@ -381,8 +381,8 @@ export default function GroupPage() {
                                                         className="h-7 px-2.5 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-brand-500 transition shrink-0"
                                                         title={
                                                             member.onHold
-                                                                ? `${member.username} sera de nouveau invité avec le groupe`
-                                                                : `${member.username} reste dans le groupe mais ne sera plus invité avec lui`
+                                                                ? `${member.username} sera de nouveau ajouté aux projets avec le groupe`
+                                                                : `${member.username} reste dans le groupe mais ne sera plus ajouté aux projets avec lui`
                                                         }
                                                     >
                                                         {member.onHold ? 'Réintégrer' : 'Mettre en retrait'}
@@ -449,8 +449,8 @@ export default function GroupPage() {
                     tone="danger"
                     body={
                         <>
-                            {group.owner.username} sera prévenu de ton départ. Tu ne seras plus invité
-                            avec ce groupe, et seul {group.owner.username} peut t'y remettre.
+                            {group.owner.username} sera prévenu de ton départ. Tu ne seras plus ajouté
+                            aux projets avec ce groupe, et seul {group.owner.username} peut t'y remettre.
                         </>
                     }
                     confirmLabel="Quitter le groupe"

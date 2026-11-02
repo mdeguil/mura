@@ -42,6 +42,9 @@ export type ProjectAccess = 'MEMBER' | 'INVITED'
 export type NotificationType =
   | 'REMOVED_FROM_PROJECT'
   | 'MEMBER_LEFT_PROJECT'
+  // Put on a project's team from one of your groups, with no invitation
+  // to answer -- which is why you are told.
+  | 'ADDED_TO_PROJECT'
   // About an account rather than a project membership: somebody you work
   // with was suspended, let back in, or removed for good. Sent to the
   // owner of each project and each group they belong to, so the subject
@@ -186,7 +189,8 @@ export interface KnownUser {
 }
 
 // A named set of people, kept once instead of rebuilt project by project.
-// Grants no access on its own: it is a shortcut for inviting.
+// Grants no access on its own: it is a shortcut for bringing people onto
+// a project together.
 export interface Group {
   id: string
   name: string

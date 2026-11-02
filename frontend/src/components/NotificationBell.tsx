@@ -301,6 +301,12 @@ function NotificationLine({ notification }: { notification: AppNotification }) {
                     {who} t'a retiré de {name}
                 </>
             )
+        case 'ADDED_TO_PROJECT':
+            return (
+                <>
+                    {who} t'a ajouté à {name}
+                </>
+            )
         case 'MEMBER_SUSPENDED':
             return (
                 <>

@@ -1,6 +1,10 @@
 package io.mura.project;
 
 import io.mura.common.exception.ApiException;
+import io.mura.group.UserGroup;
+import io.mura.group.UserGroupMember;
+import io.mura.group.UserGroupMemberRepository;
+import io.mura.group.UserGroupRepository;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
 import io.mura.notification.NotificationService;
@@ -17,9 +21,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +43,8 @@ public class ProjectService {
     private final TaskService taskService;
     private final InvitationService invitationService;
     private final NotificationService notificationService;
+    private final UserGroupRepository groupRepository;
+    private final UserGroupMemberRepository groupMemberRepository;
 
     @Transactional(readOnly = true)
     public List<ProjectResponse> listForUser(UUID userId) {
@@ -227,6 +236,91 @@ public class ProjectService {
         successor.setRole(ProjectRole.OWNER);
         previous.setRole(ProjectRole.ADMIN);
         project.setOwner(successor.getUser());
+
+        return projectMemberRepository.findAllForProject(projectId).stream()
+                .map(MemberResponse::from)
+                .toList();
+    }
+
+    // Bringing people over from a group, straight onto the team: no
+    // invitation to answer. This is the one way into a project that skips
+    // asking, so it is held to what inviting already requires -- a manager
+    // of the project, who is also in the group -- and everyone added is told
+    // at once, bell and mail, and can show themselves out as usual.
+    //
+    // Members set aside by the gérant are refused, not skipped: the gérant
+    // set them aside precisely so they would not be brought along with the
+    // group. So are suspended accounts, which cannot sign in to use it.
+    @Transactional
+    public List<MemberResponse> addFromGroup(UUID actorId, UUID projectId, UUID groupId, List<UUID> memberIds) {
+        requireManager(actorId, projectId);
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+
+        UserGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Groupe introuvable."));
+        if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, actorId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Tu ne fais pas partie de ce groupe.");
+        }
+
+        Map<UUID, UserGroupMember> inGroup = groupMemberRepository.findAllForGroups(List.of(groupId)).stream()
+                .collect(Collectors.toMap(m -> m.getId().getUserId(), Function.identity()));
+
+        // Everything is checked before anything is written. A notification
+        // sends its mail on the spot, so a refusal halfway through would
+        // roll the memberships back but not the mails already gone.
+        List<User> joining = new ArrayList<>();
+        for (UUID memberId : new LinkedHashSet<>(memberIds)) {
+            UserGroupMember membership = inGroup.get(memberId);
+            if (membership == null) {
+                throw new ApiException(
+                        HttpStatus.BAD_REQUEST,
+                        "Une des personnes choisies ne fait pas partie du groupe " + group.getName() + "."
+                );
+            }
+
+            User user = membership.getUser();
+            if (membership.isOnHold()) {
+                throw new ApiException(
+                        HttpStatus.CONFLICT,
+                        user.getUsername() + " est en retrait du groupe " + group.getName()
+                                + " : le gérant l'a mis de côté."
+                );
+            }
+            if (user.isSuspended()) {
+                throw new ApiException(
+                        HttpStatus.CONFLICT,
+                        "Le compte de " + user.getUsername() + " est suspendu."
+                );
+            }
+
+            // Already on the team: nothing to do, and no reason to refuse
+            // the rest of the selection over it.
+            if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, memberId)) {
+                joining.add(user);
+            }
+        }
+
+        User actor = userRepository.findById(actorId)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
+
+        for (User user : joining) {
+            // Whatever invitation they still had -- waiting, refused or
+            // lapsed -- no longer has anything to ask: they are in. Cleared
+            // before any notification is written, see the note on
+            // UserGroupRepository.deleteGroupById.
+            for (InvitationStatus status : List.of(
+                    InvitationStatus.PENDING, InvitationStatus.DECLINED, InvitationStatus.EXPIRED)) {
+                invitationRepository.deleteAll(invitationRepository.findAllByProjectIdAndInvitedUserIdAndStatus(
+                        projectId, user.getId(), status));
+            }
+            projectMemberRepository.save(new ProjectMember(project, user, ProjectRole.MEMBER));
+        }
+
+        joining.stream()
+                .filter(user -> !user.getId().equals(actorId))
+                .forEach(user -> notificationService.notify(
+                        user, NotificationType.ADDED_TO_PROJECT, project, actor, null));
 
         return projectMemberRepository.findAllForProject(projectId).stream()
                 .map(MemberResponse::from)

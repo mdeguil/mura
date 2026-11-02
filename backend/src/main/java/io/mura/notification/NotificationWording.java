@@ -47,6 +47,13 @@ final class NotificationWording {
                     who + " a quitté le projet " + name + ", que tu gères.",
                     destination, open
             );
+            case ADDED_TO_PROJECT -> new Lines(
+                    who + " t'a ajouté à " + name,
+                    "Tu fais partie de " + name,
+                    who + " t'a ajouté au projet " + name + " avec l'un de tes groupes. "
+                            + "Si tu n'y as pas ta place, tu peux le quitter depuis la page du projet.",
+                    destination, open
+            );
             case MEMBER_SUSPENDED -> new Lines(
                     "Le compte de " + who + " a été suspendu",
                     "Le compte de " + who + " a été suspendu",
@@ -105,7 +112,7 @@ final class NotificationWording {
                     who + " t'a ajouté au groupe " + name,
                     "Tu fais partie du groupe " + name,
                     who + " t'a ajouté au groupe " + name + ". Un groupe n'ouvre aucun projet "
-                            + "par lui-même : il sert à vous réunir pour les invitations.",
+                            + "par lui-même : il sert à vous ajouter ensemble à un projet.",
                     destination, open
             );
             case REMOVED_FROM_GROUP -> new Lines(
@@ -127,7 +134,7 @@ final class NotificationWording {
                     "Tu es en retrait du groupe " + name,
                     "Mis en retrait du groupe " + name,
                     who + " t'a mis en retrait du groupe " + name + ". Tu en restes membre, "
-                            + "mais tu ne seras pas invité quand le groupe l'est. Ton compte "
+                            + "mais tu ne seras pas ajouté aux projets avec lui. Ton compte "
                             + "n'est pas touché.",
                     destination, open
             );

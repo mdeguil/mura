@@ -5,6 +5,9 @@ public enum NotificationType {
     REMOVED_FROM_PROJECT,
     // Someone left a project you manage.
     MEMBER_LEFT_PROJECT,
+    // A manager of a project put you on its team from one of your groups.
+    // There was no invitation to answer, which is why you are told.
+    ADDED_TO_PROJECT,
     // Someone you work with had their account suspended. Sent to the owner
     // of each project and each group they belong to: those are the people
     // who have to work around the absence.

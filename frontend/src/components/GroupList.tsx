@@ -57,7 +57,7 @@ export default function GroupList() {
             <div className="flex items-center justify-between gap-4 mb-4">
                 <p className="text-sm text-slate-500">
                     Un groupe garde une équipe sous la main. Il n’ouvre aucun projet par lui-même : il
-                    sert à inviter tout le monde d’un coup.
+                    sert à ajouter tout le monde à un projet d’un coup.
                 </p>
                 <button
                     onClick={() => setCreating((v) => !v)}
@@ -102,7 +102,7 @@ export default function GroupList() {
                     </div>
                     <h2 className="text-base font-semibold text-slate-800 mb-1">Aucun groupe</h2>
                     <p className="text-sm text-slate-500 max-w-sm">
-                        Réunis les personnes avec qui tu travailles souvent, et invite-les ensemble.
+                        Réunis les personnes avec qui tu travailles souvent, et ajoute-les ensemble à tes projets.
                     </p>
                 </div>
             ) : (

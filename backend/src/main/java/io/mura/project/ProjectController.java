@@ -1,5 +1,6 @@
 package io.mura.project;
 
+import io.mura.project.dto.AddGroupMembersRequest;
 import io.mura.project.dto.ChangeRoleRequest;
 import io.mura.project.dto.CreateProjectRequest;
 import io.mura.project.dto.MemberResponse;
@@ -116,6 +117,16 @@ public class ProjectController {
             @PathVariable UUID memberId
     ) {
         return ResponseEntity.ok(projectService.transferOwnership(userId, id, memberId));
+    }
+
+    @PostMapping("/{id}/members/from-group")
+    public ResponseEntity<List<MemberResponse>> addFromGroup(
+            @AuthenticationPrincipal UUID userId,
+            @PathVariable UUID id,
+            @Valid @RequestBody AddGroupMembersRequest request
+    ) {
+        return ResponseEntity.ok(
+                projectService.addFromGroup(userId, id, request.groupId(), request.memberIds()));
     }
 
     @PostMapping("/{id}/members/{memberId}/remove")

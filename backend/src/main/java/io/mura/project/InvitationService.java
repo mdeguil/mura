@@ -182,8 +182,9 @@ public class InvitationService {
         ProjectInvitation invitation = requireOwnInvitation(userId, invitationId);
         Project project = invitation.getProject();
 
-        // Accepting is what creates membership — and the only thing that does,
-        // so nothing here can hand out access on its own.
+        // Accepting is what creates membership. The only other way in is a
+        // manager bringing people over from a group (ProjectService.addFromGroup);
+        // nothing here hands out access on its own.
         if (!projectMemberRepository.existsByProjectIdAndUserId(project.getId(), userId)) {
             projectMemberRepository.save(
                     new ProjectMember(project, invitation.getInvitedUser(), ProjectRole.MEMBER)
