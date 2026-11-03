@@ -1,8 +1,6 @@
 import { useEffect } from 'react'
 import { useProjectTypes } from '../hooks/useProjectTypes'
-import { projectGlassBackground } from '../utils/color'
-
-export const PROJECT_COLORS = ['#06b6d4', '#3b82f6', '#a855f7', '#ec4899', '#f97316', '#22c55e']
+import { PROJECT_COLORS, projectGlassBackground } from '../utils/color'
 
 export const FIELD =
     'w-full h-10 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition'

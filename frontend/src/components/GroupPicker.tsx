@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import api from '../services/api'
 import UserAvatar, { SuspendedPill } from './UserAvatar'
 import { apiErrorMessage } from '../utils/apiError'
@@ -83,10 +83,13 @@ export default function GroupPicker({
         }
     }, [allowNone])
 
+    // Reported whenever the choice changes, not whenever the caller hands
+    // down a new callback: the latest one is read from here.
+    const onChangeRef = useRef(onChange)
+    onChangeRef.current = onChange
+
     useEffect(() => {
-        onChange(group ? { groupId: group.id, groupName: group.name, joiningCount: joining.length } : null)
-        // Reported whenever the choice changes, not whenever the caller
-        // hands down a new callback.
+        onChangeRef.current(group ? { groupId: group.id, groupName: group.name, joiningCount: joining.length } : null)
     }, [group, joining.length])
 
     if (loading) return <p className="text-xs text-slate-500">Chargement de tes groupes…</p>

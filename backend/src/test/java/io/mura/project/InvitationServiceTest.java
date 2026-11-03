@@ -97,6 +97,20 @@ class InvitationServiceTest {
     }
 
     @Test
+    void aProjectAdminInvitesInTheirOwnName() {
+        User carol = Fixtures.user("carol");
+        when(projectMemberRepository.findByProjectIdAndUserId(project.getId(), carol.getId()))
+                .thenReturn(Optional.of(Fixtures.member(project, carol, ProjectRole.ADMIN)));
+
+        service.invite(carol.getId(), project.getId(), new CreateInvitationRequest("bob@mura.test"));
+
+        ArgumentCaptor<ProjectInvitation> saved = ArgumentCaptor.forClass(ProjectInvitation.class);
+        verify(invitationRepository).save(saved.capture());
+        assertThat(saved.getValue().getInvitedBy()).isSameAs(carol);
+        verify(mailService).sendProjectInvitation("bob@mura.test", "bob", "carol", "Refonte");
+    }
+
+    @Test
     void onlyAManagerMayInvite() {
         when(projectMemberRepository.findByProjectIdAndUserId(project.getId(), bob.getId()))
                 .thenReturn(Optional.of(Fixtures.member(project, bob, ProjectRole.MEMBER)));

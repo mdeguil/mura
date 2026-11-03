@@ -5,11 +5,10 @@ import CarnetCombobox from './CarnetCombobox'
 import GroupPicker, { type GroupSelection } from './GroupPicker'
 import { useAuthStore } from '../store/authStore'
 import type { Project } from '../types'
-import { projectGlassBackground } from '../utils/color'
+import { PROJECT_COLORS, projectGlassBackground } from '../utils/color'
 import ProjectFormFields, {
     ColorPicker,
     LABEL,
-    PROJECT_COLORS,
     type ProjectFormValues,
 } from './ProjectFormFields'
 

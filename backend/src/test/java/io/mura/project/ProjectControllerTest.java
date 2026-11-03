@@ -6,7 +6,6 @@ import io.mura.project.dto.ProjectResponse;
 import io.mura.support.ControllerTestSupport;
 import io.mura.support.Fixtures;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -153,8 +152,6 @@ class ProjectControllerTest extends ControllerTestSupport {
     }
 
     @Test
-    @Disabled("Bug connu, à corriger dans la branche refonte : un identifiant mal formé dans "
-            + "l'adresse tombe dans le gestionnaire générique et répond 500 au lieu de 400.")
     void anIdThatIsNotAUuidIsABadRequest() throws Exception {
         mvc.perform(get("/api/projects/{id}", "pas-un-uuid"))
                 .andExpect(status().isBadRequest());

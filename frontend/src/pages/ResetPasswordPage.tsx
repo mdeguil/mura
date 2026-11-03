@@ -3,7 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import PasswordInput from '../components/PasswordInput'
-import PasswordStrength, { passwordRules } from '../components/PasswordStrength'
+import PasswordStrength from '../components/PasswordStrength'
+import { passwordRules } from '../utils/passwordRules'
 import Logo from '../components/Logo'
 
 export default function ResetPasswordPage() {

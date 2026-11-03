@@ -36,3 +36,6 @@ export function projectGlassBackground(hex: string, angle = 135): string {
         projectGradient(hex, angle),
     ].join(', ')
 }
+
+// The colours a project can be given, the first being the default.
+export const PROJECT_COLORS = ['#06b6d4', '#3b82f6', '#a855f7', '#ec4899', '#f97316', '#22c55e']

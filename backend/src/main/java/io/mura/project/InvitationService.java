@@ -47,7 +47,11 @@ public class InvitationService {
 
     @Transactional
     public InvitationResponse invite(UUID actorId, UUID projectId, CreateInvitationRequest request) {
-        Project project = requireManager(actorId, projectId);
+        ProjectMember manager = requireManager(actorId, projectId);
+        Project project = manager.getProject();
+        // Whoever sent it, owner or project admin: the carnet links the two
+        // of them, and the mail says who is asking.
+        User inviter = manager.getUser();
 
         String email = request.email().trim();
         User user = userRepository.findByEmailIgnoreCase(email)
@@ -83,7 +87,7 @@ public class InvitationService {
         ProjectInvitation invitation = new ProjectInvitation();
         invitation.setProject(project);
         invitation.setInvitedUser(user);
-        invitation.setInvitedBy(project.getOwner());
+        invitation.setInvitedBy(inviter);
         invitation.setStatus(InvitationStatus.PENDING);
         // Set eagerly rather than leaving it to @PrePersist: the response is
         // built before Hibernate flushes the insert.
@@ -94,7 +98,7 @@ public class InvitationService {
         // An invitation is exactly the thing they are not yet.
         mailService.sendProjectInvitation(
                 user.getEmail(), user.getUsername(),
-                project.getOwner().getUsername(), project.getName());
+                inviter.getUsername(), project.getName());
 
         return toResponse(invitation);
     }
@@ -341,21 +345,21 @@ public class InvitationService {
     // Inviting and cancelling are open to the owner and to admins. The check
     // lives here rather than calling ProjectService, which already depends on
     // this service to invite people at creation time.
-    private Project requireManager(UUID userId, UUID projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+    private ProjectMember requireManager(UUID userId, UUID projectId) {
+        if (!projectRepository.existsById(projectId)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable.");
+        }
 
-        ProjectRole role = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
-                .map(ProjectMember::getRole)
+        ProjectMember membership = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet."));
 
-        if (!role.manages()) {
+        if (!membership.getRole().manages()) {
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
                     "Il faut être propriétaire ou administrateur du projet pour inviter ou retirer des personnes."
             );
         }
 
-        return project;
+        return membership;
     }
 }
