@@ -13,6 +13,9 @@ const scale = (family) =>
 /** @type {import('tailwindcss').Config} */
 export default {
     content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+    // dark: variants follow the theme set on <html data-theme>, for the rare
+    // thing a colour variable cannot swap -- an image, say.
+    darkMode: ['selector', '[data-theme="dark"]'],
     theme: {
         extend: {
             colors: {

@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/authStore'
 import PasswordInput from '../components/PasswordInput'
 import PasswordStrength, { passwordRules } from '../components/PasswordStrength'
 import LegalLinks from '../components/LegalLinks'
-import logo from '../assets/logo-icon.png'
+import Logo from '../components/Logo'
 
 // Mirrors the @Pattern on RegisterRequest: letters (accented ones included),
 // digits, dot, hyphen, underscore, starting on a letter or a digit.
@@ -113,7 +113,7 @@ export default function RegisterPage() {
 
                     {/* Logo */}
                     <div className="flex items-center gap-2.5 mb-7">
-                        <img src={logo} alt="Mura" className="w-10 h-10 rounded-full" />
+                        <Logo className="w-10 h-10" />
                         <span className="text-xl font-semibold text-slate-800">Mura</span>
                     </div>
 

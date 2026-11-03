@@ -3,7 +3,7 @@ import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import type { Account } from '../types'
-import logo from '../assets/logo-icon.png'
+import Logo from '../components/Logo'
 
 const LENGTH = 6
 
@@ -102,7 +102,7 @@ export default function VerifyEmailPage() {
             <div className="w-full max-w-md">
                 <div className="bg-surface border border-border rounded-2xl p-8 shadow-sm">
                     <div className="flex items-center gap-2.5 mb-7">
-                        <img src={logo} alt="Mura" className="w-10 h-10 rounded-full" />
+                        <Logo className="w-10 h-10" />
                         <span className="text-xl font-semibold text-slate-800">Mura</span>
                     </div>
 

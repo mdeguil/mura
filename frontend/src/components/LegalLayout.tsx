@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import logo from '../assets/logo-icon.png'
+import Logo from './Logo'
 import LegalLinks from './LegalLinks'
 import { LEGAL_INFO, legalInfoDeclared } from '../legal/legalInfo'
 
@@ -11,7 +11,7 @@ export default function LegalLayout({ title, children }: { title: string; childr
         <div className="min-h-screen bg-app px-4 py-10">
             <div className="max-w-2xl mx-auto">
                 <Link to="/projets" className="inline-flex items-center gap-2.5 mb-8">
-                    <img src={logo} alt="" className="w-9 h-9 rounded-full" />
+                    <Logo className="w-9 h-9" alt="" />
                     <span className="text-lg font-semibold text-slate-800">Mura</span>
                 </Link>
 

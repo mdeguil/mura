@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import NotificationBell from './NotificationBell'
 import ThemeToggle from './ThemeToggle'
-import logo from '../assets/logo-icon.png'
+import Logo from './Logo'
 
 export default function Navbar() {
     const navigate = useNavigate()
@@ -17,7 +17,7 @@ export default function Navbar() {
     return (
         <header className="h-14 bg-surface border-b border-border flex items-center justify-between px-6">
             <div className="flex items-center gap-2.5">
-                <img src={logo} alt="Mura" className="w-8 h-8 rounded-full" />
+                <Logo className="w-8 h-8" />
                 <span className="text-lg font-semibold text-slate-800">Mura</span>
 
                 {/* The halves of the app sit beside the mark, so the carnet

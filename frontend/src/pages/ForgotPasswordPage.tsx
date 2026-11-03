@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
-import logo from '../assets/logo-icon.png'
+import Logo from '../components/Logo'
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('')
@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
             <div className="w-full max-w-sm">
                 <div className="bg-surface border border-border rounded-2xl p-8 shadow-sm">
                     <div className="flex items-center gap-2.5 mb-7">
-                        <img src={logo} alt="Mura" className="w-10 h-10 rounded-full" />
+                        <Logo className="w-10 h-10" />
                         <span className="text-xl font-semibold text-slate-800">Mura</span>
                     </div>
 
