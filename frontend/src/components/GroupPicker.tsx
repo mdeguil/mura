@@ -50,7 +50,17 @@ export default function GroupPicker({
         return null
     }
 
-    const joining = group ? group.members.filter((m) => reasonLeftOut(m) === null) : []
+    function joiningOf(g: Group) {
+        return g.members.filter((m) => reasonLeftOut(m) === null)
+    }
+
+    const joining = group ? joiningOf(group) : []
+
+    // Picking the chosen group again lets go of it, where going without one
+    // is allowed: that is the only way back to no group.
+    function pick(g: Group) {
+        setGroupId(g.id === groupId && allowNone ? '' : g.id)
+    }
 
     useEffect(() => {
         let cancelled = false
@@ -100,19 +110,68 @@ export default function GroupPicker({
 
     return (
         <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1.5">Quel groupe ?</label>
-            <select
-                value={groupId}
-                onChange={(e) => setGroupId(e.target.value)}
-                className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 outline-none focus:border-brand-500 transition mb-2"
+            <p id="group-picker-label" className="text-xs font-medium text-slate-600 mb-1.5">
+                Quel groupe ?
+            </p>
+            {/* Cards rather than a select: a group is recognised by its
+                faces, and how many it brings is the thing being decided. */}
+            <ul
+                role="radiogroup"
+                aria-labelledby="group-picker-label"
+                className="flex flex-col gap-2 max-h-72 overflow-y-auto p-0.5 mb-2"
             >
-                {allowNone && <option value="">Aucun groupe</option>}
-                {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                        {g.name}
-                    </option>
-                ))}
-            </select>
+                {groups.map((g) => {
+                    const selected = g.id === groupId
+                    const count = joiningOf(g).length
+                    return (
+                        <li key={g.id}>
+                            <button
+                                type="button"
+                                role="radio"
+                                aria-checked={selected}
+                                onClick={() => pick(g)}
+                                className={`w-full text-left rounded-xl border px-3 py-2.5 flex items-center gap-3 transition ${
+                                    selected
+                                        ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500'
+                                        : 'border-border bg-surface hover:border-brand-300'
+                                }`}
+                            >
+                                <span className="flex -space-x-2 shrink-0" aria-hidden="true">
+                                    {g.members.slice(0, 3).map((m) => (
+                                        <span key={m.id} className="rounded-full ring-2 ring-surface">
+                                            <UserAvatar user={m} size="sm" />
+                                        </span>
+                                    ))}
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                    <span className="block text-sm font-medium text-slate-800 truncate">
+                                        {g.name}
+                                    </span>
+                                    <span className="block text-[11px] text-slate-400 truncate">
+                                        {g.owned ? 'tu le gères' : `géré par ${g.owner.username}`}
+                                    </span>
+                                </span>
+                                <span
+                                    className={`shrink-0 text-xs font-medium whitespace-nowrap px-2 py-0.5 rounded-full border ${
+                                        count > 0
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                            : 'bg-surface-muted text-slate-400 border-border'
+                                    }`}
+                                    title={
+                                        count === 0
+                                            ? 'Personne à ajouter dans ce groupe'
+                                            : `${count} personne${count > 1 ? 's' : ''} rejoindr${
+                                                  count > 1 ? 'ont' : 'a'
+                                              } le projet`
+                                    }
+                                >
+                                    👥 {count}
+                                </span>
+                            </button>
+                        </li>
+                    )
+                })}
+            </ul>
 
             {group && (
                 <>
@@ -146,6 +205,18 @@ export default function GroupPicker({
                             : `${joining.length} personne${joining.length > 1 ? 's' : ''} rejoindr${
                                   joining.length > 1 ? 'ont' : 'a'
                               } le projet.`}
+                        {allowNone && (
+                            <>
+                                {' '}
+                                <button
+                                    type="button"
+                                    onClick={() => setGroupId('')}
+                                    className="text-brand-600 hover:text-brand-700 underline-offset-2 hover:underline"
+                                >
+                                    Retirer le groupe
+                                </button>
+                            </>
+                        )}
                     </p>
                 </>
             )}
