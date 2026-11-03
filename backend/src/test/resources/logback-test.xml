@@ -1,0 +1,16 @@
+<configuration>
+    <!-- Tests run quietly: only warnings and up, and none from the two
+         classes whose failures some tests provoke on purpose. -->
+    <logger name="io.mura.common.exception.GlobalExceptionHandler" level="OFF"/>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="io.mura.mail.MailService" level="OFF"/>
+
+    <root level="WARN">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
