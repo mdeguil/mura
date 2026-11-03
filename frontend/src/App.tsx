@@ -10,7 +10,10 @@ import RegisterPage from './pages/RegisterPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
+import LegalNoticePage from './pages/LegalNoticePage'
+import PrivacyPage from './pages/PrivacyPage'
 import AccountPage from './pages/AccountPage'
+import LegalLinks from './components/LegalLinks'
 import api from './services/api'
 import { useAuthStore } from './store/authStore'
 import type { Account } from './types'
@@ -24,7 +27,16 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   // the server refuses every other call it could make. The code screen is
   // what the app is until the address is confirmed.
   if (user && !user.emailVerified) return <VerifyEmailPage />
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      {/* At the foot of every signed-in page: the legal pages have to be
+          easy to reach from anywhere, not only from the sign-in screen. */}
+      <footer className="bg-app py-6">
+        <LegalLinks />
+      </footer>
+    </>
+  )
 }
 
 // The role is checked again on the server for every call this page makes;
@@ -72,6 +84,10 @@ export default function App() {
         <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
         {/* The address a reset mail points at. */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Open to everyone, signed in or not: they have to be readable
+            before anyone decides to create an account. */}
+        <Route path="/mentions-legales" element={<LegalNoticePage />} />
+        <Route path="/confidentialite" element={<PrivacyPage />} />
         <Route path="/compte" element={<PrivateRoute><AccountPage /></PrivateRoute>} />
         {/* The list lives at a name of its own, beside /carnet. The bare
             root still works: a bookmark should not break because the

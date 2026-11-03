@@ -4,6 +4,7 @@ import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import PasswordInput from '../components/PasswordInput'
+import LegalLinks from '../components/LegalLinks'
 import logo from '../assets/logo-icon.png'
 
 export default function LoginPage() {
@@ -88,6 +89,8 @@ export default function LoginPage() {
                         </Link>
                     </p>
                 </div>
+
+                <LegalLinks className="mt-6" />
             </div>
         </div>
     )

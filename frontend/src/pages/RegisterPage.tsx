@@ -5,6 +5,7 @@ import { apiErrorField, apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 import PasswordInput from '../components/PasswordInput'
 import PasswordStrength, { passwordRules } from '../components/PasswordStrength'
+import LegalLinks from '../components/LegalLinks'
 import logo from '../assets/logo-icon.png'
 
 // Mirrors the @Pattern on RegisterRequest: letters (accented ones included),
@@ -226,6 +227,17 @@ export default function RegisterPage() {
                         </button>
                     </form>
 
+                    {/* Told at the moment the data is collected, as the
+                        RGPD asks (art. 13), not left for someone to find. */}
+                    <p className="text-xs text-slate-500 mt-4">
+                        Mura conserve ton nom d'utilisateur, ton adresse e-mail et ton mot de passe haché pour
+                        faire fonctionner ton compte. Le détail, et tes droits, sont dans la{' '}
+                        <Link to="/confidentialite" className="text-brand-700 underline underline-offset-2">
+                            politique de confidentialité
+                        </Link>
+                        .
+                    </p>
+
                     <p className="text-center text-sm text-slate-500 mt-5">
                         Déjà un compte ?{' '}
                         <Link to="/login" className="text-brand-600 font-medium hover:text-brand-700">
@@ -233,6 +245,8 @@ export default function RegisterPage() {
                         </Link>
                     </p>
                 </div>
+
+                <LegalLinks className="mt-6" />
             </div>
         </div>
     )
