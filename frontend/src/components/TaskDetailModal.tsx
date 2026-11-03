@@ -263,7 +263,7 @@ export default function TaskDetailModal({
                         type="submit"
                         form="task-edit"
                         disabled={savingDates || !changed}
-                        className="h-9 px-4 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition disabled:opacity-40"
+                        className="h-9 px-4 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink text-xs font-medium transition disabled:opacity-40"
                     >
                         {savingDates ? 'Enregistrement…' : 'Enregistrer'}
                     </button>

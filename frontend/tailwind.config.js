@@ -35,6 +35,10 @@ export default {
                     DEFAULT: themed('border'),
                     strong: themed('border-strong'),
                 },
+                // Fixed, not themed: the text set on a Vert d'eau fill. That
+                // green is too light for white text (1.79:1) in either theme;
+                // the charte's own dark background reads at 10.14:1.
+                ink: '#11161b',
             },
             fontFamily: {
                 sans: ['"Inter Variable"', ...defaultTheme.fontFamily.sans],

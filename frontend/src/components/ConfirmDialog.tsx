@@ -54,10 +54,10 @@ export default function ConfirmDialog({
                     <button
                         onClick={confirm}
                         disabled={busy}
-                        className={`h-9 px-4 rounded-lg text-sm font-medium text-white transition disabled:opacity-60 ${
+                        className={`h-9 px-4 rounded-lg text-sm font-medium transition disabled:opacity-60 ${
                             tone === 'danger'
-                                ? 'bg-red-500 hover:bg-red-600'
-                                : 'bg-brand-500 hover:bg-brand-600'
+                                ? 'bg-red-500 hover:bg-red-600 text-white'
+                                : 'bg-brand-500 hover:bg-brand-600 text-ink'
                         }`}
                     >
                         {busy ? 'En cours…' : confirmLabel}

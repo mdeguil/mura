@@ -176,7 +176,7 @@ export default function CreateProjectModal({
                                             type="button"
                                             onClick={addEmail}
                                             disabled={!emailDraft.trim()}
-                                            className="w-10 h-10 rounded-lg bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center transition disabled:opacity-40 shrink-0"
+                                            className="w-10 h-10 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink flex items-center justify-center transition disabled:opacity-40 shrink-0"
                                             aria-label="Ajouter cette personne à la liste"
                                         >
                                             <svg

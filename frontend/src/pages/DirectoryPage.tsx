@@ -219,7 +219,7 @@ export default function DirectoryPage() {
                                 <button
                                     type="submit"
                                     disabled={saving || !email.trim()}
-                                    className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition disabled:opacity-60 shrink-0"
+                                    className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink text-xs font-medium transition disabled:opacity-60 shrink-0"
                                 >
                                     {saving ? 'Ajout…' : 'Ajouter'}
                                 </button>

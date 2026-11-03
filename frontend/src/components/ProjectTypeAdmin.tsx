@@ -159,7 +159,7 @@ export default function ProjectTypeAdmin() {
                         <button
                             type="submit"
                             disabled={saving || !label.trim()}
-                            className="h-9 px-4 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition disabled:opacity-40"
+                            className="h-9 px-4 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink text-xs font-medium transition disabled:opacity-40"
                         >
                             {saving ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Créer'}
                         </button>

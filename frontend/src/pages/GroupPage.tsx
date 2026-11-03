@@ -191,7 +191,7 @@ export default function GroupPage() {
                                             />
                                             <button
                                                 type="submit"
-                                                className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-medium transition"
+                                                className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink text-xs font-medium transition"
                                             >
                                                 Enregistrer
                                             </button>
@@ -270,7 +270,7 @@ export default function GroupPage() {
                                         className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center transition ${
                                             adding
                                                 ? 'bg-surface-muted text-slate-500 rotate-45'
-                                                : 'bg-brand-500 text-white hover:bg-brand-600'
+                                                : 'bg-brand-500 text-ink hover:bg-brand-600'
                                         }`}
                                         title={adding ? 'Annuler' : 'Ajouter une personne'}
                                         aria-label={adding ? 'Annuler' : 'Ajouter une personne'}

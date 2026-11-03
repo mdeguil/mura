@@ -151,7 +151,7 @@ export default function MonthCalendar({
                                             <span
                                                 className={`inline-flex items-center justify-center w-5 h-5 rounded-full ${
                                                     isSameDay(day, today)
-                                                        ? 'bg-brand-500 text-white font-medium'
+                                                        ? 'bg-brand-500 text-ink font-medium'
                                                         : isSameMonth(day, month)
                                                           ? 'text-slate-600'
                                                           : 'text-slate-300'

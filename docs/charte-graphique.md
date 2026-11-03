@@ -14,9 +14,11 @@ L'identité visuelle de Mura part de son logo : un thème sombre, et deux couleu
 
 ### Le dégradé de marque
 
-Le bleu océan qui passe au vert d'eau, de gauche à droite : `linear-gradient(90deg, #2B80C5, #33D9B2)`.
+Le bleu océan qui passe au vert d'eau, de gauche à droite, pris une nuance plus profonde : `linear-gradient(90deg, #1F6FB0, #13866B)`.
 
 C'est la signature de Mura : boutons d'action principaux (« Créer le projet », « Se connecter »), avatars, pastilles d'état vide. Il est identique dans les deux thèmes.
+
+Il porte toujours du texte blanc, d'où ces nuances : avec les couleurs vives de la charte (`#2B80C5` → `#33D9B2`), le blanc tombe à 1,79:1 côté vert d'eau. Celles-ci gardent les mêmes teintes et tiennent au moins 4,52:1 sur toute la largeur (WCAG AA).
 
 - `bg-brand-gradient` — horizontal, pour les boutons.
 - `bg-brand-gradient-diagonal` — à 135°, pour les avatars et les pastilles carrées.
@@ -56,9 +58,10 @@ Toutes les couleurs passent par des **variables CSS**, définies une fois pour l
 3. **Voile derrière une fenêtre :** `bg-black/50`, jamais un gris (`bg-slate-900/40` deviendrait clair en sombre).
 4. **Ombres :** `shadow-black/…`, pour la même raison.
 5. **Pastille foncée avec texte clair** (filtre sélectionné) : `bg-slate-800 text-surface` plutôt que `text-white`. En sombre, la pastille s'inverse proprement en pastille claire à texte foncé.
-6. **Texte blanc** (`text-white`) seulement sur un fond de couleur : dégradé de marque, rouge d'une action destructive, avatar.
+6. **Texte blanc** (`text-white`) seulement sur un fond de couleur foncé : dégradé de marque, rouge d'une action destructive, avatar.
 7. **Le vert d'eau sert d'accent, pas de fond de page.** Onglet actif, élément sélectionné, lien, bouton principal. Pour un texte vert d'eau lisible sur fond clair, `text-brand-700`.
-8. **Couleurs d'état :**
+8. **Jamais de texte blanc sur le vert d'eau** (`bg-brand-500`) : 1,79:1, illisible. Le texte d'un bouton vert d'eau est `text-ink` (`#11161B`, le fond sombre de la charte), à 10,14:1 dans les deux thèmes.
+9. **Couleurs d'état :**
    - À faire : gris (`slate`)
    - En cours : bleu océan (`blue`)
    - Terminé / succès : vert (`emerald`)

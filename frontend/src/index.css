@@ -202,13 +202,16 @@
 }
 
 @layer utilities {
-    /* The charte's two colours side by side, Bleu Océan into Vert d'eau.
+    /* The charte's two colours side by side, Bleu Océan into Vert d'eau,
+       taken a shade deeper: every use carries white text (buttons, avatar
+       initials), and the bright pair drops to 1.79:1 at the green end.
+       These keep the same hues and hold 4.5:1 all the way across.
        Fixed rather than themed: it is the brand, the same in both. */
     .bg-brand-gradient {
-        background-image: linear-gradient(90deg, #2b80c5, #33d9b2);
+        background-image: linear-gradient(90deg, #1f6fb0, #13866b);
     }
 
     .bg-brand-gradient-diagonal {
-        background-image: linear-gradient(135deg, #2b80c5, #33d9b2);
+        background-image: linear-gradient(135deg, #1f6fb0, #13866b);
     }
 }

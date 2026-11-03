@@ -150,7 +150,7 @@ export default function MemberList({
                         className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center transition ${
                             inviting
                                 ? 'bg-surface-muted text-slate-500 rotate-45'
-                                : 'bg-brand-500 text-white hover:bg-brand-600'
+                                : 'bg-brand-500 text-ink hover:bg-brand-600'
                         }`}
                         title={inviting ? 'Annuler' : 'Inviter une personne ou ajouter un groupe'}
                         aria-label={inviting ? 'Annuler' : 'Inviter une personne ou ajouter un groupe'}
