@@ -50,7 +50,20 @@ services:
         condition: service_started
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      # Baked into the pages at build time, which is why they are build
+      # arguments rather than environment: who runs this instance, for its
+      # Mentions légales and privacy policy. All optional; see .env.example.
+      args:
+        VITE_LEGAL_PUBLISHER_NAME: ${VITE_LEGAL_PUBLISHER_NAME:-}
+        VITE_LEGAL_PUBLISHER_ADDRESS: ${VITE_LEGAL_PUBLISHER_ADDRESS:-}
+        VITE_LEGAL_CONTACT_EMAIL: ${VITE_LEGAL_CONTACT_EMAIL:-}
+        VITE_LEGAL_PUBLICATION_DIRECTOR: ${VITE_LEGAL_PUBLICATION_DIRECTOR:-}
+        VITE_LEGAL_HOST_NAME: ${VITE_LEGAL_HOST_NAME:-}
+        VITE_LEGAL_HOST_ADDRESS: ${VITE_LEGAL_HOST_ADDRESS:-}
+        VITE_LEGAL_HOST_PHONE: ${VITE_LEGAL_HOST_PHONE:-}
+        VITE_LEGAL_PRIVACY_CONTACT: ${VITE_LEGAL_PRIVACY_CONTACT:-}
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-5173}:80"

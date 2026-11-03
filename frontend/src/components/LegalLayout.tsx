@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import logo from '../assets/logo-icon.png'
 import LegalLinks from './LegalLinks'
-import { LEGAL_INFO, legalInfoIncomplete } from '../legal/legalInfo'
+import { LEGAL_INFO, legalInfoDeclared } from '../legal/legalInfo'
 
 // The frame of a legal page. Open to everyone, signed in or not: someone
 // deciding whether to create an account has to be able to read these first.
@@ -19,15 +19,18 @@ export default function LegalLayout({ title, children }: { title: string; childr
                     <h1 className="text-2xl font-semibold text-slate-800 mb-1">{title}</h1>
                     <p className="text-xs text-slate-500 mb-6">Mise à jour le {LEGAL_INFO.lastUpdated}</p>
 
-                    {/* Said out loud rather than hidden: a page with blanks
-                        in it must not pass for a finished one. */}
-                    {legalInfoIncomplete() && (
+                    {/* Said out loud rather than left blank: an instance
+                        nobody has declared must not pass for one that has.
+                        Mura is installed by the people who use it, so this
+                        speaks to whoever installed this one. */}
+                    {!legalInfoDeclared() && (
                         <p
                             role="note"
                             className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-6"
                         >
-                            Certaines informations sur l'éditeur et l'hébergeur restent à compléter avant la mise
-                            en ligne de Mura.
+                            Cette instance de Mura n'a pas déclaré qui l'administre. Si elle sert à d'autres
+                            personnes que celle qui l'a installée, son administrateur doit renseigner ces
+                            informations dans sa configuration (variables <code>VITE_LEGAL_*</code>).
                         </p>
                     )}
 

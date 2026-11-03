@@ -17,8 +17,24 @@ export default function PrivacyPage() {
 
             <LegalSection title="Responsable du traitement">
                 <p>
-                    <span className="text-slate-800">{publisher.name}</span>, {publisher.address}. Pour toute
-                    question sur tes données : <span className="text-slate-800">{privacyContact}</span>.
+                    Mura s'installe chez ceux qui l'utilisent. Le responsable de tes données est la personne ou
+                    l'organisation qui administre cette instance
+                    {publisher.name ? (
+                        <>
+                            {' '}: <span className="text-slate-800">{publisher.name}</span>
+                            {publisher.address && <>, {publisher.address}</>}
+                        </>
+                    ) : null}
+                    . Les auteurs du logiciel n'y ont aucun accès.
+                </p>
+                <p>
+                    Pour toute question sur tes données :{' '}
+                    {privacyContact ? (
+                        <span className="text-slate-800">{privacyContact}</span>
+                    ) : (
+                        "l'administrateur de cette instance"
+                    )}
+                    .
                 </p>
             </LegalSection>
 
@@ -48,8 +64,8 @@ export default function PrivacyPage() {
                     </li>
                     <li>
                         Protéger le service : vérifier qu'une adresse e-mail t'appartient, permettre à un
-                        administrateur de suspendre un compte. Base légale : l'intérêt légitime de l'éditeur à
-                        assurer la sécurité de Mura (RGPD, art. 6-1-f).
+                        administrateur de suspendre un compte. Base légale : l'intérêt légitime de
+                        l'administrateur de cette instance à en assurer la sécurité (RGPD, art. 6-1-f).
                     </li>
                 </ul>
                 <p>Tes données ne servent à aucune publicité, à aucun profilage, et ne sont ni vendues ni louées.</p>
@@ -63,12 +79,18 @@ export default function PrivacyPage() {
                         l'équipe.
                     </li>
                     <li>
-                        Les administrateurs de Mura voient la liste des comptes (nom, adresse, rôle, état) pour
+                        Les administrateurs de cette instance voient la liste des comptes (nom, adresse, rôle, état) pour
                         pouvoir les gérer. Ils n'ont aucun accès aux projets dont ils ne sont pas membres.
                     </li>
                     <li>
-                        L'hébergeur, <span className="text-slate-800">{host.name}</span>, stocke les données pour le
-                        compte de l'éditeur, et le service d'envoi d'e-mails transmet les messages.
+                        L'hébergeur de cette instance
+                        {host.name && (
+                            <>
+                                , <span className="text-slate-800">{host.name}</span>,
+                            </>
+                        )}{' '}
+                        stocke les données pour le compte de son administrateur, et le service d'envoi d'e-mails
+                        qu'il a choisi transmet les messages.
                     </li>
                 </ul>
             </LegalSection>
@@ -121,8 +143,13 @@ export default function PrivacyPage() {
                         .
                     </li>
                     <li>
-                        Pour tout le reste : écris à <span className="text-slate-800">{privacyContact}</span>. Une
-                        réponse t'est due dans un délai d'un mois.
+                        Pour tout le reste : écris à{' '}
+                        {privacyContact ? (
+                            <span className="text-slate-800">{privacyContact}</span>
+                        ) : (
+                            "l'administrateur de cette instance"
+                        )}
+                        . Une réponse t'est due dans un délai d'un mois.
                     </li>
                 </ul>
                 <p>

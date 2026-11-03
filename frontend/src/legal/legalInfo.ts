@@ -1,36 +1,46 @@
-// Who publishes Mura and where it runs, as the Mentions légales (LCEN,
-// art. 6-III) and the politique de confidentialité (RGPD, art. 13) must say.
+// Who publishes this instance of Mura and where it runs, as the Mentions
+// légales (LCEN, art. 6-III) and the politique de confidentialité (RGPD,
+// art. 13) must say.
 //
-// These are facts about a person or a company, not something the code can
-// know: whoever puts Mura online fills them in. Until then the legal pages
-// say plainly that they are incomplete rather than showing a made-up name.
-export const TO_FILL = 'À compléter'
+// Mura itself is open-source software, not a service: those duties fall on
+// whoever puts an instance online, and the facts are theirs. So they are
+// read from the environment at build time (VITE_LEGAL_* in .env, passed to
+// the frontend image as build arguments) rather than written into the code.
+// An instance that has not declared them -- one running on a laptop, say --
+// leaves them empty, and the legal pages say so in plain words.
+const read = (value: string | undefined): string | null => {
+    const trimmed = value?.trim()
+    return trimmed ? trimmed : null
+}
+
+const env = import.meta.env
 
 export const LEGAL_INFO = {
-    // Who answers for the service: a person's name, or a company's name,
-    // legal form and registration number.
     publisher: {
-        name: TO_FILL,
-        address: TO_FILL,
-        email: TO_FILL,
-        // The person responsible for what is published, usually the
-        // publisher themself or the company's legal representative.
-        publicationDirector: TO_FILL,
+        // A person's name, or a company's name, legal form and registration
+        // number.
+        name: read(env.VITE_LEGAL_PUBLISHER_NAME),
+        address: read(env.VITE_LEGAL_PUBLISHER_ADDRESS),
+        email: read(env.VITE_LEGAL_CONTACT_EMAIL),
+        // Usually the publisher themself, or the company's legal
+        // representative.
+        publicationDirector: read(env.VITE_LEGAL_PUBLICATION_DIRECTOR),
     },
     host: {
-        name: TO_FILL,
-        address: TO_FILL,
-        phone: TO_FILL,
+        name: read(env.VITE_LEGAL_HOST_NAME),
+        address: read(env.VITE_LEGAL_HOST_ADDRESS),
+        phone: read(env.VITE_LEGAL_HOST_PHONE),
     },
-    // Where someone writes to exercise a right the account page does not
-    // cover (rectifying an address, asking a question). Often the
-    // publisher's own address.
-    privacyContact: TO_FILL,
+    // Where people write about their data. The publisher's contact address
+    // unless the instance names a dedicated one.
+    privacyContact: read(env.VITE_LEGAL_PRIVACY_CONTACT) ?? read(env.VITE_LEGAL_CONTACT_EMAIL),
     // Shown at the top of both pages; change it whenever their text does.
     lastUpdated: '3 novembre 2026',
 }
 
-export function legalInfoIncomplete(): boolean {
-    const { publisher, host, privacyContact } = LEGAL_INFO
-    return [...Object.values(publisher), ...Object.values(host), privacyContact].includes(TO_FILL)
+// The least an instance open to the public has to declare: who publishes
+// it, how to reach them, and who hosts it.
+export function legalInfoDeclared(): boolean {
+    const { publisher, host } = LEGAL_INFO
+    return Boolean(publisher.name && publisher.email && host.name)
 }
