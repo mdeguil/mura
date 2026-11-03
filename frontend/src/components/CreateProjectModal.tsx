@@ -143,6 +143,7 @@ export default function CreateProjectModal({
                                     <GroupPicker
                                         leftOut={(person) => (person.id === currentUserId ? 'Toi' : null)}
                                         allowNone
+                                        countOnly
                                         onChange={setFromGroup}
                                     />
                                     <p className="text-xs text-slate-400 mt-2">

@@ -19,6 +19,7 @@ export interface GroupSelection {
 export default function GroupPicker({
     leftOut,
     allowNone = false,
+    countOnly = false,
     onChange,
 }: {
     // Why the caller has no use for someone -- already on the team, say --
@@ -27,6 +28,9 @@ export default function GroupPicker({
     // Start on "no group" rather than the first one, where bringing a group
     // along is optional and must not happen just because the field exists.
     allowNone?: boolean
+    // Say how many will come, without listing them. The creation form asks
+    // for that: it is a form among others there, not a team to look over.
+    countOnly?: boolean
     onChange: (selection: GroupSelection | null) => void
 }) {
     const [groups, setGroups] = useState<Group[]>([])
@@ -114,26 +118,28 @@ export default function GroupPicker({
                 <>
                     {/* Read only: who comes is decided by the group, not
                         ticked here. */}
-                    <ul className="bg-surface-muted border border-border rounded-xl divide-y divide-border max-h-64 overflow-y-auto">
-                        {group.members.map((person) => {
-                            const reason = reasonLeftOut(person)
-                            return (
-                                <li
-                                    key={person.id}
-                                    className={`px-3 py-2 flex items-center gap-3 ${reason ? 'opacity-50' : ''}`}
-                                >
-                                    <UserAvatar user={person} size="sm" />
-                                    <span className="min-w-0 flex-1 text-xs text-slate-700 truncate flex items-center gap-1.5">
-                                        <span className="truncate">{person.username}</span>
-                                        {person.suspended && <SuspendedPill />}
-                                    </span>
-                                    {reason && reason !== 'Suspendu' && (
-                                        <span className="text-[10px] text-slate-400 shrink-0">{reason}</span>
-                                    )}
-                                </li>
-                            )
-                        })}
-                    </ul>
+                    {!countOnly && (
+                        <ul className="bg-surface-muted border border-border rounded-xl divide-y divide-border max-h-64 overflow-y-auto">
+                            {group.members.map((person) => {
+                                const reason = reasonLeftOut(person)
+                                return (
+                                    <li
+                                        key={person.id}
+                                        className={`px-3 py-2 flex items-center gap-3 ${reason ? 'opacity-50' : ''}`}
+                                    >
+                                        <UserAvatar user={person} size="sm" />
+                                        <span className="min-w-0 flex-1 text-xs text-slate-700 truncate flex items-center gap-1.5">
+                                            <span className="truncate">{person.username}</span>
+                                            {person.suspended && <SuspendedPill />}
+                                        </span>
+                                        {reason && reason !== 'Suspendu' && (
+                                            <span className="text-[10px] text-slate-400 shrink-0">{reason}</span>
+                                        )}
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    )}
                     <p className="text-xs text-slate-500 mt-2">
                         {joining.length === 0
                             ? 'Personne à ajouter dans ce groupe.'
