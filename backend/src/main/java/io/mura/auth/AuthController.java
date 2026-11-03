@@ -9,12 +9,18 @@ import io.mura.auth.dto.ResetPasswordRequest;
 import io.mura.auth.dto.VerifyEmailRequest;
 import io.mura.auth.dto.ResetPasswordRequest;
 import io.mura.auth.dto.VerifyEmailRequest;
+import io.mura.admin.AccountService;
+import io.mura.admin.dto.AccountDeletionPreview;
+import io.mura.auth.dto.DataExport;
+import io.mura.auth.dto.DeleteOwnAccountRequest;
 import io.mura.member.dto.AccountResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +35,8 @@ import java.util.UUID;
 public class AuthController {
 
     private final AuthService authService;
+    private final DataExportService dataExportService;
+    private final AccountService accountService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -73,6 +81,31 @@ public class AuthController {
     @PostMapping("/password/reset")
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Everything Mura holds about the caller, as a file to keep: the rights
+    // of access and portability (RGPD, art. 15 and 20) without having to ask.
+    @GetMapping("/me/export")
+    public ResponseEntity<DataExport> export(@AuthenticationPrincipal UUID userId) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"mes-donnees-mura.json\"")
+                .body(dataExportService.export(userId));
+    }
+
+    // What closing the account will do, shown before it is done.
+    @GetMapping("/me/deletion-preview")
+    public ResponseEntity<AccountDeletionPreview> deletionPreview(@AuthenticationPrincipal UUID userId) {
+        return ResponseEntity.ok(accountService.ownDeletionPreview(userId));
+    }
+
+    // The right to erasure (RGPD, art. 17), from the person's own account.
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteOwn(
+            @AuthenticationPrincipal UUID userId,
+            @Valid @RequestBody DeleteOwnAccountRequest request
+    ) {
+        accountService.deleteOwn(userId, request.password());
         return ResponseEntity.noContent().build();
     }
 }

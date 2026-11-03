@@ -42,4 +42,15 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Pr
     Optional<ProjectMember> findByProjectIdAndUserId(UUID projectId, UUID userId);
 
     boolean existsByProjectIdAndUserId(UUID projectId, UUID userId);
+
+    // Every project this person is on, archived ones included, for the
+    // export of their own data.
+    @Query("""
+            SELECT m FROM ProjectMember m
+            JOIN FETCH m.project p
+            JOIN FETCH p.owner
+            WHERE m.user.id = :userId
+            ORDER BY m.joinedAt
+            """)
+    List<ProjectMember> findAllForUser(@Param("userId") UUID userId);
 }

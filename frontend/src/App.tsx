@@ -10,6 +10,7 @@ import RegisterPage from './pages/RegisterPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
+import AccountPage from './pages/AccountPage'
 import api from './services/api'
 import { useAuthStore } from './store/authStore'
 import type { Account } from './types'
@@ -71,6 +72,7 @@ export default function App() {
         <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
         {/* The address a reset mail points at. */}
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/compte" element={<PrivateRoute><AccountPage /></PrivateRoute>} />
         {/* The list lives at a name of its own, beside /carnet. The bare
             root still works: a bookmark should not break because the
             address got a name. */}

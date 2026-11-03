@@ -19,6 +19,7 @@ import io.mura.project.ProjectRole;
 import io.mura.task.TaskRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +40,7 @@ public class AccountService {
     private final UserGroupRepository userGroupRepository;
     private final TaskRepository taskRepository;
     private final NotificationService notificationService;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public List<AccountResponse> list(UUID actorId) {
@@ -169,8 +171,18 @@ public class AccountService {
     @Transactional(readOnly = true)
     public AccountDeletionPreview deletionPreview(UUID actorId, UUID targetId) {
         requireAdmin(actorId);
-        User target = requireAccount(targetId);
+        return previewFor(requireAccount(targetId));
+    }
 
+    // The same preview for someone closing their own account: they are owed
+    // the same account of what goes and what stays as an administrator gets.
+    @Transactional(readOnly = true)
+    public AccountDeletionPreview ownDeletionPreview(UUID userId) {
+        return previewFor(requireAccount(userId));
+    }
+
+    private AccountDeletionPreview previewFor(User target) {
+        UUID targetId = target.getId();
         List<AccountDeletionPreview.ProjectHandover> transferred = new ArrayList<>();
         List<String> removed = new ArrayList<>();
 
@@ -210,6 +222,33 @@ public class AccountService {
                     "Suspends d'abord ce compte. La suppression est définitive."
             );
         }
+
+        erase(target, actorId);
+    }
+
+    // Someone closing their own account: the right to erasure (RGPD,
+    // art. 17) without having to ask anybody. There is no suspension step
+    // here -- that step exists so an administrator cannot remove someone
+    // else in one click. Here the person asks for it themself, and typing
+    // their password is the deliberate step instead.
+    @Transactional
+    public void deleteOwn(UUID userId, String password) {
+        User target = requireAccount(userId);
+
+        if (!passwordEncoder.matches(password, target.getPassword())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "Mot de passe incorrect.", "password");
+        }
+        // Leaving with the last way back in would leave nobody able to
+        // manage Mura at all.
+        refuseLosingTheLastAdmin(target);
+
+        erase(target, userId);
+    }
+
+    // What deleting an account does, once whoever asked has been checked.
+    // actorId is left out of the notifications: they already know.
+    private void erase(User target, UUID actorId) {
+        UUID targetId = target.getId();
 
         // Everyone who has to hear about it, gathered before anything is
         // removed: the memberships that say who works with this person go

@@ -42,4 +42,16 @@ public interface ProjectInvitationRepository extends JpaRepository<ProjectInvita
             @Param("userId") UUID userId,
             @Param("status") InvitationStatus status
     );
+
+    // Invitations this person received or sent, whatever became of them,
+    // for the export of their own data.
+    @Query("""
+            SELECT i FROM ProjectInvitation i
+            JOIN FETCH i.invitedUser
+            JOIN FETCH i.invitedBy
+            JOIN FETCH i.project
+            WHERE i.invitedUser.id = :userId OR i.invitedBy.id = :userId
+            ORDER BY i.createdAt DESC
+            """)
+    List<ProjectInvitation> findAllInvolving(@Param("userId") UUID userId);
 }

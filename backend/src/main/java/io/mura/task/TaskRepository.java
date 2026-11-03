@@ -25,4 +25,14 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Task t SET t.assignee = null WHERE t.project.id = :projectId AND t.assignee.id = :userId")
     void clearAssignee(@Param("projectId") UUID projectId, @Param("userId") UUID userId);
+
+    // Every task this person is in charge of, across projects, for the
+    // export of their own data.
+    @Query("""
+            SELECT t FROM Task t
+            JOIN FETCH t.project
+            WHERE t.assignee.id = :userId
+            ORDER BY t.startDate
+            """)
+    List<Task> findAllAssignedTo(@Param("userId") UUID userId);
 }

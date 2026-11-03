@@ -57,12 +57,26 @@ export default function Navbar() {
                     <NotificationBell />
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-brand-gradient-diagonal flex items-center justify-center text-white text-xs font-semibold">
+                {/* The way to one's own account: what Mura holds, a copy of
+                    it, and closing the account. */}
+                <NavLink
+                    to="/compte"
+                    title="Mon compte"
+                    className={({ isActive }) =>
+                        `flex items-center gap-2 h-8 pl-1 pr-2.5 rounded-lg transition ${
+                            isActive ? 'bg-surface-muted' : 'hover:bg-surface-muted'
+                        }`
+                    }
+                >
+                    <div
+                        className="w-7 h-7 rounded-full bg-brand-gradient-diagonal flex items-center justify-center text-white text-xs font-semibold"
+                        aria-hidden="true"
+                    >
                         {user?.username?.[0]?.toUpperCase() ?? '?'}
                     </div>
                     <span className="text-sm text-slate-600">{user?.username}</span>
-                </div>
+                    <span className="sr-only">, mon compte</span>
+                </NavLink>
                 <button
                     onClick={handleLogout}
                     className="text-sm text-slate-500 hover:text-slate-700 border border-border-strong rounded-lg px-3 py-1.5 transition"
