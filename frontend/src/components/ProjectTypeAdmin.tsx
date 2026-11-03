@@ -117,7 +117,7 @@ export default function ProjectTypeAdmin() {
                 </p>
                 <button
                     onClick={creating ? close : openCreate}
-                    className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition shrink-0"
+                    className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition shrink-0"
                 >
                     {creating ? 'Annuler' : '+ Nouveau type'}
                 </button>

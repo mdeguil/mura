@@ -120,7 +120,7 @@ export default function HomePage() {
                     </div>
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition"
+                        className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition"
                     >
                         + Créer un projet
                     </button>
@@ -189,7 +189,7 @@ export default function HomePage() {
                         onClick={() => setTypeFilter('ALL')}
                         className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
                             typeFilter === 'ALL'
-                                ? 'bg-slate-800 text-white border-slate-800'
+                                ? 'bg-slate-800 text-surface border-slate-800'
                                 : 'bg-surface text-slate-600 border-border-strong hover:border-brand-500'
                         }`}
                     >
@@ -201,7 +201,7 @@ export default function HomePage() {
                             onClick={() => setTypeFilter(t.id)}
                             className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
                                 typeFilter === t.id
-                                    ? 'bg-slate-800 text-white border-slate-800'
+                                    ? 'bg-slate-800 text-surface border-slate-800'
                                     : 'bg-surface text-slate-600 border-border-strong hover:border-brand-500'
                             }`}
                         >
@@ -225,7 +225,7 @@ export default function HomePage() {
                     />
                 ) : projects.length === 0 ? (
                     <div className="bg-surface border border-border rounded-2xl py-16 px-6 flex flex-col items-center text-center">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center mb-4">
+                        <div className="w-14 h-14 rounded-2xl bg-brand-gradient-diagonal flex items-center justify-center mb-4">
                             <span className="text-white text-2xl">📋</span>
                         </div>
                         <h2 className="text-base font-semibold text-slate-800 mb-1">Aucun projet pour l'instant</h2>

@@ -50,7 +50,7 @@ export default function EditProjectModal({
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl shadow-lg max-h-[90vh] flex flex-col overflow-hidden">
                 <span
                     className="h-1.5 shrink-0"
@@ -103,7 +103,7 @@ export default function EditProjectModal({
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
+                                className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                             >
                                 {loading ? 'Enregistrement…' : 'Enregistrer'}
                             </button>

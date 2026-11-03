@@ -24,7 +24,7 @@ export default function UserAvatar({
                     // on the team, they just cannot be reached.
                     suspended
                         ? 'bg-slate-300'
-                        : 'bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400'
+                        : 'bg-brand-gradient-diagonal'
                 }`}
                 title={title ?? (suspended ? `${user.username} · compte suspendu` : user.username)}
                 aria-label={suspended ? `${user.username}, compte suspendu` : user.username}

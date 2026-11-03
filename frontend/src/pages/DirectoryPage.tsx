@@ -166,7 +166,7 @@ export default function DirectoryPage() {
                     {tab === 'people' && (
                         <button
                             onClick={() => setAdding((v) => !v)}
-                            className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition shrink-0"
+                            className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition shrink-0"
                         >
                             {adding ? 'Annuler' : '+ Ajouter une personne'}
                         </button>
@@ -325,7 +325,7 @@ export default function DirectoryPage() {
                         <div className="text-sm text-slate-500">Chargement…</div>
                     ) : people.length === 0 ? (
                         <div className="bg-surface border border-border rounded-2xl py-16 px-6 flex flex-col items-center text-center">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center mb-4">
+                            <div className="w-14 h-14 rounded-2xl bg-brand-gradient-diagonal flex items-center justify-center mb-4">
                                 <span className="text-white text-2xl">📇</span>
                             </div>
                             <h2 className="text-base font-semibold text-slate-800 mb-1">

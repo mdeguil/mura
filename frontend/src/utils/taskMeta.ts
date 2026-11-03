@@ -42,10 +42,11 @@ export const NEXT_TASK_STATUS: Partial<Record<TaskStatus, TaskStatus>> = {
 
 // The same colours as TASK_STATUS_BAR_CLASSES, as hex, because the card's
 // accent band is built by projectGlassBackground() rather than by a class.
-// slate-400, blue-500, emerald-500.
+// slate-400, blue-500, emerald-500, as the light theme defines them in
+// index.css -- blue-500 being the charte's Bleu Océan scale.
 export const TASK_STATUS_HEX: Record<TaskStatus, string> = {
     A_FAIRE: '#94a3b8',
-    EN_COURS: '#3b82f6',
+    EN_COURS: '#3a8ccf',
     TERMINE: '#10b981',
 }
 

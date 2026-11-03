@@ -122,7 +122,7 @@ export default function TaskDetailModal({
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-surface border border-border rounded-2xl p-6 w-full max-w-2xl shadow-lg max-h-[85vh] overflow-y-auto">
                 <div className="flex items-start justify-between gap-4">
                     <h2 className="text-base font-semibold text-slate-800">{task.name}</h2>
@@ -241,7 +241,7 @@ export default function TaskDetailModal({
                         <button
                             type="submit"
                             disabled={loading || !name.trim()}
-                            className="h-8 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition disabled:opacity-60"
+                            className="h-8 px-3 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-xs font-medium transition disabled:opacity-60"
                         >
                             + Ajouter
                         </button>

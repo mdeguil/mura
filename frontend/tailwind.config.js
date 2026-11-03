@@ -1,30 +1,43 @@
+import defaultTheme from 'tailwindcss/defaultTheme'
+
+// Every colour is read from a CSS variable set in src/index.css, once for the
+// light theme and once for the dark one. The values themselves -- and the
+// charte they come from -- live there and in docs/charte-graphique.md.
+const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]
+
+const themed = (name) => `rgb(var(--c-${name}) / <alpha-value>)`
+
+const scale = (family) =>
+    Object.fromEntries(SHADES.map((shade) => [shade, themed(`${family}-${shade}`)]))
+
 /** @type {import('tailwindcss').Config} */
 export default {
     content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
     theme: {
         extend: {
             colors: {
-                brand: {
-                    50:  '#f0fdfa',
-                    100: '#ccfbf1',
-                    200: '#99f6e4',
-                    300: '#5eead4',
-                    400: '#2dd4bf',
-                    500: '#14b8a6',
-                    600: '#0d9488',
-                    700: '#0f766e',
-                    800: '#115e59',
-                    900: '#134e4a',
-                },
-                app: '#f1f5f9',
+                // Vert d'eau, the charte's primary colour, at 500.
+                brand: scale('brand'),
+                // Bleu Océan, the charte's secondary colour, at 600.
+                blue: scale('blue'),
+                slate: scale('slate'),
+                red: scale('red'),
+                amber: scale('amber'),
+                emerald: scale('emerald'),
+                orange: scale('orange'),
+                rose: scale('rose'),
+                app: themed('app'),
                 surface: {
-                    DEFAULT: '#ffffff',
-                    muted: '#f8fafc',
+                    DEFAULT: themed('surface'),
+                    muted: themed('surface-muted'),
                 },
                 border: {
-                    DEFAULT: '#e2e8f0',
-                    strong: '#cbd5e1',
+                    DEFAULT: themed('border'),
+                    strong: themed('border-strong'),
                 },
+            },
+            fontFamily: {
+                sans: ['"Inter Variable"', ...defaultTheme.fontFamily.sans],
             },
         },
     },

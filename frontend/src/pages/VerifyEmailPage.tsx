@@ -144,7 +144,7 @@ export default function VerifyEmailPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full mt-5 h-10 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
+                            className="w-full mt-5 h-10 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                         >
                             {loading ? 'Vérification…' : 'Confirmer'}
                         </button>

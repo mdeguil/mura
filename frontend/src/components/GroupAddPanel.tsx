@@ -78,7 +78,7 @@ export default function GroupAddPanel({
                     type="button"
                     onClick={add}
                     disabled={saving || count === 0}
-                    className="h-9 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition disabled:opacity-60"
+                    className="h-9 px-3 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-xs font-medium transition disabled:opacity-60"
                 >
                     {saving ? 'Ajout…' : 'Ajouter le groupe'}
                 </button>

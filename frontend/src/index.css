@@ -1,3 +1,214 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Mura's charte graphique, as colours the whole app reads from. The full
+ * charte -- roles, values, rules of use -- is in docs/charte-graphique.md.
+ *
+ * Every colour class (bg-slate-50, text-brand-700, border-red-200, ...) is
+ * a variable here rather than a fixed value, so a screen written once reads
+ * correctly in both themes. In dark, the grey scale is turned over -- the
+ * classes meaning "dark text" give light text -- and the pale tints become
+ * the colour washed into the dark surface.
+ *
+ * Values are "r g b" so Tailwind's opacity modifiers keep working
+ * (bg-rose-50/40, bg-surface-muted/60).
+ *
+ * Dark is the default; index.html sets data-theme before the first paint,
+ * from what this device last chose.
+ */
+@layer base {
+    :root {
+        --c-app: 241 245 249;
+        --c-surface: 255 255 255;
+        --c-surface-muted: 248 250 252;
+        --c-border: 226 232 240;
+        --c-border-strong: 203 213 225;
+        --c-slate-50: 248 250 252;
+        --c-slate-100: 241 245 249;
+        --c-slate-200: 226 232 240;
+        --c-slate-300: 203 213 225;
+        --c-slate-400: 148 163 184;
+        --c-slate-500: 100 116 139;
+        --c-slate-600: 71 85 105;
+        --c-slate-700: 51 65 85;
+        --c-slate-800: 30 41 59;
+        --c-slate-900: 15 23 42;
+        --c-brand-50: 235 252 247;
+        --c-brand-100: 205 247 236;
+        --c-brand-200: 159 239 218;
+        --c-brand-300: 106 228 198;
+        --c-brand-400: 69 220 186;
+        --c-brand-500: 51 217 178;
+        --c-brand-600: 27 165 132;
+        --c-brand-700: 21 131 106;
+        --c-brand-800: 20 106 87;
+        --c-brand-900: 19 86 71;
+        --c-blue-50: 238 246 252;
+        --c-blue-100: 214 233 247;
+        --c-blue-200: 174 210 239;
+        --c-blue-300: 125 182 228;
+        --c-blue-400: 79 154 214;
+        --c-blue-500: 58 140 207;
+        --c-blue-600: 43 128 197;
+        --c-blue-700: 36 104 161;
+        --c-blue-800: 31 84 128;
+        --c-blue-900: 27 69 102;
+        --c-red-50: 254 242 242;
+        --c-red-100: 254 226 226;
+        --c-red-200: 254 202 202;
+        --c-red-300: 252 165 165;
+        --c-red-400: 248 113 113;
+        --c-red-500: 239 68 68;
+        --c-red-600: 220 38 38;
+        --c-red-700: 185 28 28;
+        --c-red-800: 153 27 27;
+        --c-red-900: 127 29 29;
+        --c-amber-50: 255 251 235;
+        --c-amber-100: 254 243 199;
+        --c-amber-200: 253 230 138;
+        --c-amber-300: 252 211 77;
+        --c-amber-400: 251 191 36;
+        --c-amber-500: 245 158 11;
+        --c-amber-600: 217 119 6;
+        --c-amber-700: 180 83 9;
+        --c-amber-800: 146 64 14;
+        --c-amber-900: 120 53 15;
+        --c-emerald-50: 236 253 245;
+        --c-emerald-100: 209 250 229;
+        --c-emerald-200: 167 243 208;
+        --c-emerald-300: 110 231 183;
+        --c-emerald-400: 52 211 153;
+        --c-emerald-500: 16 185 129;
+        --c-emerald-600: 5 150 105;
+        --c-emerald-700: 4 120 87;
+        --c-emerald-800: 6 95 70;
+        --c-emerald-900: 6 78 59;
+        --c-orange-50: 255 247 237;
+        --c-orange-100: 255 237 213;
+        --c-orange-200: 254 215 170;
+        --c-orange-300: 253 186 116;
+        --c-orange-400: 251 146 60;
+        --c-orange-500: 249 115 22;
+        --c-orange-600: 234 88 12;
+        --c-orange-700: 194 65 12;
+        --c-orange-800: 154 52 18;
+        --c-orange-900: 124 45 18;
+        --c-rose-50: 255 241 242;
+        --c-rose-100: 255 228 230;
+        --c-rose-200: 254 205 211;
+        --c-rose-300: 253 164 175;
+        --c-rose-400: 251 113 133;
+        --c-rose-500: 244 63 94;
+        --c-rose-600: 225 29 72;
+        --c-rose-700: 190 18 60;
+        --c-rose-800: 159 18 57;
+        --c-rose-900: 136 19 55;
+    }
+
+    :root[data-theme="dark"] {
+        color-scheme: dark;
+        --c-app: 17 22 27;
+        --c-surface: 26 34 45;
+        --c-surface-muted: 20 27 35;
+        --c-border: 39 50 65;
+        --c-border-strong: 54 67 84;
+        --c-slate-50: 28 37 48;
+        --c-slate-100: 37 47 59;
+        --c-slate-200: 54 65 77;
+        --c-slate-300: 77 89 102;
+        --c-slate-400: 107 120 134;
+        --c-slate-500: 141 154 168;
+        --c-slate-600: 184 195 207;
+        --c-slate-700: 220 227 234;
+        --c-slate-800: 244 247 250;
+        --c-slate-900: 244 247 250;
+        --c-brand-50: 30 60 64;
+        --c-brand-100: 32 74 74;
+        --c-brand-200: 35 100 93;
+        --c-brand-300: 39 129 114;
+        --c-brand-400: 69 220 186;
+        --c-brand-500: 51 217 178;
+        --c-brand-600: 69 220 186;
+        --c-brand-700: 106 228 198;
+        --c-brand-800: 159 239 218;
+        --c-brand-900: 205 247 236;
+        --c-blue-50: 30 49 68;
+        --c-blue-100: 33 57 81;
+        --c-blue-200: 38 72 103;
+        --c-blue-300: 43 89 129;
+        --c-blue-400: 79 154 214;
+        --c-blue-500: 58 140 207;
+        --c-blue-600: 79 154 214;
+        --c-blue-700: 125 182 228;
+        --c-blue-800: 174 210 239;
+        --c-blue-900: 214 233 247;
+        --c-red-50: 56 39 48;
+        --c-red-100: 73 41 50;
+        --c-red-200: 103 46 53;
+        --c-red-300: 137 52 57;
+        --c-red-400: 248 113 113;
+        --c-red-500: 239 68 68;
+        --c-red-600: 248 113 113;
+        --c-red-700: 252 165 165;
+        --c-red-800: 254 202 202;
+        --c-red-900: 254 226 226;
+        --c-amber-50: 57 51 40;
+        --c-amber-100: 74 61 38;
+        --c-amber-200: 105 79 33;
+        --c-amber-300: 140 98 27;
+        --c-amber-400: 251 191 36;
+        --c-amber-500: 245 158 11;
+        --c-amber-600: 251 191 36;
+        --c-amber-700: 252 211 77;
+        --c-amber-800: 253 230 138;
+        --c-amber-900: 254 243 199;
+        --c-emerald-50: 25 55 57;
+        --c-emerald-100: 24 67 63;
+        --c-emerald-200: 22 88 75;
+        --c-emerald-300: 21 113 89;
+        --c-emerald-400: 52 211 153;
+        --c-emerald-500: 16 185 129;
+        --c-emerald-600: 52 211 153;
+        --c-emerald-700: 110 231 183;
+        --c-emerald-800: 167 243 208;
+        --c-emerald-900: 209 250 229;
+        --c-orange-50: 57 45 42;
+        --c-orange-100: 75 52 40;
+        --c-orange-200: 106 63 37;
+        --c-orange-300: 142 76 33;
+        --c-orange-400: 251 146 60;
+        --c-orange-500: 249 115 22;
+        --c-orange-600: 251 146 60;
+        --c-orange-700: 253 186 116;
+        --c-orange-800: 254 215 170;
+        --c-orange-900: 255 237 213;
+        --c-rose-50: 57 38 52;
+        --c-rose-100: 74 40 56;
+        --c-rose-200: 104 44 63;
+        --c-rose-300: 139 49 70;
+        --c-rose-400: 251 113 133;
+        --c-rose-500: 244 63 94;
+        --c-rose-600: 251 113 133;
+        --c-rose-700: 253 164 175;
+        --c-rose-800: 254 205 211;
+        --c-rose-900: 255 228 230;
+    }
+
+    body {
+        @apply bg-app text-slate-800 font-sans antialiased;
+    }
+}
+
+@layer utilities {
+    /* The charte's two colours side by side, Bleu Océan into Vert d'eau.
+       Fixed rather than themed: it is the brand, the same in both. */
+    .bg-brand-gradient {
+        background-image: linear-gradient(90deg, #2b80c5, #33d9b2);
+    }
+
+    .bg-brand-gradient-diagonal {
+        background-image: linear-gradient(135deg, #2b80c5, #33d9b2);
+    }
+}

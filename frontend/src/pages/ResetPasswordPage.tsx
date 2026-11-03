@@ -149,7 +149,7 @@ export default function ResetPasswordPage() {
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="mt-1 h-10 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
+                                    className="mt-1 h-10 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                                 >
                                     {loading ? 'Changement…' : 'Changer mon mot de passe'}
                                 </button>

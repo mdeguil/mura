@@ -9,7 +9,7 @@ export default function ProjectCard({ project }: { project: Project }) {
     return (
         <Link
             to={`/project/${project.id}`}
-            className="relative block bg-surface border border-border rounded-xl p-4 pb-6 shadow-lg shadow-slate-900/10 transition hover:shadow-xl hover:shadow-slate-900/15 hover:-translate-y-1 overflow-hidden"
+            className="relative block bg-surface border border-border rounded-xl p-4 pb-6 shadow-lg shadow-black/10 transition hover:shadow-xl hover:shadow-black/15 hover:-translate-y-1 overflow-hidden"
         >
             <div className="flex items-start justify-between gap-2">
                 <h3 className="text-sm font-semibold text-slate-800 truncate">{project.name}</h3>

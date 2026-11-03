@@ -168,7 +168,7 @@ export default function GroupPage() {
                     <>
                         <div className="mt-4 flex items-start justify-between gap-4">
                             <div className="flex items-center gap-3 min-w-0">
-                                <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 via-brand-500 to-emerald-400 flex items-center justify-center shrink-0">
+                                <span className="w-10 h-10 rounded-xl bg-brand-gradient-diagonal flex items-center justify-center shrink-0">
                                     <span className="text-white text-lg">👥</span>
                                 </span>
                                 <div className="min-w-0">
@@ -319,7 +319,7 @@ export default function GroupPage() {
                                         <button
                                             type="submit"
                                             disabled={busy || !email.trim()}
-                                            className="h-9 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition disabled:opacity-60 shrink-0"
+                                            className="h-9 px-3 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-xs font-medium transition disabled:opacity-60 shrink-0"
                                         >
                                             {busy ? 'Ajout…' : 'Ajouter'}
                                         </button>

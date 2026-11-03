@@ -50,7 +50,7 @@ export default function MemberDepartureDialog({
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-lg overflow-hidden">
                 <div className="px-6 pt-5 pb-4 border-b border-border">
                     <h2 className="text-base font-semibold text-slate-800">

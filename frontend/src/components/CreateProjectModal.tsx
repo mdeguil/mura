@@ -83,7 +83,7 @@ export default function CreateProjectModal({
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl shadow-lg max-h-[90vh] flex flex-col overflow-hidden">
                 {/* The chosen colour sits across the top, so the swatch row
                     below has something to answer to. */}
@@ -259,7 +259,7 @@ export default function CreateProjectModal({
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
+                                className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                             >
                                 {loading ? 'Création…' : 'Créer le projet'}
                             </button>

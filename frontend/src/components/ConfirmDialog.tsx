@@ -32,7 +32,7 @@ export default function ConfirmDialog({
     }
 
     return (
-        <div className="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-lg overflow-hidden">
                 <span className={`block h-1.5 ${tone === 'danger' ? 'bg-red-500' : 'bg-brand-500'}`} />
 

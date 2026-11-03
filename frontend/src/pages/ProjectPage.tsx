@@ -462,7 +462,7 @@ export default function ProjectPage() {
                                         </h2>
                                         <button
                                             onClick={() => setShowCreateTask(true)}
-                                            className="h-8 px-3 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-xs font-medium transition"
+                                            className="h-8 px-3 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-xs font-medium transition"
                                         >
                                             + Nouvelle tâche
                                         </button>

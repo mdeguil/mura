@@ -65,7 +65,7 @@ export default function ProjectInfo({
                         <button
                             onClick={() => onAnswerInvitation(true)}
                             disabled={!invitation}
-                            className="h-9 px-4 rounded-lg bg-gradient-to-r from-blue-600 via-brand-500 to-emerald-400 hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
+                            className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                         >
                             Rejoindre le projet
                         </button>
