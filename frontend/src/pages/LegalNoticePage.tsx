@@ -53,9 +53,10 @@ export default function LegalNoticePage() {
 
             <LegalSection title="Logiciel">
                 <p>
-                    Mura est un logiciel libre, distribué sous licence MIT, fait pour être installé par ceux qui
-                    l'utilisent. Ses auteurs n'hébergent aucune instance et n'ont pas accès à tes données. Les
-                    projets, tâches et autres contenus que tu y crées restent les tiens.
+                    Mura est un logiciel fait pour être installé par ceux qui l'utilisent. Il est libre
+                    d'installation et d'utilisation, mais son code ne peut être ni modifié ni redistribué sans
+                    l'accord de son auteur (licence Mura). Son auteur n'héberge aucune instance et n'a pas accès
+                    à tes données. Les projets, tâches et autres contenus que tu y crées restent les tiens.
                 </p>
             </LegalSection>
 

@@ -1,21 +1,131 @@
-MIT License
+LICENCE MURA — UTILISATION LIBRE, MODIFICATION RÉSERVÉE
+Version 1.0
 
-Copyright (c) 2025 Mura Contributors
+Copyright (c) 2025-2026 Matéo Deguil. Tous droits réservés, sauf ceux
+accordés ci-dessous.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. OBJET
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+La présente licence fixe ce que chacun peut faire du logiciel Mura : son
+code source, sa documentation, ses fichiers de configuration et ses
+éléments graphiques, tels que publiés dans le dépôt officiel du projet
+(ci-après « le Logiciel »).
+
+Le Logiciel appartient à Matéo Deguil (ci-après « le Titulaire »).
+Toute personne ou organisation qui l'obtient (ci-après « le Licencié »)
+accepte la présente licence en l'installant ou en l'utilisant.
+
+
+2. CE QUI EST AUTORISÉ
+
+Le Titulaire accorde au Licencié, gratuitement, pour le monde entier et
+pour toute la durée des droits d'auteur, le droit de :
+
+  a) télécharger, installer et exécuter le Logiciel tel qu'il est
+     publié, pour son propre usage ou au sein de son organisation,
+     y compris une entreprise ;
+
+  b) mettre l'instance ainsi installée à la disposition des personnes
+     qu'il choisit (son équipe, ses collaborateurs, ses clients), qui
+     l'utilisent à travers l'interface du Logiciel ;
+
+  c) configurer le Logiciel par les moyens qu'il prévoit à cet effet
+     (fichier .env, variables d'environnement, paramètres de
+     l'interface). Configurer n'est pas modifier ;
+
+  d) lire et étudier le code source ;
+
+  e) faire les copies nécessaires à l'installation, à l'exécution et
+     à la sauvegarde de son instance.
+
+
+3. CE QUI EST INTERDIT
+
+Sauf accord écrit et préalable du Titulaire, le Licencié ne peut pas :
+
+  a) modifier, adapter, traduire ou corriger le code source, ni créer
+     une œuvre dérivée du Logiciel ou d'une partie de celui-ci ;
+
+  b) distribuer, publier ou transmettre le Logiciel, modifié ou non,
+     ailleurs que par le dépôt officiel du projet ;
+
+  c) vendre, louer ou sous-licencier le Logiciel, ni le proposer à des
+     tiers comme un service payant (hébergement, abonnement) ;
+
+  d) retirer ou altérer les mentions de droits d'auteur ou la présente
+     licence ;
+
+  e) utiliser le nom « Mura » ou son logo pour désigner un autre
+     logiciel ou service, ou une version modifiée du Logiciel.
+
+La création d'une copie (« fork ») du dépôt sur GitHub, que les
+conditions d'utilisation de GitHub permettent pour tout dépôt public,
+ne donne aucun droit au-delà de ceux de l'article 2.
+
+
+4. PROPOSER UNE AMÉLIORATION
+
+Par exception à l'article 3 a), chacun peut modifier une copie du
+Logiciel dans le seul but de proposer cette modification au projet
+officiel (par une « pull request » ou un correctif envoyé au
+Titulaire). Cette copie ne peut être ni utilisée en production, ni
+diffusée autrement.
+
+En proposant une contribution, son auteur accepte que le Titulaire
+l'intègre, la modifie et la diffuse librement, sous la présente
+licence ou sous toute autre, et lui en cède à cette fin les droits
+d'exploitation, sans contrepartie. Le Titulaire reste libre de refuser
+toute contribution.
+
+
+5. DONNÉES ET RESPONSABILITÉ DE L'INSTANCE
+
+Le Titulaire n'héberge aucune instance du Logiciel et n'a accès à
+aucune donnée de ses utilisateurs. Le Licencié qui exploite une
+instance pour d'autres personnes en est seul responsable, notamment au
+titre de la loi pour la confiance dans l'économie numérique (mentions
+légales) et du règlement général sur la protection des données
+(responsable du traitement).
+
+
+6. ABSENCE DE GARANTIE
+
+Le Logiciel est fourni « en l'état », sans garantie d'aucune sorte,
+expresse ou implicite, notamment de bon fonctionnement, d'adéquation à
+un besoin particulier ou d'absence de défaut. Dans toute la mesure
+permise par la loi, le Titulaire ne peut être tenu responsable d'aucun
+dommage résultant de l'installation, de l'utilisation ou de
+l'impossibilité d'utiliser le Logiciel.
+
+
+7. FIN DES DROITS
+
+Toute violation de la présente licence met fin automatiquement aux
+droits qu'elle accorde au Licencié, qui doit alors cesser d'utiliser le
+Logiciel et en supprimer ses copies.
+
+
+8. COMPOSANTS TIERS ET VERSIONS ANTÉRIEURES
+
+Les bibliothèques et ressources de tiers utilisées par le Logiciel,
+notamment la police Inter (SIL Open Font License 1.1), restent régies
+par leur propre licence.
+
+Les versions du Logiciel publiées avant l'adoption de la présente
+licence l'ont été sous licence MIT et restent régies par celle-ci. La
+présente licence s'applique à toutes les versions publiées ensuite.
+
+
+9. DEMANDES D'AUTORISATION
+
+Toute utilisation non prévue à l'article 2 demande un accord écrit du
+Titulaire, à solliciter en ouvrant une discussion (« issue ») sur le
+dépôt officiel du projet.
+
+
+10. DROIT APPLICABLE
+
+La présente licence est régie par le droit français. Tout litige
+relatif à son interprétation ou à son exécution relève des tribunaux
+français compétents.

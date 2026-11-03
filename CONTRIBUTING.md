@@ -39,6 +39,12 @@ Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md) to
 
 See [docs/setup.md](docs/setup.md) for detailed instructions.
 
+## Licence of contributions
+
+Mura is not open source: its [LICENSE](LICENSE) forbids modifying the code, with one exception — you may change a copy of it for the sole purpose of proposing that change here, through a pull request. That copy may not be used in production or shared elsewhere.
+
+By opening a pull request, you agree that the author may integrate, modify and distribute your contribution under Mura's licence or any other, and you grant the rights needed for that (article 4 of the licence). The author remains free to decline any contribution.
+
 ## Code of Conduct
 
 Be respectful. We follow the [Contributor Covenant](https://www.contributor-covenant.org/).

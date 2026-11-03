@@ -1,8 +1,8 @@
 # 🟦 Mura
 
-> A modern, open-source project management tool — inspired by Trello.
+> A modern, self-hosted project management tool — inspired by Trello.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![License](https://img.shields.io/badge/license-Mura%201.0-blue.svg)
 ![Backend](https://img.shields.io/badge/backend-Spring%20Boot-green.svg)
 ![Frontend](https://img.shields.io/badge/frontend-React-61DAFB.svg)
 ![Database](https://img.shields.io/badge/database-PostgreSQL-336791.svg)
@@ -58,4 +58,4 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## 📄 License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+Mura is free to install and use, for yourself or within your organisation, but its code may not be modified, redistributed or sold without the author's permission — see the [LICENSE](LICENSE) file (in French) for the exact terms. Versions published before this licence remain under the MIT License.

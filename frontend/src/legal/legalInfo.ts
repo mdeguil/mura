@@ -2,10 +2,11 @@
 // légales (LCEN, art. 6-III) and the politique de confidentialité (RGPD,
 // art. 13) must say.
 //
-// Mura itself is open-source software, not a service: those duties fall on
-// whoever puts an instance online, and the facts are theirs. So they are
-// read from the environment at build time (VITE_LEGAL_* in .env, passed to
-// the frontend image as build arguments) rather than written into the code.
+// Mura itself is software people install for themselves, not a service:
+// those duties fall on whoever puts an instance online, and the facts are
+// theirs. So they are read from the environment at build time (VITE_LEGAL_*
+// in .env, passed to the frontend image as build arguments) rather than
+// written into the code.
 // An instance that has not declared them -- one running on a laptop, say --
 // leaves them empty, and the legal pages say so in plain words.
 const read = (value: string | undefined): string | null => {
