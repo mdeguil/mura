@@ -56,6 +56,13 @@ public class AccountService {
     }
 
     @Transactional
+    /**
+     * Makes an account an administrator of the instance, or a plain user
+     * again. It gives no rights inside anyone's project.
+     *
+     * @throws ApiException 403 unless the actor is an administrator, 409 if
+     *         it would leave no active administrator
+     */
     public AccountResponse changeRole(UUID actorId, UUID targetId, ChangeAccountRoleRequest request) {
         requireAdmin(actorId);
         User target = requireAccount(targetId);
@@ -73,6 +80,14 @@ public class AccountService {
     }
 
     @Transactional
+    /**
+     * Suspends or restores an account. A suspended account can no longer
+     * sign in, and its next request is refused. The owners of its projects
+     * and groups are notified, except the actor.
+     *
+     * @throws ApiException 403 unless the actor is an administrator, 409 when
+     *         acting on oneself or suspending the last active administrator
+     */
     public AccountResponse setSuspended(UUID actorId, UUID targetId, boolean suspended) {
         requireAdmin(actorId);
         User target = requireAccount(targetId);
@@ -204,6 +219,15 @@ public class AccountService {
     }
 
     @Transactional
+    /**
+     * Deletes a suspended account for good. Each project it owns passes to
+     * another member when there is one, and goes with the account otherwise;
+     * its tasks lose their assignee. See {@link #deletionPreview} for what
+     * that means for a given account before doing it.
+     *
+     * @throws ApiException 403 unless the actor is an administrator, 409 when
+     *         acting on oneself or if the account was not suspended first
+     */
     public void delete(UUID actorId, UUID targetId) {
         requireAdmin(actorId);
         User target = requireAccount(targetId);

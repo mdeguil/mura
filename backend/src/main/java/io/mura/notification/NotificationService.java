@@ -29,6 +29,12 @@ public class NotificationService {
                 .toList();
     }
 
+    /**
+     * Puts a line about a project in the recipient's bell and mails it,
+     * unless their account is suspended. The project's name is copied, so
+     * the line still reads correctly once the project is gone. A blank
+     * message is dropped.
+     */
     @Transactional
     public void notify(User recipient, NotificationType type, Project project, User actor, String message) {
         Notification notification = new Notification();

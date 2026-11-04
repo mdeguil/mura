@@ -168,6 +168,15 @@ public class ProjectService {
         projectRepository.delete(project);
     }
 
+    /**
+     * Creates the project with its creator as owner. The listed addresses
+     * are invited and must answer; a group's people join at once and are
+     * told so. Someone both in the group and listed simply joins.
+     *
+     * @throws ApiException 404 for an unknown address or group, 403 if the
+     *         creator is not in the group, 409 if they list their own
+     *         address; nothing is created then
+     */
     @Transactional
     public ProjectResponse create(UUID ownerId, CreateProjectRequest request) {
         User owner = userRepository.findById(ownerId)
@@ -326,6 +335,16 @@ public class ProjectService {
                         user, NotificationType.ADDED_TO_PROJECT, project, actor, null));
     }
 
+    /**
+     * Takes someone off the team, or lets them leave when actor and member
+     * are the same person. Their tasks stay and lose their assignee. Someone
+     * removed is told why, with the optional message; someone leaving tells
+     * the owner and the admins.
+     *
+     * @throws ApiException 409 for the owner, who must hand the project over
+     *         first; 403 for a plain member removing someone, or an admin
+     *         removing another admin
+     */
     @Transactional
     public void removeMember(UUID actorId, UUID projectId, UUID memberId, String message) {
         Project project = projectRepository.findById(projectId)

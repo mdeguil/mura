@@ -63,6 +63,13 @@ public class ProjectTypeService {
         return ProjectTypeResponse.of(type, projectRepository.countByTypeId(id));
     }
 
+    /**
+     * Deletes a type after moving its projects to the fallback type, so no
+     * project is lost or left without one.
+     *
+     * @throws ApiException 409 for the fallback type itself, which can be
+     *         neither edited nor deleted
+     */
     @Transactional
     public void delete(UUID id) {
         ProjectType type = require(id);

@@ -13,6 +13,11 @@ interface AuthState {
   logout: () => void
 }
 
+/**
+ * The session: the token and the account it belongs to. Kept in the
+ * browser's localStorage under `mura-auth`, so a reload stays signed in.
+ * `services/api.ts` calls `logout` when the server answers 401.
+ */
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({

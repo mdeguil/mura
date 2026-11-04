@@ -3,6 +3,11 @@
 // form being broken.
 export type PasswordRule = { label: string; met: boolean }
 
+/**
+ * The same rules as the backend's StrongPasswordValidator and the check in
+ * AuthService: change one, change the other, or the form will accept a
+ * password the server then refuses.
+ */
 export function passwordRules(password: string, email: string, username: string): PasswordRule[] {
     const trimmedEmail = email.trim().toLowerCase()
     const trimmedUser = username.trim().toLowerCase()

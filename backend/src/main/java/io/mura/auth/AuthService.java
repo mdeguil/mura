@@ -33,6 +33,13 @@ public class AuthService {
     private final EmailTokenService emailTokenService;
     private final MailService mailService;
 
+    /**
+     * Creates the account, signs it in and mails a six-digit code. Until the
+     * code is entered, the token only reaches the verification routes.
+     *
+     * @throws ApiException 409 if the email or the username is taken, in any
+     *         case; 400 if the password is the email or the username
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         // Already trimmed, and the email already lowercased, by
@@ -85,6 +92,13 @@ public class AuthService {
         return new AuthResponse(token, AccountResponse.from(user));
     }
 
+    /**
+     * Confirms the address with the code that was mailed. Does nothing for
+     * an address already confirmed.
+     *
+     * @throws ApiException 400 for a wrong code, 429 once five have been
+     *         tried, 410 if the code has expired or been replaced
+     */
     @Transactional
     public AccountResponse verifyEmail(UUID userId, VerifyEmailRequest request) {
         User user = requireUser(userId);
@@ -121,6 +135,13 @@ public class AuthService {
                 });
     }
 
+    /**
+     * Sets a new password from the link that was mailed, and spends the
+     * link. Also confirms the address if it was not yet.
+     *
+     * @throws ApiException 410 if the link is unknown, expired or used; 400
+     *         if the password is the old one, the email or the username
+     */
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         User user = emailTokenService.consumeResetLink(request.token());
@@ -147,6 +168,10 @@ public class AuthService {
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Ce compte n'existe plus."));
     }
 
+    /**
+     * @throws ApiException 401 for an unknown email or a wrong password,
+     *         with the same message for both; 403 for a suspended account
+     */
     public AuthResponse login(LoginRequest request) {
         // Case-insensitive, like registration and like every other lookup by
         // email: capitals from a phone keyboard are not a wrong password.

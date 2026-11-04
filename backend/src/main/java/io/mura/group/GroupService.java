@@ -68,6 +68,12 @@ public class GroupService {
         return GroupResponse.from(group, actorId, membersOf(groupId));
     }
 
+    /**
+     * Deletes the group. Its members are told by name; the projects it
+     * brought people onto keep them.
+     *
+     * @throws ApiException 403 for anyone but the gérant
+     */
     @Transactional
     public void delete(UUID actorId, UUID groupId) {
         UserGroup group = requireOwner(actorId, groupId);
@@ -83,6 +89,13 @@ public class GroupService {
         requireDeleted(groupId);
     }
 
+    /**
+     * Adds an account to the group outright, with no invitation to answer,
+     * and tells them so.
+     *
+     * @throws ApiException 403 for anyone but the gérant, 404 if no account
+     *         uses the email, 409 if they are already in it
+     */
     @Transactional
     public GroupResponse addMember(UUID actorId, UUID groupId, AddGroupMemberRequest request) {
         UserGroup group = requireOwner(actorId, groupId);

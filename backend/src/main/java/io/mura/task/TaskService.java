@@ -72,6 +72,14 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
+    /**
+     * Replaces the whole task: fields left out of the request are cleared,
+     * not kept. A change of status is recorded in the task's history.
+     *
+     * @throws ApiException 409 if the status goes backward or skips a stage,
+     *         if it reaches Terminé with a subtask still open, or if the
+     *         assignee is not on the team
+     */
     @Transactional
     public TaskResponse update(UUID userId, UUID projectId, UUID taskId, UpdateTaskRequest request) {
         access.requireMembership(userId, projectId);
@@ -115,6 +123,11 @@ public class TaskService {
         return TaskResponse.from(task);
     }
 
+    /**
+     * Removes the task for good, subtasks and history with it.
+     *
+     * @throws ApiException 409 unless the task was archived first
+     */
     @Transactional
     public void delete(UUID userId, UUID projectId, UUID taskId) {
         access.requireMembership(userId, projectId);

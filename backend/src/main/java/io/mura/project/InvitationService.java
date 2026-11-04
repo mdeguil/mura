@@ -45,6 +45,16 @@ public class InvitationService {
         this.lifetime = Duration.ofDays(lifetimeDays);
     }
 
+    /**
+     * Invites an existing account onto the project, in the actor's name, and
+     * mails them. A refused or lapsed invitation for the same person is
+     * replaced; the invitation itself lapses after the configured number of
+     * days.
+     *
+     * @throws ApiException 403 unless the actor manages the project, 404 if no
+     *         account uses the email, 409 if the person is already on the
+     *         team or already has an invitation waiting
+     */
     @Transactional
     public InvitationResponse invite(UUID actorId, UUID projectId, CreateInvitationRequest request) {
         ProjectMember manager = access.requireManager(actorId, projectId);
@@ -191,6 +201,12 @@ public class InvitationService {
         invitationRepository.delete(invitation);
     }
 
+    /**
+     * Joins the project as a plain member. Only the invitee may answer.
+     *
+     * @throws ApiException 403 for anyone else, 409 if the invitation has
+     *         lapsed or was already answered
+     */
     @Transactional
     public InvitationResponse accept(UUID userId, UUID invitationId) {
         ProjectInvitation invitation = requireOwnInvitation(userId, invitationId);
