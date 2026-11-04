@@ -1,15 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Navbar from '../components/Navbar'
 import ProjectCard from '../components/ProjectCard'
 import CreateProjectModal from '../components/CreateProjectModal'
+import ErrorMessage from '../components/ErrorMessage'
 import InvitedProjectCard from '../components/InvitedProjectCard'
 import ArchivedProjectList from '../components/ArchivedProjectList'
-import api from '../services/api'
 import type { Invitation, Project, ProjectStatus } from '../types'
 import { PROJECT_STATUS_LABELS } from '../utils/projectMeta'
+import { useApiQuery } from '../hooks/useApiQuery'
 import { useProjectTypes } from '../hooks/useProjectTypes'
-import { apiErrorMessage } from '../utils/apiError'
-
 
 // Archived sits alongside the statuses rather than under them: it is where a
 // project goes, not how its work is going. Keeping it as its own tab is also
@@ -27,65 +26,24 @@ const TABS: { key: ProjectTab; label: string }[] = [
 
 export default function HomePage() {
     const { types } = useProjectTypes()
-    const [projects, setProjects] = useState<Project[]>([])
-    const [invitations, setInvitations] = useState<Invitation[]>([])
-    const [archived, setArchived] = useState<Project[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const {
+        data: projects,
+        setData: setProjects,
+        loading,
+        error,
+        reload,
+    } = useApiQuery<Project[]>('/projects', [], 'Impossible de charger tes projets.')
+    // Pending invitations, dismissed from the bell or not: this list is
+    // where someone comes back to find a project they were invited to.
+    const invitationsQuery = useApiQuery<Invitation[]>('/invitations', [], 'Impossible de charger tes invitations.')
+    // The owner's bin: restoring or deleting from here is the only way out.
+    const archivedQuery = useApiQuery<Project[]>('/projects/archived', [], 'Impossible de charger tes projets archivés.')
+    const invitations = invitationsQuery.data
+    const { data: archived, setData: setArchived } = archivedQuery
     const [query, setQuery] = useState('')
     const [typeFilter, setTypeFilter] = useState<string>('ALL')
     const [tab, setTab] = useState<ProjectTab>('ALL')
     const [showCreateModal, setShowCreateModal] = useState(false)
-
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<Project[]>('/projects')
-            .then(({ data }) => {
-                if (!cancelled) setProjects(data)
-            })
-            .catch((err) => {
-                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger tes projets.'))
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
-
-    // Pending invitations, dismissed from the bell or not: this list is
-    // where someone comes back to find a project they were invited to.
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<Invitation[]>('/invitations')
-            .then(({ data }) => {
-                if (!cancelled) setInvitations(data)
-            })
-            .catch(() => {})
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
-
-    // The owner's bin: restoring or deleting from here is the only way out.
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<Project[]>('/projects/archived')
-            .then(({ data }) => {
-                if (!cancelled) setArchived(data)
-            })
-            .catch(() => {})
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
 
     // Search and type narrow whatever tab is open, so the counts on the tabs
     // always match what opening one would show.
@@ -126,10 +84,10 @@ export default function HomePage() {
                     </button>
                 </div>
 
-                {error && (
-                    <div className="mb-6 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-                        {error}
-                    </div>
+                {invitationsQuery.error && (
+                    <ErrorMessage onRetry={invitationsQuery.reload} className="mb-6">
+                        {invitationsQuery.error}
+                    </ErrorMessage>
                 )}
 
                 {invitations.length > 0 && (
@@ -210,8 +168,14 @@ export default function HomePage() {
                     ))}
                 </div>
 
+                {/* A list that failed to load is not an empty one: the
+                    "Aucun projet" panels below would say something untrue. */}
                 {loading ? (
                     <div className="text-sm text-slate-500">Chargement…</div>
+                ) : tab === 'ARCHIVED' && archivedQuery.error ? (
+                    <ErrorMessage onRetry={archivedQuery.reload}>{archivedQuery.error}</ErrorMessage>
+                ) : tab !== 'ARCHIVED' && error ? (
+                    <ErrorMessage onRetry={reload}>{error}</ErrorMessage>
                 ) : tab === 'ARCHIVED' ? (
                     <ArchivedProjectList
                         projects={narrowedArchived}

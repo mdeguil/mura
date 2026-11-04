@@ -2,6 +2,7 @@ import { useState } from 'react'
 import api from '../services/api'
 import UserAvatar, { SuspendedPill } from './UserAvatar'
 import CarnetCombobox from './CarnetCombobox'
+import ConfirmDialog from './ConfirmDialog'
 import GroupAddPanel from './GroupAddPanel'
 import MemberDepartureDialog, { type Departure } from './MemberDepartureDialog'
 import type { Invitation, Member, ProjectRole } from '../types'
@@ -48,6 +49,7 @@ export default function MemberList({
     const [loading, setLoading] = useState(false)
     const [successorId, setSuccessorId] = useState('')
     const [departure, setDeparture] = useState<Departure | null>(null)
+    const [confirmingTransfer, setConfirmingTransfer] = useState(false)
 
     const pending = invitations.filter((i) => i.status === 'PENDING')
     // Refused or lapsed: either way nobody is coming, and either way the
@@ -114,18 +116,6 @@ export default function MemberList({
     }
 
     async function handleTransfer() {
-        const successor = members.find((m) => m.id === successorId)
-        if (!successor) return
-
-        // Irreversible from this side: only the new owner can hand it back.
-        if (
-            !window.confirm(
-                `Céder le projet à ${successor.username} ? Tu deviendras administrateur, et seul ${successor.username} pourra te le rendre.`
-            )
-        ) {
-            return
-        }
-
         setError('')
         try {
             const { data } = await api.post<Member[]>(
@@ -136,7 +126,10 @@ export default function MemberList({
         } catch (err) {
             setError(apiErrorMessage(err, 'Impossible de céder le projet.'))
         }
+        setConfirmingTransfer(false)
     }
+
+    const successor = members.find((m) => m.id === successorId)
 
     return (
         <section className="bg-surface border border-border rounded-xl p-5">
@@ -397,8 +390,8 @@ export default function MemberList({
                             ))}
                         </select>
                         <button
-                            onClick={handleTransfer}
-                            disabled={!successorId}
+                            onClick={() => setConfirmingTransfer(true)}
+                            disabled={!successor}
                             className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-brand-500 transition disabled:opacity-40 shrink-0"
                         >
                             Céder
@@ -421,6 +414,18 @@ export default function MemberList({
                         Quitter le projet
                     </button>
                 </div>
+            )}
+
+            {/* Irreversible from this side: only the new owner can hand it back. */}
+            {confirmingTransfer && successor && (
+                <ConfirmDialog
+                    title={`Céder le projet à ${successor.username} ?`}
+                    body={`Tu deviendras administrateur, et seul ${successor.username} pourra te le rendre.`}
+                    confirmLabel="Céder le projet"
+                    tone="neutral"
+                    onCancel={() => setConfirmingTransfer(false)}
+                    onConfirm={handleTransfer}
+                />
             )}
 
             {departure && (

@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import api from '../services/api'
+import ErrorMessage from './ErrorMessage'
 import UserAvatar from './UserAvatar'
-import { apiErrorMessage } from '../utils/apiError'
+import { useApiQuery } from '../hooks/useApiQuery'
 import type { Group } from '../types'
 
 // The list, and nothing else: a card opens the group's own page, the way a
@@ -12,28 +11,11 @@ import type { Group } from '../types'
 // No way to create one from here: groups are set up by an administrator,
 // who names the gérant, from the Administration page.
 export default function GroupList() {
-    const [groups, setGroups] = useState<Group[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
-
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<Group[]>('/groups')
-            .then(({ data }) => {
-                if (!cancelled) setGroups(data)
-            })
-            .catch((err) => {
-                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger tes groupes.'))
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
+    const { data: groups, loading, error, reload } = useApiQuery<Group[]>(
+        '/groups',
+        [],
+        'Impossible de charger tes groupes.'
+    )
 
     if (loading) return <div className="text-sm text-slate-500">Chargement…</div>
 
@@ -45,9 +27,11 @@ export default function GroupList() {
                 administrateur.
             </p>
 
-            {error && <p className="text-xs text-red-500 mb-4">{error}</p>}
-
-            {groups.length === 0 ? (
+            {/* A failed load is not an empty list: saying "Aucun groupe"
+                would tell the reader something untrue. */}
+            {error ? (
+                <ErrorMessage onRetry={reload}>{error}</ErrorMessage>
+            ) : groups.length === 0 ? (
                 <div className="bg-surface border border-border rounded-2xl py-16 px-6 flex flex-col items-center text-center">
                     <div className="w-14 h-14 rounded-2xl bg-brand-gradient-diagonal flex items-center justify-center mb-4">
                         <span className="text-white text-2xl">👥</span>

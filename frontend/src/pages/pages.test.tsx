@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import App from '../App'
 import AccountPage from './AccountPage'
 import LoginPage from './LoginPage'
-import { account, apiError } from '../test/fixtures'
+import ProjectPage from './ProjectPage'
+import { account, apiError, project, task } from '../test/fixtures'
 import { renderAt } from '../test/render'
 
 vi.mock('../services/api')
@@ -122,6 +123,81 @@ describe('AccountPage', () => {
 
         await waitFor(() => expect(useAuthStore.getState().token).toBeNull())
         expect(screen.getAllByTestId('current-path')[0]).toHaveTextContent('/login')
+    })
+})
+
+describe('ProjectPage', () => {
+    const alice = account('alice')
+
+    // Alice's own project, opened on `tab`; `more` adds answers for the
+    // project's other addresses, given its id.
+    function openProject(more: (projectId: string) => Record<string, unknown> = () => ({}), tab = '') {
+        const refonte = project('Refonte', alice)
+        useAuthStore.setState({ token: 'jwt', user: alice })
+        emptyServer({ [`/projects/${refonte.id}`]: refonte, ...more(refonte.id) })
+        const rendered = renderAt(<ProjectPage />, { route: `/project/${refonte.id}${tab}`, path: '/project/:id' })
+        return { ...rendered, refonte }
+    }
+
+    it('changes the status with the type the server expects', async () => {
+        vi.mocked(api.put).mockImplementationOnce(async (_url, body) => ({
+            data: { ...project('Refonte', alice), ...(body as object) },
+        }))
+        const { user, refonte } = openProject()
+
+        await user.click(await screen.findByRole('button', { name: /À venir/ }))
+        await user.click(screen.getByRole('option', { name: /En cours/ }))
+
+        expect(api.put).toHaveBeenCalledWith(
+            `/projects/${refonte.id}`,
+            expect.objectContaining({ typeId: refonte.type.id, status: 'EN_COURS' })
+        )
+        expect(vi.mocked(api.put).mock.calls[0][1]).not.toHaveProperty('type')
+    })
+
+    it('says on the page when a change is refused, with no browser alert', async () => {
+        const alert = vi.spyOn(window, 'alert')
+        vi.mocked(api.put).mockRejectedValueOnce(apiError(400, 'Le type de projet est requis.'))
+        const { user } = openProject()
+
+        await user.click(await screen.findByRole('button', { name: /À venir/ }))
+        await user.click(screen.getByRole('option', { name: /Achevé/ }))
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('Le type de projet est requis.')
+        expect(alert).not.toHaveBeenCalled()
+    })
+
+    it('asks in a dialog before deleting an archived task for good', async () => {
+        const confirm = vi.spyOn(window, 'confirm')
+        vi.mocked(api.delete).mockResolvedValueOnce({ data: undefined })
+        const { user, refonte } = openProject(
+            (projectId) => ({ [`/projects/${projectId}/tasks/archived`]: [task('Vieille maquette', { archived: true })] }),
+            '?tab=tasks'
+        )
+
+        await user.click(await screen.findByRole('button', { name: /Supprimer$/ }))
+        const dialog = screen.getByRole('dialog', { name: 'Supprimer définitivement « Vieille maquette » ?' })
+        expect(api.delete).not.toHaveBeenCalled()
+
+        await user.click(within(dialog).getByRole('button', { name: 'Supprimer définitivement' }))
+
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+        expect(api.delete).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`^/projects/${refonte.id}/tasks/`)))
+        expect(confirm).not.toHaveBeenCalled()
+    })
+
+    it("tells a member the tasks did not load instead of showing none", async () => {
+        const refonte = project('Refonte', alice)
+        useAuthStore.setState({ token: 'jwt', user: alice })
+        vi.mocked(api.get).mockImplementation(async (url: string) => {
+            if (url === `/projects/${refonte.id}`) return { data: refonte }
+            if (url === `/projects/${refonte.id}/tasks`) throw apiError(500)
+            return { data: [] }
+        })
+        renderAt(<ProjectPage />, { route: `/project/${refonte.id}`, path: '/project/:id' })
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('Impossible de charger les tâches.')
+        expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
     })
 })
 

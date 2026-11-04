@@ -1,22 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
+import ArchiveProjectDialog from '../components/ArchiveProjectDialog'
+import ConfirmDialog from '../components/ConfirmDialog'
 import CreateTaskModal from '../components/CreateTaskModal'
-import GanttChart from '../components/GanttChart'
-import MonthCalendar from '../components/MonthCalendar'
+import EditProjectModal from '../components/EditProjectModal'
+import ErrorMessage from '../components/ErrorMessage'
+import LoadErrors from '../components/LoadErrors'
+import PlanningPanel, { type PlanningView } from '../components/PlanningPanel'
+import ProjectHeader from '../components/ProjectHeader'
+import ProjectInfo from '../components/ProjectInfo'
 import TaskBoard from '../components/TaskBoard'
 import TaskDetailModal from '../components/TaskDetailModal'
-import ProjectInfo from '../components/ProjectInfo'
-import EditProjectModal from '../components/EditProjectModal'
-import ArchiveProjectDialog from '../components/ArchiveProjectDialog'
-import ProjectStatusPicker from '../components/ProjectStatusPicker'
 import api from '../services/api'
+import { useProject } from '../hooks/useProject'
 import { useAuthStore } from '../store/authStore'
-import type { Invitation, Member, Project, ProjectStatus, Subtask, Task, TaskStatus } from '../types'
-import { projectTypeLabel } from '../utils/projectMeta'
-import { projectGlassBackground } from '../utils/color'
-import { taskPayload } from '../utils/taskPayload'
+import type { Project, ProjectStatus, Subtask, Task, TaskStatus } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
+import { taskPayload } from '../utils/taskPayload'
 
 type ProjectTab = 'info' | 'planning' | 'tasks'
 
@@ -28,29 +29,38 @@ const TABS: { key: ProjectTab; label: string }[] = [
 
 const DEFAULT_TAB: ProjectTab = 'info'
 
-type PlanningView = 'calendar' | 'gantt'
-
-const PLANNING_VIEWS: { key: PlanningView; label: string }[] = [
-    { key: 'calendar', label: '📅 Calendrier' },
-    { key: 'gantt', label: '📊 Gantt' },
-]
+const byStartDate = (a: Task, b: Task) => a.startDate.localeCompare(b.startDate)
 
 export default function ProjectPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
-    const [project, setProject] = useState<Project | null>(null)
-    const [members, setMembers] = useState<Member[]>([])
-    const [invitations, setInvitations] = useState<Invitation[]>([])
-    const [ownInvitation, setOwnInvitation] = useState<Invitation | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const {
+        project,
+        setProject,
+        loading,
+        error,
+        reloadProject,
+        members,
+        setMembers,
+        tasks,
+        setTasks,
+        archivedTasks,
+        setArchivedTasks,
+        invitations,
+        setInvitations,
+        ownInvitation,
+        loadErrors,
+    } = useProject(id)
 
-    const [tasks, setTasks] = useState<Task[]>([])
-    const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
+    // What went wrong with the last change made from this page. Said on the
+    // page rather than in a browser alert, which cannot be read back later
+    // and blocks everything until it is dismissed.
+    const [actionError, setActionError] = useState('')
     const [showCreateTask, setShowCreateTask] = useState(false)
     const [editingProject, setEditingProject] = useState(false)
     const [archiving, setArchiving] = useState(false)
+    const [deletingTask, setDeletingTask] = useState<Task | null>(null)
     const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
     const [planningView, setPlanningView] = useState<PlanningView>('calendar')
     const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
@@ -77,202 +87,130 @@ export default function ProjectPage() {
         setSearchParams(tab === DEFAULT_TAB ? {} : { tab }, { replace: true })
     }
 
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<Project>(`/projects/${id}`)
-            .then(({ data }) => {
-                if (cancelled) return
-                setProject(data)
-                setMembers(data.members)
-            })
-            .catch((err) => {
-                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger ce projet.'))
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => {
-            cancelled = true
+    // Runs a change made from this page, saying so on the page if it fails.
+    async function attempt(action: () => Promise<void>, fallback: string) {
+        setActionError('')
+        try {
+            await action()
+        } catch (err) {
+            setActionError(apiErrorMessage(err, fallback))
         }
-    }, [id])
-
-    // Everything below is members-only. Someone who merely holds an
-    // invitation gets the project's description and nothing else, so these
-    // wait until the project says which of the two the caller is.
-    useEffect(() => {
-        if (project?.access !== 'MEMBER') return
-        let cancelled = false
-
-        api.get<Task[]>(`/projects/${id}/tasks`)
-            .then(({ data }) => {
-                if (!cancelled) setTasks(data)
-            })
-            .catch(() => {})
-
-        api.get<Task[]>(`/projects/${id}/tasks/archived`)
-            .then(({ data }) => {
-                if (!cancelled) setArchivedTasks(data)
-            })
-            .catch(() => {})
-
-        // A plain member still sees who else has been invited, and only
-        // loses the ability to cancel one.
-        api.get<Invitation[]>(`/projects/${id}/invitations`)
-            .then(({ data }) => {
-                if (!cancelled) setInvitations(data)
-            })
-            .catch(() => {})
-
-        return () => {
-            cancelled = true
-        }
-    }, [id, project?.access])
-
-    // The invitation this page is asking the viewer to answer.
-    useEffect(() => {
-        if (project?.access !== 'INVITED') return
-        let cancelled = false
-
-        api.get<Invitation[]>('/invitations')
-            .then(({ data }) => {
-                if (!cancelled) setOwnInvitation(data.find((i) => i.projectId === id) ?? null)
-            })
-            .catch(() => {})
-
-        return () => {
-            cancelled = true
-        }
-    }, [id, project?.access])
-
-
-    async function handleAnswerInvitation(accepted: boolean) {
-        if (!ownInvitation) return
-
-        await api.post(`/invitations/${ownInvitation.id}/${accepted ? 'accept' : 'decline'}`)
-        setOwnInvitation(null)
-
-        if (!accepted) {
-            navigate('/projets')
-            return
-        }
-
-        // Accepting changes what the server will hand back, so the project is
-        // read again — this time as a member, with the team and the tasks.
-        const { data } = await api.get<Project>(`/projects/${id}`)
-        setProject(data)
-        setMembers(data.members)
     }
 
+    function handleAnswerInvitation(accepted: boolean) {
+        if (!ownInvitation) return
 
+        void attempt(async () => {
+            await api.post(`/invitations/${ownInvitation.id}/${accepted ? 'accept' : 'decline'}`)
+            if (!accepted) {
+                navigate('/projets')
+                return
+            }
+            // Accepting changes what the server will hand back, so the
+            // project is read again — this time as a member, with the team
+            // and the tasks.
+            reloadProject()
+        }, accepted ? "Impossible d'accepter cette invitation." : 'Impossible de refuser cette invitation.')
+    }
 
     // Same endpoint the edit dialog uses: it replaces the whole project, so
     // the untouched fields are resent alongside the new status.
-    async function handleProjectStatusChange(status: ProjectStatus) {
+    function handleProjectStatusChange(status: ProjectStatus) {
         if (!project) return
 
-        try {
+        void attempt(async () => {
             const { data } = await api.put<Project>(`/projects/${id}`, {
                 name: project.name,
                 description: project.description,
                 color: project.color,
-                type: project.type,
+                typeId: project.type.id,
                 startDate: project.startDate ?? null,
                 status,
             })
             setProject(data)
-        } catch (err) {
-            window.alert(apiErrorMessage(err, 'Impossible de changer le statut du projet.'))
-        }
+        }, 'Impossible de changer le statut du projet.')
     }
 
     function handleTaskCreated(task: Task) {
-        setTasks((prev) => [...prev, task].sort((a, b) => a.startDate.localeCompare(b.startDate)))
+        setTasks((prev) => [...prev, task].sort(byStartDate))
     }
 
-    function handleStatusChange(taskId: string, status: TaskStatus) {
-        void saveTask(taskId, { status }, "Impossible de changer le statut de cette tâche.")
+    async function handleStatusChange(taskId: string, status: TaskStatus) {
+        setActionError('')
+        const problem = await saveTask(taskId, { status }, 'Impossible de changer le statut de cette tâche.')
+        if (problem) setActionError(problem)
     }
 
     // One save for the whole task: the detail panel stages every edit and
     // sends them together, so a responsable and a date changed in the same
-    // visit are one decision rather than two.
-    function handleTaskSave(
-        taskId: string,
-        changes: { startDate: string; endDate: string; assigneeId: string | null }
-    ) {
+    // visit are one decision rather than two. What went wrong goes back to
+    // the panel, which is what the reader is looking at.
+    function handleTaskSave(taskId: string, changes: { startDate: string; endDate: string; assigneeId: string | null }) {
         return saveTask(taskId, changes, "Impossible d'enregistrer cette tâche.")
     }
 
     // Both edits go through the same PUT, which replaces the whole task:
-    // taskPayload resends the fields this change does not touch.
+    // taskPayload resends the fields this change does not touch. Answers
+    // with what went wrong, or null.
     async function saveTask(
         taskId: string,
         changes: { status?: TaskStatus; assigneeId?: string | null; startDate?: string; endDate?: string },
         fallbackMessage: string
-    ): Promise<boolean> {
+    ): Promise<string | null> {
         const task = tasks.find((t) => t.id === taskId)
-        if (!task) return false
+        if (!task) return null
 
         try {
-            const { data } = await api.put<Task>(
-                `/projects/${id}/tasks/${taskId}`,
-                taskPayload(task, changes)
-            )
+            const { data } = await api.put<Task>(`/projects/${id}/tasks/${taskId}`, taskPayload(task, changes))
             setTasks((prev) => prev.map((t) => (t.id === taskId ? data : t)))
-            return true
+            return null
         } catch (err) {
-            window.alert(apiErrorMessage(err, fallbackMessage))
-            // Said rather than swallowed: a field edited in place has to
-            // know to show the value the server kept.
-            return false
+            return apiErrorMessage(err, fallbackMessage)
         }
     }
 
+    function updateTask(taskId: string, change: (task: Task) => Task) {
+        setTasks((prev) => prev.map((t) => (t.id === taskId ? change(t) : t)))
+    }
+
     function handleSubtaskAdded(taskId: string, subtask: Subtask) {
-        setTasks((prev) =>
-            prev.map((t) => (t.id === taskId ? { ...t, subtasks: [...t.subtasks, subtask] } : t))
-        )
+        updateTask(taskId, (t) => ({ ...t, subtasks: [...t.subtasks, subtask] }))
     }
 
     function handleSubtaskToggled(taskId: string, subtask: Subtask) {
-        setTasks((prev) =>
-            prev.map((t) =>
-                t.id === taskId
-                    ? { ...t, subtasks: t.subtasks.map((s) => (s.id === subtask.id ? subtask : s)) }
-                    : t
-            )
-        )
+        updateTask(taskId, (t) => ({ ...t, subtasks: t.subtasks.map((s) => (s.id === subtask.id ? subtask : s)) }))
     }
 
     function handleSubtaskDeleted(taskId: string, subtaskId: string) {
-        setTasks((prev) =>
-            prev.map((t) =>
-                t.id === taskId ? { ...t, subtasks: t.subtasks.filter((s) => s.id !== subtaskId) } : t
-            )
-        )
+        updateTask(taskId, (t) => ({ ...t, subtasks: t.subtasks.filter((s) => s.id !== subtaskId) }))
     }
 
-    async function handleArchiveTask(taskId: string) {
-        const { data } = await api.patch<Task>(`/projects/${id}/tasks/${taskId}/archive`)
-        setTasks((prev) => prev.filter((t) => t.id !== taskId))
-        setArchivedTasks((prev) => [...prev, data])
+    function handleArchiveTask(taskId: string) {
+        void attempt(async () => {
+            const { data } = await api.patch<Task>(`/projects/${id}/tasks/${taskId}/archive`)
+            setTasks((prev) => prev.filter((t) => t.id !== taskId))
+            setArchivedTasks((prev) => [...prev, data])
+        }, "Impossible d'archiver cette tâche.")
     }
 
-    async function handleRestoreTask(taskId: string) {
-        const { data } = await api.patch<Task>(`/projects/${id}/tasks/${taskId}/restore`)
-        setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId))
-        setTasks((prev) => [...prev, data].sort((a, b) => a.startDate.localeCompare(b.startDate)))
+    function handleRestoreTask(taskId: string) {
+        void attempt(async () => {
+            const { data } = await api.patch<Task>(`/projects/${id}/tasks/${taskId}/restore`)
+            setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId))
+            setTasks((prev) => [...prev, data].sort(byStartDate))
+        }, 'Impossible de restaurer cette tâche.')
     }
 
-    async function handleDeleteTaskPermanently(taskId: string) {
-        const task = archivedTasks.find((t) => t.id === taskId)
-        if (!task) return
-        if (!window.confirm(`Supprimer définitivement « ${task.name} » ? Cette action est irréversible.`)) return
+    function handleDeleteTaskPermanently(taskId: string) {
+        setDeletingTask(archivedTasks.find((t) => t.id === taskId) ?? null)
+    }
 
-        await api.delete(`/projects/${id}/tasks/${taskId}`)
-        setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId))
+    async function deleteTask(task: Task) {
+        await attempt(async () => {
+            await api.delete(`/projects/${id}/tasks/${task.id}`)
+            setArchivedTasks((prev) => prev.filter((t) => t.id !== task.id))
+        }, 'Impossible de supprimer cette tâche.')
+        setDeletingTask(null)
     }
 
     return (
@@ -286,74 +224,23 @@ export default function ProjectPage() {
 
                 {loading ? (
                     <div className="text-sm text-slate-500 mt-6">Chargement…</div>
-                ) : error || !project ? (
-                    <div className="mt-6 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
+                ) : !project ? (
+                    <ErrorMessage onRetry={error ? reloadProject : undefined} className="mt-6">
                         {error || 'Projet introuvable.'}
-                    </div>
+                    </ErrorMessage>
                 ) : (
                     <>
-                        <div className="mt-4 flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <span
-                                    className="w-2 h-9 rounded-full shrink-0"
-                                    style={{ background: projectGlassBackground(project.color) }}
-                                />
-                                <div>
-                                    <h1 className="text-xl font-semibold text-slate-800">{project.name}</h1>
-                                    <p className="text-sm text-slate-500">{projectTypeLabel(project.type)}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                                <ProjectStatusPicker
-                                    status={project.status}
-                                    canEdit={canManage}
-                                    onChange={handleProjectStatusChange}
-                                />
-                                {canManage && (
-                                    <button
-                                        onClick={() => setEditingProject(true)}
-                                        className="h-8 px-3 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-medium transition flex items-center gap-1.5"
-                                    >
-                                        <svg
-                                            viewBox="0 0 24 24"
-                                            className="w-3.5 h-3.5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            aria-hidden="true"
-                                        >
-                                            <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                        Modifier
-                                    </button>
-                                )}
-                                {isOwner && (
-                                    <button
-                                        onClick={() => setArchiving(true)}
-                                        className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition flex items-center gap-1.5"
-                                        title="Le projet quitte la liste de l'équipe, rien n'est perdu"
-                                    >
-                                        <svg
-                                            viewBox="0 0 24 24"
-                                            className="w-3.5 h-3.5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            aria-hidden="true"
-                                        >
-                                            <path d="M3 8v12h18V8" />
-                                            <path d="M1 3h22v5H1z" />
-                                            <path d="M10 12h4" />
-                                        </svg>
-                                        Archiver
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+                        <ProjectHeader
+                            project={project}
+                            canManage={canManage}
+                            isOwner={isOwner}
+                            onStatusChange={handleProjectStatusChange}
+                            onEdit={() => setEditingProject(true)}
+                            onArchive={() => setArchiving(true)}
+                        />
+
+                        {actionError && <ErrorMessage className="mt-4">{actionError}</ErrorMessage>}
+                        <LoadErrors failures={loadErrors} className="mt-4" />
 
                         <div className="mt-6 flex items-center gap-6 border-b border-border">
                             {TABS.map((tab) => {
@@ -363,11 +250,7 @@ export default function ProjectPage() {
                                         key={tab.key}
                                         onClick={() => !locked && selectTab(tab.key)}
                                         disabled={locked}
-                                        title={
-                                            locked
-                                                ? "Accepte l'invitation pour accéder à cette vue"
-                                                : undefined
-                                        }
+                                        title={locked ? "Accepte l'invitation pour accéder à cette vue" : undefined}
                                         className={`pb-3 -mb-px text-sm font-medium border-b-2 transition ${
                                             locked
                                                 ? 'text-slate-300 border-transparent cursor-not-allowed'
@@ -401,9 +284,7 @@ export default function ProjectPage() {
                                         setInvitations((prev) => [
                                             // A new invitation replaces this person's refused or
                                             // lapsed one server-side, so the old row goes too.
-                                            ...prev.filter(
-                                                (i) => i.invitedUser.id !== invitation.invitedUser.id
-                                            ),
+                                            ...prev.filter((i) => i.invitedUser.id !== invitation.invitedUser.id),
                                             invitation,
                                         ])
                                     }
@@ -415,76 +296,49 @@ export default function ProjectPage() {
                                         // Their tasks stay, but the server has just cleared
                                         // the assignee on them.
                                         setTasks((prev) =>
-                                            prev.map((t) =>
-                                                t.assignee?.id === memberId ? { ...t, assignee: null } : t
-                                            )
+                                            prev.map((t) => (t.assignee?.id === memberId ? { ...t, assignee: null } : t))
                                         )
                                     }}
                                 />
                             </div>
                         ) : (
-                        <div className="mt-6 flex-1 bg-surface border border-border rounded-2xl p-6 flex flex-col">
-                            {activeTab === 'planning' ? (
-                                <>
-                                    <div className="flex items-center gap-1 mb-4 self-start bg-surface-muted border border-border rounded-lg p-0.5">
-                                        {PLANNING_VIEWS.map((view) => (
-                                            <button
-                                                key={view.key}
-                                                onClick={() => setPlanningView(view.key)}
-                                                className={`h-7 px-3 rounded-md text-xs font-medium transition ${
-                                                    planningView === view.key
-                                                        ? 'bg-surface text-slate-800 shadow-sm'
-                                                        : 'text-slate-500 hover:text-slate-700'
-                                                }`}
-                                            >
-                                                {view.label}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {planningView === 'calendar' ? (
-                                        <MonthCalendar
-                                            tasks={tasks}
-                                            onOpenTask={(task) => setSelectedTaskId(task.id)}
-                                        />
-                                    ) : (
-                                        <GanttChart
-                                            tasks={tasks}
-                                            onOpenTask={(task) => setSelectedTaskId(task.id)}
-                                        />
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h2 className="text-sm font-semibold text-slate-800">
-                                            Tâches ({tasks.length})
-                                        </h2>
-                                        <button
-                                            onClick={() => setShowCreateTask(true)}
-                                            className="h-8 px-3 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-xs font-medium transition"
-                                        >
-                                            + Nouvelle tâche
-                                        </button>
-                                    </div>
-                                    <TaskBoard
+                            <div className="mt-6 flex-1 bg-surface border border-border rounded-2xl p-6 flex flex-col">
+                                {activeTab === 'planning' ? (
+                                    <PlanningPanel
                                         tasks={tasks}
-                                        archivedTasks={archivedTasks}
-                                        onStatusChange={handleStatusChange}
-                                        onArchive={handleArchiveTask}
-                                        onRestore={handleRestoreTask}
-                                        onDeletePermanently={handleDeleteTaskPermanently}
+                                        view={planningView}
+                                        onViewChange={setPlanningView}
                                         onOpenTask={(task) => setSelectedTaskId(task.id)}
                                     />
-                                </>
-                            )}
-                        </div>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h2 className="text-sm font-semibold text-slate-800">
+                                                Tâches ({tasks.length})
+                                            </h2>
+                                            <button
+                                                onClick={() => setShowCreateTask(true)}
+                                                className="h-8 px-3 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-xs font-medium transition"
+                                            >
+                                                + Nouvelle tâche
+                                            </button>
+                                        </div>
+                                        <TaskBoard
+                                            tasks={tasks}
+                                            archivedTasks={archivedTasks}
+                                            onStatusChange={handleStatusChange}
+                                            onArchive={handleArchiveTask}
+                                            onRestore={handleRestoreTask}
+                                            onDeletePermanently={handleDeleteTaskPermanently}
+                                            onOpenTask={(task) => setSelectedTaskId(task.id)}
+                                        />
+                                    </>
+                                )}
+                            </div>
                         )}
                     </>
                 )}
             </main>
-
-
 
             {archiving && project && (
                 <ArchiveProjectDialog
@@ -510,6 +364,16 @@ export default function ProjectPage() {
                     members={members}
                     onClose={() => setShowCreateTask(false)}
                     onCreated={handleTaskCreated}
+                />
+            )}
+            {deletingTask && (
+                <ConfirmDialog
+                    title={`Supprimer définitivement « ${deletingTask.name} » ?`}
+                    body="Elle ne pourra pas être récupérée. Cette action est irréversible."
+                    confirmLabel="Supprimer définitivement"
+                    icon="🗑️"
+                    onCancel={() => setDeletingTask(null)}
+                    onConfirm={() => deleteTask(deletingTask)}
                 />
             )}
 

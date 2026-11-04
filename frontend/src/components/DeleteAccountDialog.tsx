@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
+import { useApiQuery } from '../hooks/useApiQuery'
+import Modal from './Modal'
 import type { Account, AccountDeletionPreview } from '../types'
 
 export default function DeleteAccountDialog({
@@ -14,26 +16,14 @@ export default function DeleteAccountDialog({
 }) {
     // Worked out by the server before anything happens, so the list below is
     // what will actually occur rather than a warning in the abstract.
-    const [preview, setPreview] = useState<AccountDeletionPreview | null>(null)
+    const { data: preview, error: previewError } = useApiQuery<AccountDeletionPreview | null>(
+        `/admin/accounts/${account.id}/deletion-preview`,
+        null,
+        'Impossible de préparer la suppression.'
+    )
     const [typed, setTyped] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
-
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<AccountDeletionPreview>(`/admin/accounts/${account.id}/deletion-preview`)
-            .then(({ data }) => {
-                if (!cancelled) setPreview(data)
-            })
-            .catch((err) => {
-                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de préparer la suppression.'))
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [account.id])
 
     // Typing the name back is the whole safeguard: nothing here can be undone.
     const matches = typed.trim() === account.username
@@ -53,66 +43,68 @@ export default function DeleteAccountDialog({
     }
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-surface border border-border rounded-2xl w-full max-w-lg shadow-lg overflow-hidden">
-                <span className="block h-1.5 bg-red-500" />
+        <Modal labelledBy="delete-account-title" onClose={onClose} size="lg" className="overflow-hidden">
+            <span className="block h-1.5 bg-red-500" />
 
-                <div className="px-6 pt-5 pb-4 border-b border-border">
-                    <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                        <span aria-hidden="true">🗑️</span>
-                        Supprimer le compte de {account.username} ?
-                    </h2>
-                    <p className="text-sm text-slate-500 mt-0.5">Cette action est irréversible.</p>
-                </div>
-
-                <div className="px-6 py-5 max-h-[50vh] overflow-y-auto">
-                    {!preview && !error && <p className="text-sm text-slate-500">Vérification en cours…</p>}
-
-                    {preview && (
-                        <>
-                            <DeletionConsequences preview={preview} own={false} />
-
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault()
-                                    confirm()
-                                }}
-                                className="mt-5"
-                            >
-                                <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                                    Tape « {account.username} » pour confirmer
-                                </label>
-                                <input
-                                    type="text"
-                                    value={typed}
-                                    onChange={(e) => setTyped(e.target.value)}
-                                    autoFocus
-                                    className="w-full h-10 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 outline-none focus:border-red-400 transition"
-                                />
-                            </form>
-                        </>
-                    )}
-
-                    {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
-                </div>
-
-                <div className="px-6 py-4 border-t border-border bg-surface-muted/60 flex justify-end gap-2">
-                    <button
-                        onClick={onClose}
-                        className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface transition"
-                    >
-                        Annuler
-                    </button>
-                    <button
-                        onClick={confirm}
-                        disabled={!matches || loading || !preview}
-                        className="h-9 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition disabled:opacity-40 disabled:hover:bg-red-500"
-                    >
-                        {loading ? 'Suppression…' : 'Supprimer définitivement'}
-                    </button>
-                </div>
+            <div className="px-6 pt-5 pb-4 border-b border-border">
+                <h2 id="delete-account-title" className="text-base font-semibold text-slate-800 flex items-center gap-2">
+                    <span aria-hidden="true">🗑️</span>
+                    Supprimer le compte de {account.username} ?
+                </h2>
+                <p className="text-sm text-slate-500 mt-0.5">Cette action est irréversible.</p>
             </div>
-        </div>
+
+            <div className="px-6 py-5 max-h-[50vh] overflow-y-auto">
+                {!preview && !previewError && <p className="text-sm text-slate-500">Vérification en cours…</p>}
+
+                {preview && (
+                    <>
+                        <DeletionConsequences preview={preview} own={false} />
+
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault()
+                                confirm()
+                            }}
+                            className="mt-5"
+                        >
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">
+                                Tape « {account.username} » pour confirmer
+                            </label>
+                            <input
+                                type="text"
+                                value={typed}
+                                onChange={(e) => setTyped(e.target.value)}
+                                autoFocus
+                                className="w-full h-10 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 outline-none focus:border-red-400 transition"
+                            />
+                        </form>
+                    </>
+                )}
+
+                {(previewError || error) && (
+                    <p role="alert" className="text-xs text-red-600 mt-3">
+                        {previewError || error}
+                    </p>
+                )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-border bg-surface-muted/60 flex justify-end gap-2">
+                <button
+                    onClick={onClose}
+                    className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface transition"
+                >
+                    Annuler
+                </button>
+                <button
+                    onClick={confirm}
+                    disabled={!matches || loading || !preview}
+                    className="h-9 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition disabled:opacity-40 disabled:hover:bg-red-500"
+                >
+                    {loading ? 'Suppression…' : 'Supprimer définitivement'}
+                </button>
+            </div>
+        </Modal>
     )
 }
 

@@ -1,14 +1,26 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import ConfirmDialog from './ConfirmDialog'
+import ErrorMessage from './ErrorMessage'
+import { useApiQuery } from '../hooks/useApiQuery'
 import UserAvatar, { SuspendedPill } from './UserAvatar'
 import type { Account, AdminGroup } from '../types'
 
 export default function AdminGroupList() {
-    const [groups, setGroups] = useState<AdminGroup[]>([])
-    const [accounts, setAccounts] = useState<Account[]>([])
-    const [loading, setLoading] = useState(true)
+    const groupsQuery = useApiQuery<AdminGroup[]>('/admin/groups', [], 'Impossible de charger les groupes.')
+    // The gérant is picked from the accounts, so both lists are needed
+    // before the form can be opened.
+    const accountsQuery = useApiQuery<Account[]>('/admin/accounts', [], 'Impossible de charger les comptes.')
+    const { data: groups, setData: setGroups } = groupsQuery
+    const accounts = accountsQuery.data
+    const loading = groupsQuery.loading || accountsQuery.loading
+    const loadError = groupsQuery.error || accountsQuery.error
+    function reload() {
+        groupsQuery.reload()
+        accountsQuery.reload()
+    }
+
     const [error, setError] = useState('')
 
     const [editing, setEditing] = useState<AdminGroup | null>(null)
@@ -30,31 +42,6 @@ export default function AdminGroupList() {
         })
     }
 
-    useEffect(() => {
-        let cancelled = false
-
-        Promise.all([
-            api.get<AdminGroup[]>('/admin/groups'),
-            // The gérant is picked from the accounts, so both lists are
-            // needed before the form can be opened.
-            api.get<Account[]>('/admin/accounts'),
-        ])
-            .then(([g, a]) => {
-                if (cancelled) return
-                setGroups(g.data)
-                setAccounts(a.data)
-            })
-            .catch((err) => {
-                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger les groupes.'))
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
 
     const reachable = accounts.filter((a) => !a.suspended)
 
@@ -135,6 +122,12 @@ export default function AdminGroupList() {
                     {creating ? 'Annuler' : '+ Nouveau groupe'}
                 </button>
             </div>
+
+            {loadError && (
+                <ErrorMessage onRetry={reload} className="mb-4">
+                    {loadError}
+                </ErrorMessage>
+            )}
 
             {error && (
                 <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">

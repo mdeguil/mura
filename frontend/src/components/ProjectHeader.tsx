@@ -1,0 +1,83 @@
+import ProjectStatusPicker from './ProjectStatusPicker'
+import type { Project, ProjectStatus } from '../types'
+import { projectGlassBackground } from '../utils/color'
+import { projectTypeLabel } from '../utils/projectMeta'
+
+// The project's name and what can be done to it as a whole. Editing is part
+// of running the team; archiving stays with the owner.
+export default function ProjectHeader({
+    project,
+    canManage,
+    isOwner,
+    onStatusChange,
+    onEdit,
+    onArchive,
+}: {
+    project: Project
+    canManage: boolean
+    isOwner: boolean
+    onStatusChange: (status: ProjectStatus) => void
+    onEdit: () => void
+    onArchive: () => void
+}) {
+    return (
+        <div className="mt-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+                <span
+                    className="w-2 h-9 rounded-full shrink-0"
+                    style={{ background: projectGlassBackground(project.color) }}
+                />
+                <div>
+                    <h1 className="text-xl font-semibold text-slate-800">{project.name}</h1>
+                    <p className="text-sm text-slate-500">{projectTypeLabel(project.type)}</p>
+                </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+                <ProjectStatusPicker status={project.status} canEdit={canManage} onChange={onStatusChange} />
+                {canManage && (
+                    <button
+                        onClick={onEdit}
+                        className="h-8 px-3 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-medium transition flex items-center gap-1.5"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                        >
+                            <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                        </svg>
+                        Modifier
+                    </button>
+                )}
+                {isOwner && (
+                    <button
+                        onClick={onArchive}
+                        className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition flex items-center gap-1.5"
+                        title="Le projet quitte la liste de l'équipe, rien n'est perdu"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                        >
+                            <path d="M3 8v12h18V8" />
+                            <path d="M1 3h22v5H1z" />
+                            <path d="M10 12h4" />
+                        </svg>
+                        Archiver
+                    </button>
+                )}
+            </div>
+        </div>
+    )
+}

@@ -2,67 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import api from '../services/api'
-import type { AppNotification, Invitation } from '../types'
-
-// Two sources share the bell: invitations, which are waiting for an answer
-// and survive being cleared, and notifications, which only report something
-// that already happened and are deleted when cleared.
-type Item =
-    | { kind: 'invitation'; id: string; createdAt: string; read: boolean; invitation: Invitation }
-    | { kind: 'notification'; id: string; createdAt: string; read: boolean; notification: AppNotification }
+import { destinationOf, useNotifications, type BellItem } from '../hooks/useNotifications'
+import type { AppNotification } from '../types'
 
 export default function NotificationBell() {
     const navigate = useNavigate()
-    const [invitations, setInvitations] = useState<Invitation[]>([])
-    const [notifications, setNotifications] = useState<AppNotification[]>([])
+    const { items, unread, markRead, clear } = useNotifications()
     const [open, setOpen] = useState(false)
     const panel = useRef<HTMLDivElement>(null)
-
-    const items: Item[] = [
-        ...invitations.map(
-            (invitation): Item => ({
-                kind: 'invitation',
-                id: invitation.id,
-                createdAt: invitation.createdAt,
-                read: invitation.read,
-                invitation,
-            })
-        ),
-        ...notifications.map(
-            (notification): Item => ({
-                kind: 'notification',
-                id: notification.id,
-                createdAt: notification.createdAt,
-                read: notification.read,
-                notification,
-            })
-        ),
-    ].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-
-    const unread = items.filter((i) => !i.read).length
-
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<Invitation[]>('/invitations')
-            .then(({ data }) => {
-                // Dismissed ones are gone from the bell for good; they are still
-                // reachable from the projects list until answered.
-                if (!cancelled) setInvitations(data.filter((i) => !i.dismissed))
-            })
-            .catch(() => {})
-
-        api.get<AppNotification[]>('/notifications')
-            .then(({ data }) => {
-                if (!cancelled) setNotifications(data)
-            })
-            .catch(() => {})
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
 
     // Clicking anywhere else closes the panel, the way a menu is expected to
     // behave; Échap does the same from the keyboard.
@@ -84,70 +31,7 @@ export default function NotificationBell() {
         }
     }, [open])
 
-    function setRead(item: Item, read: boolean) {
-        if (item.kind === 'invitation') {
-            setInvitations((prev) => prev.map((i) => (i.id === item.id ? { ...i, read } : i)))
-        } else {
-            setNotifications((prev) => prev.map((n) => (n.id === item.id ? { ...n, read } : n)))
-        }
-    }
-
-    async function markRead(item: Item) {
-        if (item.read) return
-
-        setRead(item, true)
-        try {
-            const base = item.kind === 'invitation' ? 'invitations' : 'notifications'
-            await api.post(`/${base}/${item.id}/read`)
-        } catch {
-            // Put the dot back rather than claiming it was read.
-            setRead(item, false)
-        }
-    }
-
-    // An invitation is only cleared from the bell — it still waits under
-    // « À rejoindre ». A notification has nowhere else to live, so it goes.
-    async function clear(item: Item) {
-        if (item.kind === 'invitation') {
-            setInvitations((prev) => prev.filter((i) => i.id !== item.id))
-            try {
-                await api.post(`/invitations/${item.id}/dismiss`)
-            } catch {
-                setInvitations((prev) => [...prev, item.invitation])
-            }
-        } else {
-            setNotifications((prev) => prev.filter((n) => n.id !== item.id))
-            try {
-                await api.delete(`/notifications/${item.id}`)
-            } catch {
-                setNotifications((prev) => [...prev, item.notification])
-            }
-        }
-    }
-
-    // Where a line leads when you double-click it, and what to call the
-    // place. A notification about a project opens the project; one about a
-    // carnet entry opens the carnet. The rest lead nowhere, and say so by
-    // offering nothing.
-    function destinationOf(item: Item): { href: string; label: string } | null {
-        if (item.kind === 'invitation') {
-            return item.invitation.projectId
-                ? { href: `/project/${item.invitation.projectId}`, label: 'le projet' }
-                : null
-        }
-
-        const { type, projectId, groupId, groupName } = item.notification
-        if (type === 'CONTACT_REQUESTED' || type === 'CONTACT_ACCEPTED') {
-            return { href: '/carnet', label: 'le carnet' }
-        }
-        // A group still yours to open leads to its page; one you have left
-        // or that is gone leads to the carnet, which is what is left of it.
-        if (groupId) return { href: `/groupe/${groupId}`, label: 'le groupe' }
-        if (groupName) return { href: '/carnet', label: 'le carnet' }
-        return projectId ? { href: `/project/${projectId}`, label: 'le projet' } : null
-    }
-
-    function openDestination(item: Item) {
+    function openDestination(item: BellItem) {
         const destination = destinationOf(item)
         if (!destination) return
         setOpen(false)

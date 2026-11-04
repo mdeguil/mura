@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import Navbar from '../components/Navbar'
@@ -7,6 +7,8 @@ import UserAvatar from '../components/UserAvatar'
 import DeleteAccountDialog from '../components/DeleteAccountDialog'
 import ProjectTypeAdmin from '../components/ProjectTypeAdmin'
 import AdminGroupList from '../components/AdminGroupList'
+import ErrorMessage from '../components/ErrorMessage'
+import { useApiQuery } from '../hooks/useApiQuery'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
@@ -19,31 +21,18 @@ type Pending =
 export default function AdminPage() {
     const me = useAuthStore((s) => s.user)
     const setUser = useAuthStore((s) => s.setUser)
-    const [accounts, setAccounts] = useState<Account[]>([])
-    const [loading, setLoading] = useState(true)
+    const {
+        data: accounts,
+        setData: setAccounts,
+        loading,
+        error: loadError,
+        reload,
+    } = useApiQuery<Account[]>('/admin/accounts', [], 'Impossible de charger les comptes.')
     const [error, setError] = useState('')
     const [pending, setPending] = useState<Pending | null>(null)
     const [deleting, setDeleting] = useState<Account | null>(null)
     const [tab, setTab] = useState<'accounts' | 'types' | 'groups'>('accounts')
 
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<Account[]>('/admin/accounts')
-            .then(({ data }) => {
-                if (!cancelled) setAccounts(data)
-            })
-            .catch((err) => {
-                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger les comptes.'))
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
 
     function replace(account: Account) {
         setAccounts((prev) =>
@@ -120,6 +109,12 @@ export default function AdminPage() {
                 {tab === 'groups' && <AdminGroupList />}
                 {tab === 'accounts' && (
                 <>
+
+                {loadError && (
+                    <ErrorMessage onRetry={reload} className="mt-4">
+                        {loadError}
+                    </ErrorMessage>
+                )}
 
                 {error && (
                     <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mt-4">

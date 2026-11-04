@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import api from '../services/api'
+import { useApiQuery } from '../hooks/useApiQuery'
 import UserAvatar from './UserAvatar'
 import type { KnownUser } from '../types'
 
@@ -32,24 +32,12 @@ export default function CarnetCombobox({
     onEscape?: () => void
     className?: string
 }) {
-    const [people, setPeople] = useState<KnownUser[]>([])
+    // Suggestions only: if the carnet cannot be read, the field still takes
+    // a typed address, so a failure here is not worth interrupting anyone.
+    const { data: people } = useApiQuery<KnownUser[]>('/directory', [], '')
     const [open, setOpen] = useState(false)
     const [highlighted, setHighlighted] = useState(0)
     const wrapper = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<KnownUser[]>('/directory')
-            .then(({ data }) => {
-                if (!cancelled) setPeople(data)
-            })
-            .catch(() => {})
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
 
     useEffect(() => {
         if (!open) return

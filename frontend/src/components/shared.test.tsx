@@ -4,8 +4,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { useState } from 'react'
 import ConfirmDialog from './ConfirmDialog'
+import ErrorMessage from './ErrorMessage'
 import LegalLinks from './LegalLinks'
 import Logo from './Logo'
+import Modal from './Modal'
 import PasswordInput from './PasswordInput'
 import PasswordStrength from './PasswordStrength'
 import { passwordRules } from '../utils/passwordRules'
@@ -38,6 +40,79 @@ describe('ConfirmDialog', () => {
 
         finish()
         expect(await screen.findByRole('button', { name: 'Quitter' })).toBeEnabled()
+    })
+})
+
+describe('Modal', () => {
+    function Dialog({ title, onClose, withField = false }: { title: string; onClose: () => void; withField?: boolean }) {
+        return (
+            <Modal labelledBy={`${title}-title`} onClose={onClose}>
+                <h2 id={`${title}-title`}>{title}</h2>
+                {withField && <input aria-label="Nom" autoFocus />}
+                <button>Dans {title}</button>
+            </Modal>
+        )
+    }
+
+    it('is a dialog named by its heading, and takes the focus', () => {
+        render(<Dialog title="Réglages" onClose={vi.fn()} />)
+
+        const dialog = screen.getByRole('dialog', { name: 'Réglages' })
+        expect(dialog).toHaveAttribute('aria-modal', 'true')
+        expect(dialog).toHaveFocus()
+    })
+
+    it('closes on Escape, only the one on top', async () => {
+        const closeOuter = vi.fn()
+        const closeInner = vi.fn()
+        render(
+            <>
+                <Dialog title="Dessous" onClose={closeOuter} />
+                <Dialog title="Dessus" onClose={closeInner} />
+            </>
+        )
+
+        await userEvent.keyboard('{Escape}')
+
+        expect(closeInner).toHaveBeenCalledOnce()
+        expect(closeOuter).not.toHaveBeenCalled()
+    })
+
+    it.each([false, true])(
+        'hands the focus back to what opened it (field taking the focus: %s)',
+        async (withField) => {
+            function Opener() {
+                const [open, setOpen] = useState(false)
+                return (
+                    <>
+                        <button onClick={() => setOpen(true)}>Ouvrir</button>
+                        {open && <Dialog title="Fiche" withField={withField} onClose={() => setOpen(false)} />}
+                    </>
+                )
+            }
+            render(<Opener />)
+
+            await userEvent.click(screen.getByRole('button', { name: 'Ouvrir' }))
+            if (withField) expect(screen.getByLabelText('Nom')).toHaveFocus()
+            await userEvent.keyboard('{Escape}')
+
+            expect(screen.queryByRole('dialog')).toBeNull()
+            expect(screen.getByRole('button', { name: 'Ouvrir' })).toHaveFocus()
+        }
+    )
+})
+
+describe('ErrorMessage', () => {
+    it('is announced, and offers to try again when it can', async () => {
+        const retry = vi.fn()
+        const { rerender } = render(<ErrorMessage>Panne.</ErrorMessage>)
+        expect(screen.getByRole('alert')).toHaveTextContent('Panne.')
+        expect(screen.queryByRole('button')).toBeNull()
+
+        rerender(<ErrorMessage onRetry={retry}>Panne.</ErrorMessage>)
+        await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
+
+        expect(retry).toHaveBeenCalledOnce()
     })
 })
 

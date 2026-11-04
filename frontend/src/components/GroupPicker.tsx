@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import api from '../services/api'
 import UserAvatar, { SuspendedPill } from './UserAvatar'
-import { apiErrorMessage } from '../utils/apiError'
+import { useApiQuery } from '../hooks/useApiQuery'
 import type { Group, GroupMember } from '../types'
 
 export interface GroupSelection {
@@ -33,9 +32,7 @@ export default function GroupPicker({
     countOnly?: boolean
     onChange: (selection: GroupSelection | null) => void
 }) {
-    const [groups, setGroups] = useState<Group[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const { data: groups, loading, error } = useApiQuery<Group[]>('/groups', [], 'Impossible de charger tes groupes.')
     const [groupId, setGroupId] = useState('')
 
     const group = groups.find((g) => g.id === groupId) ?? null
@@ -62,26 +59,11 @@ export default function GroupPicker({
         setGroupId(g.id === groupId && allowNone ? '' : g.id)
     }
 
+    // Where a group is required, the first one is chosen as soon as the
+    // list arrives.
     useEffect(() => {
-        let cancelled = false
-
-        api.get<Group[]>('/groups')
-            .then(({ data }) => {
-                if (cancelled) return
-                setGroups(data)
-                if (!allowNone && data.length > 0) setGroupId(data[0].id)
-            })
-            .catch((err) => {
-                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger tes groupes.'))
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [allowNone])
+        if (!allowNone && !groupId && groups.length > 0) setGroupId(groups[0].id)
+    }, [allowNone, groupId, groups])
 
     // Reported whenever the choice changes, not whenever the caller hands
     // down a new callback: the latest one is read from here.

@@ -25,7 +25,7 @@ export default function ProjectFormFields({
     onChange: (patch: Partial<ProjectFormValues>) => void
     autoFocus?: boolean
 }) {
-    const { types, loading: loadingTypes } = useProjectTypes()
+    const { types, loading: loadingTypes, error: typesError } = useProjectTypes()
 
     // A select whose value matches no option still shows the first one, so a
     // form opened before the types arrived would read "Web" and submit
@@ -35,6 +35,7 @@ export default function ProjectFormFields({
             onChange({ typeId: types[0].id })
         }
     }, [types, values.typeId, onChange])
+
     return (
         <>
             <div>
@@ -70,6 +71,11 @@ export default function ProjectFormFields({
                             </option>
                         ))}
                     </select>
+                    {typesError && (
+                        <p role="alert" className="text-xs text-red-600 mt-1">
+                            {typesError}
+                        </p>
+                    )}
                 </div>
                 <div>
                     <label className={LABEL}>Date de début</label>

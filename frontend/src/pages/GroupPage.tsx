@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
@@ -6,6 +6,8 @@ import Navbar from '../components/Navbar'
 import ConfirmDialog from '../components/ConfirmDialog'
 import UserAvatar, { SuspendedPill } from '../components/UserAvatar'
 import CarnetCombobox from '../components/CarnetCombobox'
+import ErrorMessage from '../components/ErrorMessage'
+import { useApiQuery } from '../hooks/useApiQuery'
 import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import { apiErrorMessage } from '../utils/apiError'
@@ -19,8 +21,14 @@ export default function GroupPage() {
     const navigate = useNavigate()
     const currentUserId = useAuthStore((s) => s.user?.id) ?? ''
 
-    const [group, setGroup] = useState<Group | null>(null)
-    const [loading, setLoading] = useState(true)
+    const {
+        data: group,
+        setData: setGroup,
+        loading,
+        error: loadError,
+        reload,
+    } = useApiQuery<Group | null>(`/groups/${id}`, null, 'Impossible de charger ce groupe.')
+    // What went wrong with a change, apart from loading the group.
     const [error, setError] = useState('')
 
     const [renaming, setRenaming] = useState(false)
@@ -31,27 +39,6 @@ export default function GroupPage() {
     const [removing, setRemoving] = useState<GroupMember | null>(null)
     const [deleting, setDeleting] = useState(false)
     const [leaving, setLeaving] = useState(false)
-
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<Group>(`/groups/${id}`)
-            .then(({ data }) => {
-                if (cancelled) return
-                setGroup(data)
-                setName(data.name)
-            })
-            .catch((err) => {
-                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger ce groupe.'))
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [id])
 
     async function rename(e: React.FormEvent) {
         e.preventDefault()
@@ -161,9 +148,9 @@ export default function GroupPage() {
                 {loading ? (
                     <div className="text-sm text-slate-500 mt-6">Chargement…</div>
                 ) : !group ? (
-                    <div className="mt-6 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-                        {error || 'Groupe introuvable.'}
-                    </div>
+                    <ErrorMessage onRetry={loadError ? reload : undefined} className="mt-6">
+                        {loadError || 'Groupe introuvable.'}
+                    </ErrorMessage>
                 ) : (
                     <>
                         <div className="mt-4 flex items-start justify-between gap-4">

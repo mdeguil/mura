@@ -1,58 +1,39 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import Navbar from '../components/Navbar'
 import UserAvatar, { SuspendedPill } from '../components/UserAvatar'
 import GroupList from '../components/GroupList'
 import ConfirmDialog from '../components/ConfirmDialog'
-import ProjectInviteMenu from '../components/ProjectInviteMenu'
+import ContactCard from '../components/ContactCard'
+import ErrorMessage from '../components/ErrorMessage'
+import LoadErrors from '../components/LoadErrors'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
+import { useApiQuery } from '../hooks/useApiQuery'
 import { useAuthStore } from '../store/authStore'
 import type { KnownUser, Project } from '../types'
-import { projectGlassBackground } from '../utils/color'
 
 export default function DirectoryPage() {
-    const [people, setPeople] = useState<KnownUser[]>([])
+    const peopleQuery = useApiQuery<KnownUser[]>('/directory', [], 'Impossible de charger ton carnet.')
+    const { data: people, setData: setPeople, loading } = peopleQuery
     // Not carnet entries yet: questions waiting on an answer.
-    const [requests, setRequests] = useState<KnownUser[]>([])
+    const requestsQuery = useApiQuery<KnownUser[]>(
+        '/directory/requests',
+        [],
+        'Impossible de charger les demandes reçues.'
+    )
+    const { data: requests, setData: setRequests } = requestsQuery
     // Only to work out what the reader may invite someone onto.
-    const [projects, setProjects] = useState<Project[]>([])
-    const [loading, setLoading] = useState(true)
+    const projectsQuery = useApiQuery<Project[]>('/projects', [], 'Impossible de charger tes projets.')
+    const projects = projectsQuery.data
+    // Without the projects, the invite menus would offer nothing.
+    const loadFailures = [peopleQuery, requestsQuery, projectsQuery]
+        .filter((q) => q.error)
+        .map((q) => ({ message: q.error, retry: q.reload }))
+    // What went wrong answering a request, apart from the lists themselves.
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
     const [tab, setTab] = useState<'people' | 'groups'>('people')
     const currentUserId = useAuthStore((s) => s.user?.id) ?? ''
-
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<Project[]>('/projects')
-            .then(({ data }) => {
-                if (!cancelled) setProjects(data)
-            })
-            .catch(() => {})
-
-        api.get<KnownUser[]>('/directory/requests')
-            .then(({ data }) => {
-                if (!cancelled) setRequests(data)
-            })
-            .catch(() => {})
-
-        api.get<KnownUser[]>('/directory')
-            .then(({ data }) => {
-                if (!cancelled) setPeople(data)
-            })
-            .catch((err) => {
-                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger ton carnet.'))
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
 
     const [adding, setAdding] = useState(false)
     const [email, setEmail] = useState('')
@@ -232,11 +213,8 @@ export default function DirectoryPage() {
                         </form>
                     )}
 
-                    {error && (
-                        <div className="mb-6 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-                            {error}
-                        </div>
-                    )}
+                    {error && <ErrorMessage className="mb-6">{error}</ErrorMessage>}
+                    <LoadErrors failures={loadFailures} className="mb-6" />
 
                     <div className="flex flex-wrap items-center gap-3 mb-6">
                         <div className="relative flex-1 min-w-[16rem] max-w-sm">
@@ -323,6 +301,9 @@ export default function DirectoryPage() {
 
                     {loading ? (
                         <div className="text-sm text-slate-500">Chargement…</div>
+                    ) : peopleQuery.error ? (
+                        // Said above. Not "Ton carnet est vide": it may well not be.
+                        null
                     ) : people.length === 0 ? (
                         <div className="bg-surface border border-border rounded-2xl py-16 px-6 flex flex-col items-center text-center">
                             <div className="w-14 h-14 rounded-2xl bg-brand-gradient-diagonal flex items-center justify-center mb-4">
@@ -345,111 +326,14 @@ export default function DirectoryPage() {
                     ) : (
                         <ul className="flex flex-col gap-2">
                             {shown.map((person) => (
-                                <li
+                                <ContactCard
                                     key={person.id}
-                                    className="flex items-start gap-3 bg-surface border border-border rounded-xl px-4 py-3"
-                                >
-                                    <UserAvatar user={{ ...person, email: person.email }} />
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-sm text-slate-800 flex items-center gap-1.5">
-                                            <span className="truncate">{person.username}</span>
-                                            {person.suspended && <SuspendedPill />}
-                                        </p>
-                                        {person.email && (
-                                            <p className="text-xs text-slate-400 truncate">{person.email}</p>
-                                        )}
-
-                                        {person.sharedProjects.length > 0 ? (
-                                            <ul className="flex flex-wrap gap-1.5 mt-2">
-                                                {person.sharedProjects.map((project) => (
-                                                    <li key={project.id}>
-                                                        <Link
-                                                            to={`/project/${project.id}`}
-                                                            className="flex items-center gap-1.5 bg-surface-muted border border-border rounded-full pl-1.5 pr-2.5 py-0.5 hover:border-brand-500 transition"
-                                                        >
-                                                            <span
-                                                                className="w-2 h-2 rounded-full"
-                                                                style={{
-                                                                    background: projectGlassBackground(project.color),
-                                                                }}
-                                                            />
-                                                            <span className="text-xs text-slate-600">
-                                                                {project.name}
-                                                            </span>
-                                                        </Link>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        ) : (
-                                            <p className="text-xs text-slate-400 mt-2 italic">
-                                                Aucun projet en commun pour l'instant.
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0 mt-0.5">
-                                        <span className="text-xs text-slate-400">
-                                            {person.pending
-                                                ? 'En attente'
-                                                : person.sharedProjects.length > 0
-                                                  ? `${person.sharedProjects.length} projet${person.sharedProjects.length > 1 ? 's' : ''}`
-                                                  : person.saved
-                                                    ? 'Ajouté'
-                                                    : 'Invitation'}
-                                        </span>
-                                        {!person.pending && (
-                                            <ProjectInviteMenu
-                                                person={person}
-                                                projects={projects}
-                                                currentUserId={currentUserId}
-                                            />
-                                        )}
-                                        <button
-                                            onClick={() => toggleFavourite(person)}
-                                            aria-pressed={person.favourite}
-                                            className={`w-9 h-9 rounded-lg flex items-center justify-center text-xl leading-none transition ${
-                                                person.favourite
-                                                    ? 'text-amber-400 hover:bg-amber-50'
-                                                    : 'text-slate-300 hover:text-amber-400 hover:bg-surface-muted'
-                                            }`}
-                                            title={
-                                                person.favourite
-                                                    ? 'Retirer des favoris'
-                                                    : 'Mettre en favori'
-                                            }
-                                            aria-label={
-                                                person.favourite
-                                                    ? `Retirer ${person.username} des favoris`
-                                                    : `Mettre ${person.username} en favori`
-                                            }
-                                        >
-                                            {person.favourite ? '★' : '☆'}
-                                        </button>
-                                        <button
-                                            onClick={() => setRemoving(person)}
-                                            className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
-                                            title="Retirer de mon carnet"
-                                            aria-label={`Retirer ${person.username} de mon carnet`}
-                                        >
-                                            {/* A person with a minus, not a bin: nothing is destroyed
-                                                here — they keep their account, their projects, and
-                                                their own carnet. Only this list loses them. */}
-                                            <svg
-                                                viewBox="0 0 24 24"
-                                                className="w-[18px] h-[18px]"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                aria-hidden="true"
-                                            >
-                                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                                <circle cx="8.5" cy="7" r="4" />
-                                                <path d="M17 11h6" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </li>
+                                    person={person}
+                                    projects={projects}
+                                    currentUserId={currentUserId}
+                                    onToggleFavourite={() => toggleFavourite(person)}
+                                    onRemove={() => setRemoving(person)}
+                                />
                             ))}
                         </ul>
                     )}

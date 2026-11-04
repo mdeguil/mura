@@ -42,7 +42,10 @@ describe('GroupPicker', () => {
         // bob and carol: alice is left out by the caller, dave is suspended, eve set aside.
         expect(designCard).toHaveTextContent('👥 2')
         expect(screen.getByText('2 personnes rejoindront le projet.')).toBeInTheDocument()
-        expect(onChange).toHaveBeenLastCalledWith({ groupId: expect.any(String), groupName: 'Design', joiningCount: 2 })
+        // Reported from an effect, once the first group has been chosen.
+        await waitFor(() =>
+            expect(onChange).toHaveBeenLastCalledWith({ groupId: expect.any(String), groupName: 'Design', joiningCount: 2 })
+        )
     })
 
     it('says why each person left out is left out', async () => {

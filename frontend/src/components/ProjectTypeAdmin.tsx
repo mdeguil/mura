@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import ConfirmDialog from './ConfirmDialog'
+import ErrorMessage from './ErrorMessage'
+import { useApiQuery } from '../hooks/useApiQuery'
 import type { ProjectType } from '../types'
 
 // A handful of emoji that suit a project, offered so nobody has to go
@@ -9,8 +11,14 @@ import type { ProjectType } from '../types'
 const SUGGESTED = ['🌐', '📱', '📣', '🎉', '📁', '🔬', '🧪', '🎨', '📊', '🛠️', '🚀', '📚', '💡', '🏗️']
 
 export default function ProjectTypeAdmin() {
-    const [types, setTypes] = useState<ProjectType[]>([])
-    const [loading, setLoading] = useState(true)
+    const {
+        data: types,
+        setData: setTypes,
+        loading,
+        error: loadError,
+        reload,
+    } = useApiQuery<ProjectType[]>('/admin/project-types', [], 'Impossible de charger les types.')
+    // What went wrong with a save or a deletion, apart from the list itself.
     const [error, setError] = useState('')
 
     const [editing, setEditing] = useState<ProjectType | null>(null)
@@ -20,24 +28,6 @@ export default function ProjectTypeAdmin() {
     const [saving, setSaving] = useState(false)
     const [removing, setRemoving] = useState<ProjectType | null>(null)
 
-    useEffect(() => {
-        let cancelled = false
-
-        api.get<ProjectType[]>('/admin/project-types')
-            .then(({ data }) => {
-                if (!cancelled) setTypes(data)
-            })
-            .catch((err) => {
-                if (!cancelled) setError(apiErrorMessage(err, 'Impossible de charger les types.'))
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-
-        return () => {
-            cancelled = true
-        }
-    }, [])
 
     function openCreate() {
         setEditing(null)
@@ -122,6 +112,12 @@ export default function ProjectTypeAdmin() {
                     {creating ? 'Annuler' : '+ Nouveau type'}
                 </button>
             </div>
+
+            {loadError && (
+                <ErrorMessage onRetry={reload} className="mb-4">
+                    {loadError}
+                </ErrorMessage>
+            )}
 
             {error && (
                 <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">
