@@ -3,14 +3,15 @@ package io.mura.task;
 import io.mura.common.exception.ApiException;
 import io.mura.member.User;
 import io.mura.project.Project;
+import io.mura.project.ProjectAccessGuard;
 import io.mura.project.ProjectMemberRepository;
 import io.mura.project.ProjectRepository;
+import io.mura.project.ProjectRole;
 import io.mura.support.Fixtures;
 import io.mura.task.dto.CreateSubtaskRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -36,7 +37,7 @@ class SubtaskServiceTest {
     private ProjectRepository projectRepository;
     @Mock
     private ProjectMemberRepository projectMemberRepository;
-    @InjectMocks
+
     private SubtaskService service;
 
     private User alice;
@@ -48,11 +49,14 @@ class SubtaskServiceTest {
         alice = Fixtures.user("alice");
         project = Fixtures.project("Refonte", alice);
         task = Fixtures.task(project, "Maquettes", TaskStatus.EN_COURS);
+        service = new SubtaskService(subtaskRepository, taskRepository,
+                new ProjectAccessGuard(projectRepository, projectMemberRepository));
     }
 
     private void aliceReachesTheTask() {
         when(projectRepository.existsById(project.getId())).thenReturn(true);
-        when(projectMemberRepository.existsByProjectIdAndUserId(project.getId(), alice.getId())).thenReturn(true);
+        when(projectMemberRepository.findByProjectIdAndUserId(project.getId(), alice.getId()))
+                .thenReturn(Optional.of(Fixtures.member(project, alice, ProjectRole.MEMBER)));
         when(taskRepository.findById(task.getId())).thenReturn(Optional.of(task));
     }
 
@@ -104,7 +108,7 @@ class SubtaskServiceTest {
     @Test
     void aNonMemberIsRefused() {
         when(projectRepository.existsById(project.getId())).thenReturn(true);
-        when(projectMemberRepository.existsByProjectIdAndUserId(project.getId(), alice.getId())).thenReturn(false);
+        when(projectMemberRepository.findByProjectIdAndUserId(project.getId(), alice.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.create(alice.getId(), project.getId(), task.getId(), new CreateSubtaskRequest("x")))
                 .isInstanceOfSatisfying(ApiException.class,
@@ -119,7 +123,8 @@ class SubtaskServiceTest {
                         e -> assertThat(e.getStatus()).isEqualTo(HttpStatus.NOT_FOUND));
 
         when(projectRepository.existsById(project.getId())).thenReturn(true);
-        when(projectMemberRepository.existsByProjectIdAndUserId(project.getId(), alice.getId())).thenReturn(true);
+        when(projectMemberRepository.findByProjectIdAndUserId(project.getId(), alice.getId()))
+                .thenReturn(Optional.of(Fixtures.member(project, alice, ProjectRole.MEMBER)));
         UUID unknownTask = UUID.randomUUID();
         when(taskRepository.findById(unknownTask)).thenReturn(Optional.empty());
         assertThatThrownBy(() -> service.create(alice.getId(), project.getId(), unknownTask, new CreateSubtaskRequest("x")))

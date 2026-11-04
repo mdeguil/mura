@@ -5,10 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.nio.charset.StandardCharsets;
 
@@ -19,6 +21,8 @@ public class MailService {
     private static final Logger log = LoggerFactory.getLogger(MailService.class);
 
     private final JavaMailSender sender;
+    // Spring Boot's application executor.
+    private final TaskExecutor executor;
 
     @Value("${mura.mail.from}")
     private String from;
@@ -26,13 +30,8 @@ public class MailService {
     @Value("${mura.app.url}")
     private String appUrl;
 
-    // Each of these is @Async, not the send() below: Spring applies it
-    // through a proxy, and a call from inside the class never goes through
-    // one. A slow mail server has no business holding up a registration,
-    // and a mail that fails to leave must not undo the account just made.
-    @Async
     public void sendVerificationCode(String to, String username, String code) {
-        send(to, "Ton code de vérification Mura", body(
+        deliver(to, "Ton code de vérification Mura", body(
                 "Bienvenue, " + escape(username) + " 👋",
                 "<p>Voici le code qui confirme ton adresse :</p>"
                         + "<p style=\"font-size:28px;font-weight:700;letter-spacing:6px;"
@@ -42,10 +41,9 @@ public class MailService {
         ));
     }
 
-    @Async
     public void sendPasswordReset(String to, String username, String token) {
         String link = appUrl + "/reset-password?token=" + token;
-        send(to, "Réinitialiser ton mot de passe Mura", body(
+        deliver(to, "Réinitialiser ton mot de passe Mura", body(
                 "Mot de passe oublié ?",
                 "<p>Bonjour " + escape(username) + ",</p>"
                         + "<p>Clique sur le bouton pour choisir un nouveau mot de passe :</p>"
@@ -61,7 +59,6 @@ public class MailService {
     // Every notification goes out as mail too. The bell only reaches
     // somebody who happens to be looking at Mura; most of what it carries
     // is news they would rather not wait to see.
-    @Async
     public void sendNotification(
             String to,
             String username,
@@ -78,7 +75,7 @@ public class MailService {
                         + "border-left:3px solid #cbd5e1;color:#475569;font-style:italic\">"
                         + escape(message) + "</blockquote>";
 
-        send(to, subject, body(
+        deliver(to, subject, body(
                 heading,
                 "<p>Bonjour " + escape(username) + ",</p>"
                         + "<p>" + escape(sentence) + "</p>"
@@ -86,9 +83,9 @@ public class MailService {
                         + button(appUrl + linkPath, linkLabel)
         ));
     }
-    @Async
+
     public void sendProjectInvitation(String to, String username, String inviter, String project) {
-        send(to, inviter + " t'invite sur " + project, body(
+        deliver(to, inviter + " t'invite sur " + project, body(
                 "Une invitation t'attend",
                 "<p>Bonjour " + escape(username) + ",</p>"
                         + "<p><strong>" + escape(inviter) + "</strong> t'invite à rejoindre le projet "
@@ -97,6 +94,28 @@ public class MailService {
                         + "<p style=\"color:#64748b\">Tu la retrouveras aussi dans tes notifications. "
                         + "Elle expire dans 14 jours.</p>"
         ));
+    }
+
+    // Every mail leaves once the transaction that asked for it has committed,
+    // and off the request thread. After the commit, because a mail cannot be
+    // called back: an invitation rolled back with its project must not reach
+    // anyone. Off-thread, because a slow mail server has no business holding
+    // up a registration, and a mail that fails to leave must not undo the
+    // account just made. Outside a transaction it simply goes now.
+    private void deliver(String to, String subject, String html) {
+        Runnable delivery = () -> executor.execute(() -> send(to, subject, html));
+
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            delivery.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                delivery.run();
+            }
+        });
     }
 
     private void send(String to, String subject, String html) {

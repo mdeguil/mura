@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +32,10 @@ public class ProjectTypeService {
     // The administration page needs to know what a deletion would move.
     @Transactional(readOnly = true)
     public List<ProjectTypeResponse> listWithCounts() {
+        Map<UUID, Long> counts = projectRepository.countPerType().stream()
+                .collect(Collectors.toMap(ProjectRepository.TypeCount::getTypeId, ProjectRepository.TypeCount::getProjects));
         return typeRepository.findAllByOrderByPositionAscLabelAsc().stream()
-                .map(type -> ProjectTypeResponse.of(type, projectRepository.countByTypeId(type.getId())))
+                .map(type -> ProjectTypeResponse.of(type, counts.getOrDefault(type.getId(), 0L)))
                 .toList();
     }
 

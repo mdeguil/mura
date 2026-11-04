@@ -46,17 +46,32 @@ class ProjectTypeServiceTest {
         other.setFallback(true);
     }
 
+    private static ProjectRepository.TypeCount count(ProjectType type, long projects) {
+        return new ProjectRepository.TypeCount() {
+            @Override
+            public UUID getTypeId() {
+                return type.getId();
+            }
+
+            @Override
+            public long getProjects() {
+                return projects;
+            }
+        };
+    }
+
     @Test
-    void listWithCountsGivesEachTypeItsProjectCount() {
+    void listWithCountsGivesEachTypeItsProjectCountInOneQuery() {
         when(typeRepository.findAllByOrderByPositionAscLabelAsc()).thenReturn(List.of(web, other));
-        when(projectRepository.countByTypeId(web.getId())).thenReturn(3L);
-        when(projectRepository.countByTypeId(other.getId())).thenReturn(0L);
+        // A type nobody uses has no row of its own.
+        when(projectRepository.countPerType()).thenReturn(List.of(count(web, 3)));
 
         List<ProjectTypeResponse> types = service.listWithCounts();
 
         assertThat(types).extracting(ProjectTypeResponse::label, ProjectTypeResponse::projectCount)
                 .containsExactly(org.assertj.core.groups.Tuple.tuple("Web", 3L),
                         org.assertj.core.groups.Tuple.tuple("Autre", 0L));
+        verify(projectRepository, never()).countByTypeId(any());
     }
 
     @Test

@@ -31,6 +31,17 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
     long countByTypeId(UUID typeId);
 
+    // How many projects each type holds, in one query for the whole list.
+    // A type nobody uses has no row.
+    @Query("SELECT p.type.id AS typeId, COUNT(p) AS projects FROM Project p GROUP BY p.type.id")
+    List<TypeCount> countPerType();
+
+    interface TypeCount {
+        UUID getTypeId();
+
+        long getProjects();
+    }
+
     // Used when a type is deleted: its projects move to the fallback before
     // the row goes, so the foreign key never has to refuse.
     @Modifying(clearAutomatically = true, flushAutomatically = true)

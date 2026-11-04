@@ -1,8 +1,7 @@
 package io.mura.task;
 
 import io.mura.common.exception.ApiException;
-import io.mura.project.ProjectMemberRepository;
-import io.mura.project.ProjectRepository;
+import io.mura.project.ProjectAccessGuard;
 import io.mura.task.dto.CreateSubtaskRequest;
 import io.mura.task.dto.SubtaskResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +17,7 @@ public class SubtaskService {
 
     private final SubtaskRepository subtaskRepository;
     private final TaskRepository taskRepository;
-    private final ProjectRepository projectRepository;
-    private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectAccessGuard access;
 
     @Transactional
     public SubtaskResponse create(UUID userId, UUID projectId, UUID taskId, CreateSubtaskRequest request) {
@@ -50,13 +48,7 @@ public class SubtaskService {
 
     // Any member of the project can tick off subtasks, not just its owner.
     private Task requireAccessibleTask(UUID userId, UUID projectId, UUID taskId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable.");
-        }
-
-        if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
-        }
+        access.requireMembership(userId, projectId);
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Tâche introuvable."));

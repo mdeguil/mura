@@ -21,6 +21,11 @@ public interface UserGroupRepository extends JpaRepository<UserGroup, UUID> {
             """)
     List<UserGroup> findAllForMember(@Param("userId") UUID userId);
 
+    // Every group with the person who made it, for the administration list:
+    // the lazy owner would otherwise cost a query per row.
+    @Query("SELECT g FROM UserGroup g JOIN FETCH g.owner")
+    List<UserGroup> findAllWithOwner();
+
     // The groups this account made, which disappear with it: a group is a
     // list of people, not something its members own a share of.
     List<UserGroup> findAllByOwnerId(UUID ownerId);

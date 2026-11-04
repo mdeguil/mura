@@ -4,8 +4,8 @@ import io.mura.common.exception.ApiException;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
 import io.mura.project.Project;
+import io.mura.project.ProjectAccessGuard;
 import io.mura.project.ProjectMemberRepository;
-import io.mura.project.ProjectRepository;
 import io.mura.task.dto.CreateTaskRequest;
 import io.mura.task.dto.TaskResponse;
 import io.mura.task.dto.UpdateTaskRequest;
@@ -34,13 +34,13 @@ public class TaskService {
     );
 
     private final TaskRepository taskRepository;
-    private final ProjectRepository projectRepository;
+    private final ProjectAccessGuard access;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<TaskResponse> listForProject(UUID userId, UUID projectId) {
-        requireProjectAccess(userId, projectId);
+        access.requireMembership(userId, projectId);
         return taskRepository.findAllForProject(projectId, false).stream()
                 .map(TaskResponse::from)
                 .toList();
@@ -48,7 +48,7 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<TaskResponse> listArchivedForProject(UUID userId, UUID projectId) {
-        requireProjectAccess(userId, projectId);
+        access.requireMembership(userId, projectId);
         return taskRepository.findAllForProject(projectId, true).stream()
                 .map(TaskResponse::from)
                 .toList();
@@ -56,7 +56,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponse create(UUID userId, UUID projectId, CreateTaskRequest request) {
-        Project project = requireProjectAccess(userId, projectId);
+        Project project = access.requireMembership(userId, projectId).getProject();
 
         Task task = new Task();
         task.setProject(project);
@@ -74,7 +74,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponse update(UUID userId, UUID projectId, UUID taskId, UpdateTaskRequest request) {
-        requireProjectAccess(userId, projectId);
+        access.requireMembership(userId, projectId);
         Task task = requireTaskInProject(projectId, taskId);
 
         if (!ALLOWED_STATUS_TRANSITIONS.get(task.getStatus()).contains(request.status())) {
@@ -101,7 +101,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponse archive(UUID userId, UUID projectId, UUID taskId) {
-        requireProjectAccess(userId, projectId);
+        access.requireMembership(userId, projectId);
         Task task = requireTaskInProject(projectId, taskId);
         task.setArchived(true);
         return TaskResponse.from(task);
@@ -109,7 +109,7 @@ public class TaskService {
 
     @Transactional
     public TaskResponse restore(UUID userId, UUID projectId, UUID taskId) {
-        requireProjectAccess(userId, projectId);
+        access.requireMembership(userId, projectId);
         Task task = requireTaskInProject(projectId, taskId);
         task.setArchived(false);
         return TaskResponse.from(task);
@@ -117,7 +117,7 @@ public class TaskService {
 
     @Transactional
     public void delete(UUID userId, UUID projectId, UUID taskId) {
-        requireProjectAccess(userId, projectId);
+        access.requireMembership(userId, projectId);
         Task task = requireTaskInProject(projectId, taskId);
 
         if (!task.isArchived()) {
@@ -160,19 +160,6 @@ public class TaskService {
         // insert, so the lifecycle callback would run too late.
         change.setChangedAt(Instant.now());
         return change;
-    }
-
-    // Every member of a project works on its tasks: ownership only decides
-    // who manages the team, not who can plan the work.
-    private Project requireProjectAccess(UUID userId, UUID projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
-
-        if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
-        }
-
-        return project;
     }
 
     private Task requireTaskInProject(UUID projectId, UUID taskId) {

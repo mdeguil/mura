@@ -4,8 +4,10 @@ import io.mura.common.exception.ApiException;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
 import io.mura.project.Project;
+import io.mura.project.ProjectAccessGuard;
 import io.mura.project.ProjectMemberRepository;
 import io.mura.project.ProjectRepository;
+import io.mura.project.ProjectRole;
 import io.mura.support.Fixtures;
 import io.mura.task.dto.CreateTaskRequest;
 import io.mura.task.dto.TaskResponse;
@@ -15,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -43,7 +44,7 @@ class TaskServiceTest {
     private ProjectMemberRepository projectMemberRepository;
     @Mock
     private UserRepository userRepository;
-    @InjectMocks
+
     private TaskService service;
 
     private User alice;
@@ -53,11 +54,14 @@ class TaskServiceTest {
     void setUp() {
         alice = Fixtures.user("alice");
         project = Fixtures.project("Refonte", alice);
+        service = new TaskService(taskRepository, new ProjectAccessGuard(projectRepository, projectMemberRepository),
+                projectMemberRepository, userRepository);
     }
 
     private void aliceIsAMember() {
-        when(projectRepository.findById(project.getId())).thenReturn(Optional.of(project));
-        when(projectMemberRepository.existsByProjectIdAndUserId(project.getId(), alice.getId())).thenReturn(true);
+        when(projectRepository.existsById(project.getId())).thenReturn(true);
+        when(projectMemberRepository.findByProjectIdAndUserId(project.getId(), alice.getId()))
+                .thenReturn(Optional.of(Fixtures.member(project, alice, ProjectRole.MEMBER)));
     }
 
     private Task existing(TaskStatus status) {
@@ -117,8 +121,8 @@ class TaskServiceTest {
 
     @Test
     void someoneOutsideTheProjectCannotReachItsTasks() {
-        when(projectRepository.findById(project.getId())).thenReturn(Optional.of(project));
-        when(projectMemberRepository.existsByProjectIdAndUserId(project.getId(), alice.getId())).thenReturn(false);
+        when(projectRepository.existsById(project.getId())).thenReturn(true);
+        when(projectMemberRepository.findByProjectIdAndUserId(project.getId(), alice.getId())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.listForProject(alice.getId(), project.getId()))
                 .isInstanceOfSatisfying(ApiException.class,
@@ -127,7 +131,7 @@ class TaskServiceTest {
 
     @Test
     void anUnknownProjectIsNotFound() {
-        when(projectRepository.findById(project.getId())).thenReturn(Optional.empty());
+        when(projectRepository.existsById(project.getId())).thenReturn(false);
 
         assertThatThrownBy(() -> service.listForProject(alice.getId(), project.getId()))
                 .isInstanceOfSatisfying(ApiException.class,

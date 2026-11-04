@@ -155,11 +155,8 @@ public class AccountService {
         if (target.getAccountRole() != AccountRole.ADMIN) {
             return;
         }
-        long remaining = userRepository.findAll().stream()
-                .filter(u -> u.getAccountRole() == AccountRole.ADMIN)
-                .filter(u -> !u.isSuspended())
-                .filter(u -> !u.getId().equals(target.getId()))
-                .count();
+        long remaining = userRepository.countByAccountRoleAndSuspendedAtIsNullAndIdNot(
+                AccountRole.ADMIN, target.getId());
         if (remaining == 0) {
             throw new ApiException(
                     HttpStatus.CONFLICT,

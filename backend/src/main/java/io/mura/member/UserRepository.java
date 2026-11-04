@@ -21,6 +21,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     boolean existsByUsernameIgnoreCase(String username);
 
+    // Active administrators other than this one: counted in the database
+    // rather than by loading every account to look.
+    long countByAccountRoleAndSuspendedAtIsNullAndIdNot(AccountRole accountRole, UUID id);
+
     // A statement rather than delete(entity), which proved unreliable in
     // the one transaction that matters: after handing a project over to
     // its new owner, the entity-level delete emitted no SQL at all while

@@ -33,6 +33,7 @@ public class ProjectService {
     private static final String DEFAULT_COLOR = "#14b8a6";
 
     private final ProjectRepository projectRepository;
+    private final ProjectAccessGuard access;
     private final ProjectTypeService projectTypeService;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectInvitationRepository invitationRepository;
@@ -98,7 +99,7 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public List<MemberResponse> listMembers(UUID userId, UUID projectId) {
-        requireMembership(userId, projectId);
+        access.requireMembership(userId, projectId);
         return projectMemberRepository.findAllForProject(projectId).stream()
                 .map(MemberResponse::from)
                 .toList();
@@ -116,9 +117,7 @@ public class ProjectService {
     // it too. Putting it in the bin is not: that stays with the owner.
     @Transactional
     public ProjectResponse update(UUID actorId, UUID projectId, UpdateProjectRequest request) {
-        requireManager(actorId, projectId);
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+        Project project = access.requireManager(actorId, projectId).getProject();
 
         project.setName(request.name());
         project.setDescription(request.description());
@@ -136,14 +135,14 @@ public class ProjectService {
 
     @Transactional
     public ProjectResponse archive(UUID actorId, UUID projectId) {
-        Project project = requireOwner(actorId, projectId);
+        Project project = access.requireOwner(actorId, projectId);
         project.setArchived(true);
         return ProjectResponse.from(project, ProjectAccess.MEMBER, List.of());
     }
 
     @Transactional
     public ProjectResponse restore(UUID actorId, UUID projectId) {
-        Project project = requireOwner(actorId, projectId);
+        Project project = access.requireOwner(actorId, projectId);
         project.setArchived(false);
         return ProjectResponse.from(
                 project,
@@ -157,7 +156,7 @@ public class ProjectService {
     // the bin first.
     @Transactional
     public void delete(UUID actorId, UUID projectId) {
-        Project project = requireOwner(actorId, projectId);
+        Project project = access.requireOwner(actorId, projectId);
 
         if (!project.isArchived()) {
             throw new ApiException(
@@ -168,6 +167,7 @@ public class ProjectService {
 
         projectRepository.delete(project);
     }
+
     @Transactional
     public ProjectResponse create(UUID ownerId, CreateProjectRequest request) {
         User owner = userRepository.findById(ownerId)
@@ -185,9 +185,10 @@ public class ProjectService {
 
         projectMemberRepository.save(new ProjectMember(project, owner, ProjectRole.OWNER));
 
-        // The group's people are checked first and brought on last: an
-        // unknown address in the invitations rolls the creation back, and by
-        // then nobody must have been mailed about a project that is not there.
+        // The group's people are checked first and brought on last, so an
+        // unknown address in the invitations stops the creation before
+        // anything about the group is written. Mails wait for the commit:
+        // a creation rolled back reaches nobody's inbox.
         List<User> fromGroup = request.groupId() == null
                 ? List.of()
                 : joinersFromGroup(ownerId, project.getId(), request.groupId());
@@ -213,7 +214,7 @@ public class ProjectService {
 
     @Transactional
     public MemberResponse changeRole(UUID actorId, UUID projectId, UUID memberId, ProjectRole role) {
-        Project project = requireOwner(actorId, projectId);
+        Project project = access.requireOwner(actorId, projectId);
 
         if (role == ProjectRole.OWNER) {
             throw new ApiException(
@@ -239,7 +240,7 @@ public class ProjectService {
     // being dropped from a project they built.
     @Transactional
     public List<MemberResponse> transferOwnership(UUID actorId, UUID projectId, UUID newOwnerId) {
-        Project project = requireOwner(actorId, projectId);
+        Project project = access.requireOwner(actorId, projectId);
 
         if (actorId.equals(newOwnerId)) {
             throw new ApiException(HttpStatus.CONFLICT, "Tu es déjà le propriétaire de ce projet.");
@@ -269,9 +270,7 @@ public class ProjectService {
     // in to use it, and not those already on the team.
     @Transactional
     public List<MemberResponse> addFromGroup(UUID actorId, UUID projectId, UUID groupId) {
-        requireManager(actorId, projectId);
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+        ProjectMember manager = access.requireManager(actorId, projectId);
 
         List<User> joining = joinersFromGroup(actorId, projectId, groupId);
         if (joining.isEmpty()) {
@@ -280,9 +279,7 @@ public class ProjectService {
                     "Personne à ajouter : tout le groupe est déjà dans le projet, en retrait ou suspendu."
             );
         }
-        User actor = userRepository.findById(actorId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
-        bringOn(project, actor, joining);
+        bringOn(manager.getProject(), manager.getUser(), joining);
 
         return projectMemberRepository.findAllForProject(projectId).stream()
                 .map(MemberResponse::from)
@@ -290,9 +287,7 @@ public class ProjectService {
     }
 
     // Who from a group can come onto the project, worked out without writing
-    // anything. Everything is checked before anything is written: a
-    // notification sends its mail on the spot, so a refusal halfway through
-    // would roll the memberships back but not the mails already gone.
+    // anything, so a refusal leaves nothing half done.
     private List<User> joinersFromGroup(UUID actorId, UUID projectId, UUID groupId) {
         if (!groupRepository.existsById(groupId)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Groupe introuvable.");
@@ -301,30 +296,29 @@ public class ProjectService {
             throw new ApiException(HttpStatus.FORBIDDEN, "Tu ne fais pas partie de ce groupe.");
         }
 
+        Set<UUID> onTheTeam = projectMemberRepository.findUserIdsByProjectId(projectId);
         return groupMemberRepository.findAllForGroups(List.of(groupId)).stream()
                 .filter(membership -> !membership.isOnHold())
                 .map(UserGroupMember::getUser)
                 .filter(user -> !user.isSuspended())
-                .filter(user -> !projectMemberRepository.existsByProjectIdAndUserId(projectId, user.getId()))
+                .filter(user -> !onTheTeam.contains(user.getId()))
                 .toList();
     }
 
     // The writing half, once joinersFromGroup has said yes to everyone.
     private void bringOn(Project project, User actor, List<User> joining) {
-        UUID projectId = project.getId();
-
-        for (User user : joining) {
-            // Whatever invitation they still had -- waiting, refused or
-            // lapsed -- no longer has anything to ask: they are in. Cleared
-            // before any notification is written, see the note on
-            // UserGroupRepository.deleteGroupById.
-            for (InvitationStatus status : List.of(
-                    InvitationStatus.PENDING, InvitationStatus.DECLINED, InvitationStatus.EXPIRED)) {
-                invitationRepository.deleteAll(invitationRepository.findAllByProjectIdAndInvitedUserIdAndStatus(
-                        projectId, user.getId(), status));
-            }
-            projectMemberRepository.save(new ProjectMember(project, user, ProjectRole.MEMBER));
+        if (joining.isEmpty()) {
+            return;
         }
+
+        // Whatever invitation they still had -- waiting, refused or lapsed --
+        // no longer has anything to ask: they are in. Cleared before any
+        // notification is written, see the note on
+        // UserGroupRepository.deleteGroupById.
+        invitationRepository.deleteOutstandingFor(project.getId(), joining.stream().map(User::getId).toList());
+        projectMemberRepository.saveAll(joining.stream()
+                .map(user -> new ProjectMember(project, user, ProjectRole.MEMBER))
+                .toList());
 
         joining.stream()
                 .filter(user -> !user.getId().equals(actor.getId()))
@@ -350,7 +344,7 @@ public class ProjectService {
         // manager, and an admin may only remove plain members — otherwise two
         // admins could show each other the door.
         if (!actorId.equals(memberId)) {
-            ProjectMember actor = requireManager(actorId, projectId);
+            ProjectMember actor = access.requireManager(actorId, projectId);
             if (actor.getRole() == ProjectRole.ADMIN && target.getRole() != ProjectRole.MEMBER) {
                 throw new ApiException(
                         HttpStatus.FORBIDDEN,
@@ -358,7 +352,7 @@ public class ProjectService {
                 );
             }
         } else {
-            requireMembership(actorId, projectId);
+            access.requireMembership(actorId, projectId);
         }
 
         User actor = userRepository.findById(actorId)
@@ -397,14 +391,6 @@ public class ProjectService {
         project.setStatus(status);
         project.setCompletedAt(status == ProjectStatus.ACHEVE ? Instant.now() : null);
     }
-    private ProjectMember requireMembership(UUID userId, UUID projectId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable.");
-        }
-
-        return projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
-                .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet."));
-    }
 
     private ProjectMember requireMemberOf(UUID projectId, UUID memberId) {
         return projectMemberRepository.findByProjectIdAndUserId(projectId, memberId)
@@ -412,34 +398,5 @@ public class ProjectService {
                         HttpStatus.NOT_FOUND,
                         "Cette personne ne fait pas partie du projet."
                 ));
-    }
-
-    // Inviting, cancelling an invitation and removing members are open to the
-    // owner and to admins alike.
-    ProjectMember requireManager(UUID userId, UUID projectId) {
-        ProjectMember membership = requireMembership(userId, projectId);
-
-        if (!membership.getRole().manages()) {
-            throw new ApiException(
-                    HttpStatus.FORBIDDEN,
-                    "Il faut être propriétaire ou administrateur de ce projet."
-            );
-        }
-
-        return membership;
-    }
-
-    private Project requireOwner(UUID userId, UUID projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
-
-        if (!project.getOwner().getId().equals(userId)) {
-            throw new ApiException(
-                    HttpStatus.FORBIDDEN,
-                    "Seul le propriétaire du projet peut faire cela."
-            );
-        }
-
-        return project;
     }
 }

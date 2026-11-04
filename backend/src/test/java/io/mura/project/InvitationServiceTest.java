@@ -57,7 +57,8 @@ class InvitationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new InvitationService(projectRepository, projectMemberRepository, invitationRepository,
+        service = new InvitationService(new ProjectAccessGuard(projectRepository, projectMemberRepository),
+                projectMemberRepository, invitationRepository,
                 userRepository, mailService, LIFETIME_DAYS);
         alice = Fixtures.user("alice");
         bob = Fixtures.user("bob");

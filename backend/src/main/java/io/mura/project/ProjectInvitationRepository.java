@@ -1,9 +1,11 @@
 package io.mura.project;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +18,18 @@ public interface ProjectInvitationRepository extends JpaRepository<ProjectInvita
     List<ProjectInvitation> findAllByProjectIdAndInvitedUserIdAndStatus(
             UUID projectId, UUID invitedUserId, InvitationStatus status
     );
+
+    // What these people still had on this project -- waiting, refused or
+    // lapsed -- once they join it outright, for all of them at once. A
+    // statement rather than delete(entity), see UserGroupRepository.deleteGroupById.
+    @Modifying(flushAutomatically = true)
+    @Query("""
+            DELETE FROM ProjectInvitation i
+            WHERE i.project.id = :projectId
+              AND i.invitedUser.id IN :userIds
+              AND i.status <> io.mura.project.InvitationStatus.ACCEPTED
+            """)
+    int deleteOutstandingFor(@Param("projectId") UUID projectId, @Param("userIds") Collection<UUID> userIds);
 
     // Both sides are joined eagerly: the project page shows who was invited,
     // and the home page shows which project each invitation is for.

@@ -74,11 +74,23 @@ class AccountServiceTest {
         for (User user : List.of(admin, alice, bob)) {
             when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         }
-        when(userRepository.findAll()).thenReturn(List.of(alice, admin, bob));
+        everyone(alice, admin, bob);
         when(userGroupRepository.findAllForMember(any())).thenReturn(List.of());
         when(projectRepository.findAllForMember(any())).thenReturn(List.of());
         when(projectRepository.findAllByOwnerId(any())).thenReturn(List.of());
         when(userGroupRepository.findAllByOwnerId(any())).thenReturn(List.of());
+    }
+
+    // The accounts on the instance: listed whole, and counted the way the
+    // database would for the last-administrator rule.
+    private void everyone(User... users) {
+        List<User> all = List.of(users);
+        when(userRepository.findAll()).thenReturn(all);
+        when(userRepository.countByAccountRoleAndSuspendedAtIsNullAndIdNot(any(), any())).thenAnswer(call -> all.stream()
+                .filter(u -> u.getAccountRole() == call.getArgument(0))
+                .filter(u -> !u.isSuspended())
+                .filter(u -> !u.getId().equals(call.getArgument(1)))
+                .count());
     }
 
     private static void assertStatus(Throwable thrown, HttpStatus status) {
@@ -101,7 +113,7 @@ class AccountServiceTest {
     void promotingAndDemotingAnAccount() {
         assertThat(service.changeRole(admin.getId(), alice.getId(), new ChangeAccountRoleRequest(AccountRole.ADMIN))
                 .accountRole()).isEqualTo(AccountRole.ADMIN);
-        when(userRepository.findAll()).thenReturn(List.of(alice, admin, bob));
+        everyone(alice, admin, bob);
         assertThat(service.changeRole(admin.getId(), alice.getId(), new ChangeAccountRoleRequest(AccountRole.USER))
                 .accountRole()).isEqualTo(AccountRole.USER);
     }
@@ -116,7 +128,7 @@ class AccountServiceTest {
     @Test
     void aSuspendedAdministratorDoesNotCountAsAWayBackIn() {
         User other = Fixtures.suspended(Fixtures.admin("other"));
-        when(userRepository.findAll()).thenReturn(List.of(admin, other));
+        everyone(admin, other);
 
         assertStatus(catchThrowable(() -> service.changeRole(admin.getId(), admin.getId(),
                 new ChangeAccountRoleRequest(AccountRole.USER))), HttpStatus.CONFLICT);

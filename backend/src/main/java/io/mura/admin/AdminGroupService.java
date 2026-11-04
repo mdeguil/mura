@@ -36,7 +36,7 @@ public class AdminGroupService {
 
     @Transactional(readOnly = true)
     public List<AdminGroupResponse> list() {
-        List<UserGroup> groups = groupRepository.findAll();
+        List<UserGroup> groups = groupRepository.findAllWithOwner();
         if (groups.isEmpty()) {
             return List.of();
         }

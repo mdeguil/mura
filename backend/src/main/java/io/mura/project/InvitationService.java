@@ -19,7 +19,7 @@ import java.util.UUID;
 @Service
 public class InvitationService {
 
-    private final ProjectRepository projectRepository;
+    private final ProjectAccessGuard access;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectInvitationRepository invitationRepository;
     private final UserRepository userRepository;
@@ -30,14 +30,14 @@ public class InvitationService {
     private final Duration lifetime;
 
     public InvitationService(
-            ProjectRepository projectRepository,
+            ProjectAccessGuard access,
             ProjectMemberRepository projectMemberRepository,
             ProjectInvitationRepository invitationRepository,
             UserRepository userRepository,
             MailService mailService,
             @Value("${mura.invitations.lifetime-days}") long lifetimeDays
     ) {
-        this.projectRepository = projectRepository;
+        this.access = access;
         this.projectMemberRepository = projectMemberRepository;
         this.invitationRepository = invitationRepository;
         this.userRepository = userRepository;
@@ -47,7 +47,7 @@ public class InvitationService {
 
     @Transactional
     public InvitationResponse invite(UUID actorId, UUID projectId, CreateInvitationRequest request) {
-        ProjectMember manager = requireManager(actorId, projectId);
+        ProjectMember manager = access.requireManager(actorId, projectId);
         Project project = manager.getProject();
         // Whoever sent it, owner or project admin: the carnet links the two
         // of them, and the mail says who is asking.
@@ -113,10 +113,9 @@ public class InvitationService {
             return List.of();
         }
 
-        // Every address is resolved before the first mail goes out. A mail
-        // cannot be rolled back: an unknown address at the end of the list
-        // would otherwise cancel the project after the first people had
-        // already been told about it.
+        // Every address is resolved before the first invitation is written,
+        // so an unknown one at the end of the list stops everything at once.
+        // The mails wait for the commit: a cancelled creation tells nobody.
         List<User> invitees = emails.stream()
                 .map(String::trim)
                 .filter(email -> !email.isEmpty())
@@ -159,16 +158,11 @@ public class InvitationService {
                 })
                 .toList();
     }
+
     // Not read-only: reading is what applies expiry.
     @Transactional
     public List<InvitationResponse> listOpenForProject(UUID userId, UUID projectId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable.");
-        }
-
-        if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
-        }
+        access.requireMembership(userId, projectId);
 
         return expireStale(invitationRepository.findAllOpenForProject(projectId)).stream()
                 .map(this::toResponse)
@@ -187,7 +181,7 @@ public class InvitationService {
 
     @Transactional
     public void cancel(UUID actorId, UUID projectId, UUID invitationId) {
-        requireManager(actorId, projectId);
+        access.requireManager(actorId, projectId);
         ProjectInvitation invitation = requirePendingInvitation(invitationId);
 
         if (!invitation.getProject().getId().equals(projectId)) {
@@ -340,26 +334,5 @@ public class InvitationService {
         }
 
         return invitation;
-    }
-
-    // Inviting and cancelling are open to the owner and to admins. The check
-    // lives here rather than calling ProjectService, which already depends on
-    // this service to invite people at creation time.
-    private ProjectMember requireManager(UUID userId, UUID projectId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable.");
-        }
-
-        ProjectMember membership = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
-                .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet."));
-
-        if (!membership.getRole().manages()) {
-            throw new ApiException(
-                    HttpStatus.FORBIDDEN,
-                    "Il faut être propriétaire ou administrateur du projet pour inviter ou retirer des personnes."
-            );
-        }
-
-        return membership;
     }
 }

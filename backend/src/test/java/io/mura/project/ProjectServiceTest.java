@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -30,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,7 +65,7 @@ class ProjectServiceTest {
     private UserGroupRepository groupRepository;
     @Mock
     private UserGroupMemberRepository groupMemberRepository;
-    @InjectMocks
+
     private ProjectService service;
 
     private User alice;
@@ -77,6 +77,9 @@ class ProjectServiceTest {
 
     @BeforeEach
     void setUp() {
+        service = new ProjectService(projectRepository, new ProjectAccessGuard(projectRepository, projectMemberRepository),
+                projectTypeService, projectMemberRepository, invitationRepository, userRepository, taskService,
+                invitationService, notificationService, groupRepository, groupMemberRepository);
         alice = Fixtures.user("alice");
         bob = Fixtures.user("bob");
         carol = Fixtures.user("carol");
@@ -91,6 +94,7 @@ class ProjectServiceTest {
         when(projectMemberRepository.existsByProjectIdAndUserId(project.getId(), alice.getId())).thenReturn(true);
         when(projectMemberRepository.existsByProjectIdAndUserId(project.getId(), bob.getId())).thenReturn(true);
         when(projectMemberRepository.findAllForProject(project.getId())).thenReturn(List.of(aliceOwner, bobMember));
+        when(projectMemberRepository.findUserIdsByProjectId(project.getId())).thenReturn(Set.of(alice.getId(), bob.getId()));
         when(userRepository.findById(alice.getId())).thenReturn(Optional.of(alice));
         when(userRepository.findById(bob.getId())).thenReturn(Optional.of(bob));
     }
@@ -225,9 +229,7 @@ class ProjectServiceTest {
             when(groupRepository.existsById(group.getId())).thenReturn(true);
             when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), alice.getId())).thenReturn(true);
             // A new project has nobody on it but its owner.
-            when(projectMemberRepository.existsByProjectIdAndUserId(any(), eq(bob.getId()))).thenReturn(false);
-            when(projectMemberRepository.existsByProjectIdAndUserId(any(), eq(carol.getId()))).thenReturn(false);
-            when(projectMemberRepository.existsByProjectIdAndUserId(any(), eq(alice.getId()))).thenReturn(true);
+            when(projectMemberRepository.findUserIdsByProjectId(any())).thenReturn(Set.of(alice.getId()));
         }
 
         private CreateProjectRequest request(List<String> invited, UUID groupId) {
@@ -369,13 +371,11 @@ class ProjectServiceTest {
             group = Fixtures.group("Design", alice);
             when(groupRepository.existsById(group.getId())).thenReturn(true);
             when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), alice.getId())).thenReturn(true);
-            when(projectMemberRepository.existsByProjectIdAndUserId(project.getId(), carol.getId())).thenReturn(false);
         }
 
         @Test
         void everyoneWhoCanComeJoinsAndIsTold() {
             User dave = Fixtures.user("dave");
-            when(projectMemberRepository.existsByProjectIdAndUserId(project.getId(), dave.getId())).thenReturn(false);
             UserGroupMember onHold = Fixtures.groupMember(group, Fixtures.user("eve"));
             onHold.setOnHoldAt(Instant.now());
             when(groupMemberRepository.findAllForGroups(List.of(group.getId()))).thenReturn(List.of(
@@ -387,11 +387,13 @@ class ProjectServiceTest {
 
             service.addFromGroup(alice.getId(), project.getId(), group.getId());
 
-            ArgumentCaptor<ProjectMember> joined = ArgumentCaptor.forClass(ProjectMember.class);
-            verify(projectMemberRepository).save(joined.capture());
-            assertThat(joined.getAllValues()).extracting(m -> m.getUser().getUsername()).containsExactly("carol");
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<ProjectMember>> joined = ArgumentCaptor.forClass(List.class);
+            verify(projectMemberRepository).saveAll(joined.capture());
+            assertThat(joined.getValue()).extracting(m -> m.getUser().getUsername()).containsExactly("carol");
             verify(notificationService).notify(carol, NotificationType.ADDED_TO_PROJECT, project, alice, null);
-            verify(invitationRepository).findAllByProjectIdAndInvitedUserIdAndStatus(project.getId(), carol.getId(), InvitationStatus.PENDING);
+            // One statement for everyone joining, whatever they still had pending.
+            verify(invitationRepository).deleteOutstandingFor(project.getId(), List.of(carol.getId()));
         }
 
         @Test

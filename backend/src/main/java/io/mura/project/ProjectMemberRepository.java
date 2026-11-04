@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, ProjectMemberId> {
@@ -42,6 +43,11 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Pr
     Optional<ProjectMember> findByProjectIdAndUserId(UUID projectId, UUID userId);
 
     boolean existsByProjectIdAndUserId(UUID projectId, UUID userId);
+
+    // Who is on the team, by id only: enough to tell a newcomer apart
+    // without one query per person.
+    @Query("SELECT m.user.id FROM ProjectMember m WHERE m.project.id = :projectId")
+    Set<UUID> findUserIdsByProjectId(@Param("projectId") UUID projectId);
 
     // Every project this person is on, archived ones included, for the
     // export of their own data.

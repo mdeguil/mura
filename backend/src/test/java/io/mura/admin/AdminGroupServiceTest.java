@@ -70,7 +70,7 @@ class AdminGroupServiceTest {
     void listSortsByNameAndLoadsEveryGroupsMembersInOneQuery() {
         UserGroup zeta = Fixtures.group("zeta", alice);
         UserGroup alpha = Fixtures.group("Alpha", bob);
-        when(groupRepository.findAll()).thenReturn(List.of(zeta, alpha));
+        when(groupRepository.findAllWithOwner()).thenReturn(List.of(zeta, alpha));
         when(memberRepository.findAllForGroups(anyList())).thenReturn(List.of(
                 Fixtures.groupMember(zeta, alice), Fixtures.groupMember(zeta, bob), Fixtures.groupMember(alpha, bob)));
 
@@ -83,7 +83,7 @@ class AdminGroupServiceTest {
 
     @Test
     void anEmptyListAsksNothingMore() {
-        when(groupRepository.findAll()).thenReturn(List.of());
+        when(groupRepository.findAllWithOwner()).thenReturn(List.of());
 
         assertThat(service.list()).isEmpty();
         verify(memberRepository, never()).findAllForGroups(anyList());
