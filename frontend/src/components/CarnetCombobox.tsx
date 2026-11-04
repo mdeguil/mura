@@ -21,6 +21,7 @@ export default function CarnetCombobox({
     autoFocus = false,
     onEscape,
     className = '',
+    id,
 }: {
     value: string
     onChange: (value: string) => void
@@ -31,6 +32,8 @@ export default function CarnetCombobox({
     autoFocus?: boolean
     onEscape?: () => void
     className?: string
+    // For a <label htmlFor> outside the field.
+    id?: string
 }) {
     // Suggestions only: if the carnet cannot be read, the field still takes
     // a typed address, so a failure here is not worth interrupting anyone.
@@ -124,6 +127,7 @@ export default function CarnetCombobox({
     return (
         <div ref={wrapper} className={`relative ${className}`}>
             <input
+                id={id}
                 type="text"
                 value={value}
                 onChange={(e) => {

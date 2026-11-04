@@ -1,0 +1,102 @@
+import { useState } from 'react'
+import type { Group } from '../types'
+
+// The group's name, renamed in place by its gérant, and what can be done to
+// the group as a whole: the gérant renames or deletes it, anyone else can
+// only leave.
+export default function GroupHeader({
+    group,
+    onRename,
+    onDelete,
+    onLeave,
+}: {
+    group: Group
+    // Answers whether the new name was kept, so the field knows to close.
+    onRename: (name: string) => Promise<boolean>
+    onDelete: () => void
+    onLeave: () => void
+}) {
+    const [renaming, setRenaming] = useState(false)
+    const [name, setName] = useState('')
+    const onHoldCount = group.members.filter((m) => m.onHold).length
+
+    async function rename(e: React.FormEvent) {
+        e.preventDefault()
+        if (!name.trim() || name.trim() === group.name || (await onRename(name.trim()))) {
+            setRenaming(false)
+        }
+    }
+
+    return (
+        <div className="mt-4 flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl bg-brand-gradient-diagonal flex items-center justify-center shrink-0">
+                    <span className="text-white text-lg">👥</span>
+                </span>
+                <div className="min-w-0">
+                    {renaming ? (
+                        <form onSubmit={rename} className="flex gap-2">
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Escape') setRenaming(false)
+                                }}
+                                maxLength={100}
+                                required
+                                autoFocus
+                                aria-label="Nom du groupe"
+                                className="h-9 w-64 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 outline-none focus:border-brand-500 transition"
+                            />
+                            <button
+                                type="submit"
+                                className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink text-xs font-medium transition"
+                            >
+                                Enregistrer
+                            </button>
+                        </form>
+                    ) : (
+                        <h1 className="text-xl font-semibold text-slate-800 truncate">{group.name}</h1>
+                    )}
+                    <p className="text-sm text-slate-500">
+                        {group.owned ? 'Tu gères ce groupe' : `Géré par ${group.owner.username}`}
+                        {' · '}
+                        {group.members.length} personne
+                        {group.members.length > 1 ? 's' : ''}
+                        {onHoldCount > 0 && <> · {onHoldCount} en retrait</>}
+                    </p>
+                </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+                {group.owned ? (
+                    <>
+                        <button
+                            onClick={() => {
+                                setName(group.name)
+                                setRenaming((v) => !v)
+                            }}
+                            className="h-8 px-3 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-medium transition"
+                        >
+                            {renaming ? 'Annuler' : 'Renommer'}
+                        </button>
+                        <button
+                            onClick={onDelete}
+                            className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition"
+                        >
+                            Supprimer
+                        </button>
+                    </>
+                ) : (
+                    <button
+                        onClick={onLeave}
+                        className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-red-400 hover:text-red-600 transition"
+                    >
+                        Quitter le groupe
+                    </button>
+                )}
+            </div>
+        </div>
+    )
+}

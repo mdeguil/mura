@@ -1,6 +1,7 @@
 import type {
     Account,
     Group,
+    Invitation,
     GroupMember,
     Member,
     Project,
@@ -71,6 +72,23 @@ export function task(name: string, extra: Partial<Task> = {}): Task {
         assignee: null,
         subtasks: [],
         statusHistory: [],
+        ...extra,
+    }
+}
+
+export function invitation(invitedUser: User, invitedBy: User, extra: Partial<Invitation> = {}): Invitation {
+    return {
+        id: id('invitation'),
+        projectId: 'project-x',
+        projectName: 'Refonte',
+        projectColor: '#14b8a6',
+        invitedUser,
+        invitedBy,
+        status: 'PENDING',
+        read: false,
+        dismissed: false,
+        createdAt: '2026-01-20T10:00:00Z',
+        expiresAt: '2099-01-01T00:00:00Z',
         ...extra,
     }
 }

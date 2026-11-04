@@ -7,7 +7,8 @@ import CarnetCombobox from './CarnetCombobox'
 import DeleteOwnAccountDialog from './DeleteOwnAccountDialog'
 import GroupAddPanel from './GroupAddPanel'
 import GroupPicker from './GroupPicker'
-import { apiError, group, groupMember, member, user } from '../test/fixtures'
+import MemberList from './MemberList'
+import { apiError, group, groupMember, invitation, member, user } from '../test/fixtures'
 import type { AccountDeletionPreview, Group, KnownUser } from '../types'
 
 vi.mock('../services/api')
@@ -190,6 +191,105 @@ describe('DeleteOwnAccountDialog', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
 
         expect(onClose).toHaveBeenCalledOnce()
+    })
+})
+
+describe('MemberList', () => {
+    const team = () => [member(alice, 'OWNER'), member(bob), member(carol, 'ADMIN')]
+
+    function renderList(
+        extra: Partial<React.ComponentProps<typeof MemberList>> = {},
+        handlers = { onInvited: vi.fn(), onMembersChanged: vi.fn(), onInvitationCancelled: vi.fn() }
+    ) {
+        vi.mocked(api.get).mockResolvedValue({ data: [] })
+        render(
+            <MemberList
+                projectId="p1"
+                members={team()}
+                invitations={[]}
+                canManage
+                isOwner
+                currentUserId={alice.id}
+                onRemoved={vi.fn()}
+                {...handlers}
+                {...extra}
+            />
+        )
+        return handlers
+    }
+
+    it('invites the address typed and closes the form', async () => {
+        const sent = invitation(dave, alice)
+        vi.mocked(api.post).mockResolvedValueOnce({ data: sent })
+        const { onInvited } = renderList()
+
+        await userEvent.click(screen.getByRole('button', { name: 'Inviter une personne ou ajouter un groupe' }))
+        await userEvent.type(screen.getByRole('combobox', { name: 'Qui veux-tu inviter ?' }), 'dave@mura.test')
+        await userEvent.click(screen.getByRole('button', { name: 'Inviter' }))
+
+        expect(api.post).toHaveBeenCalledWith('/projects/p1/invitations', { email: 'dave@mura.test' })
+        await waitFor(() => expect(onInvited).toHaveBeenCalledWith(sent))
+        expect(screen.queryByRole('combobox', { name: 'Qui veux-tu inviter ?' })).toBeNull()
+    })
+
+    it("keeps the form open and says why when the server refuses", async () => {
+        vi.mocked(api.post).mockRejectedValueOnce(apiError(404, "Aucun compte Mura n'utilise l'email x@y.z."))
+        renderList()
+
+        await userEvent.click(screen.getByRole('button', { name: 'Inviter une personne ou ajouter un groupe' }))
+        await userEvent.type(screen.getByRole('combobox', { name: 'Qui veux-tu inviter ?' }), 'x@y.z')
+        await userEvent.click(screen.getByRole('button', { name: 'Inviter' }))
+
+        expect(await screen.findByRole('alert')).toHaveTextContent("Aucun compte Mura n'utilise l'email x@y.z.")
+        expect(screen.getByRole('combobox', { name: 'Qui veux-tu inviter ?' })).toHaveValue('x@y.z')
+    })
+
+    it('lets only the owner change a role', async () => {
+        vi.mocked(api.patch).mockResolvedValueOnce({ data: member(bob, 'ADMIN') })
+        const { onMembersChanged } = renderList()
+
+        await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Rôle de bob' }), 'ADMIN')
+
+        expect(api.patch).toHaveBeenCalledWith(`/projects/p1/members/${bob.id}/role`, { role: 'ADMIN' })
+        await waitFor(() =>
+            expect(onMembersChanged).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ role: 'ADMIN' })]))
+        )
+    })
+
+    it('shows roles as text to an admin, who cannot hand the project over', () => {
+        renderList({ isOwner: false, currentUserId: carol.id })
+
+        expect(screen.queryByRole('combobox', { name: /Rôle de/ })).toBeNull()
+        expect(screen.queryByRole('heading', { name: 'Céder le projet' })).toBeNull()
+        expect(screen.getByRole('button', { name: 'Quitter le projet' })).toBeInTheDocument()
+    })
+
+    it('asks before handing the project over', async () => {
+        vi.mocked(api.post).mockResolvedValueOnce({ data: team() })
+        renderList()
+
+        await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Nouveau propriétaire' }), bob.id)
+        await userEvent.click(screen.getByRole('button', { name: 'Céder' }))
+        expect(api.post).not.toHaveBeenCalled()
+
+        await userEvent.click(screen.getByRole('button', { name: 'Céder le projet' }))
+
+        expect(api.post).toHaveBeenCalledWith(`/projects/p1/members/${bob.id}/transfer-ownership`)
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    })
+
+    it('lists who has yet to answer, and offers to ask again those who did not come', async () => {
+        vi.mocked(api.post).mockResolvedValueOnce({ data: invitation(eve, alice) })
+        renderList({
+            invitations: [invitation(dave, alice), invitation(eve, alice, { status: 'DECLINED' })],
+        })
+
+        expect(screen.getByText('En attente de réponse (1)')).toBeInTheDocument()
+        expect(screen.getByText('A refusé')).toBeInTheDocument()
+
+        await userEvent.click(screen.getByRole('button', { name: 'Réinviter' }))
+
+        expect(api.post).toHaveBeenCalledWith('/projects/p1/invitations', { email: eve.email })
     })
 })
 

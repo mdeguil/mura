@@ -4,9 +4,10 @@ import api from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import App from '../App'
 import AccountPage from './AccountPage'
+import GroupPage from './GroupPage'
 import LoginPage from './LoginPage'
 import ProjectPage from './ProjectPage'
-import { account, apiError, project, task } from '../test/fixtures'
+import { account, apiError, group, groupMember, project, task } from '../test/fixtures'
 import { renderAt } from '../test/render'
 
 vi.mock('../services/api')
@@ -198,6 +199,73 @@ describe('ProjectPage', () => {
 
         expect(await screen.findByRole('alert')).toHaveTextContent('Impossible de charger les tâches.')
         expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+    })
+})
+
+describe('GroupPage', () => {
+    const alice = account('alice')
+    const bob = account('bob')
+    const carol = account('carol')
+
+    function openGroup(owned: boolean) {
+        const design = group('Design', owned ? alice : bob, [groupMember(alice), groupMember(bob)], owned)
+        useAuthStore.setState({ token: 'jwt', user: alice })
+        emptyServer({ [`/groups/${design.id}`]: design })
+        return { ...renderAt(<GroupPage />, { route: `/groupe/${design.id}`, path: '/groupe/:id' }), design }
+    }
+
+    it('lets the gérant add someone, who then shows in the list', async () => {
+        const { user, design } = openGroup(true)
+        vi.mocked(api.post).mockResolvedValueOnce({
+            data: { ...design, members: [...design.members, groupMember(carol)] },
+        })
+
+        await user.click(await screen.findByRole('button', { name: 'Ajouter une personne' }))
+        await user.type(screen.getByRole('combobox', { name: 'Qui veux-tu ajouter ?' }), 'carol@mura.test')
+        await user.click(screen.getByRole('button', { name: 'Ajouter' }))
+
+        expect(api.post).toHaveBeenCalledWith(`/groups/${design.id}/members`, { email: 'carol@mura.test' })
+        expect(await screen.findByText('carol')).toBeInTheDocument()
+        expect(screen.queryByRole('combobox', { name: 'Qui veux-tu ajouter ?' })).toBeNull()
+    })
+
+    it('sets a member aside with what the server answers', async () => {
+        const { user, design } = openGroup(true)
+        vi.mocked(api.put).mockResolvedValueOnce({
+            data: { ...design, members: [groupMember(alice), groupMember(bob, { onHold: true })] },
+        })
+
+        await user.click(await screen.findByRole('button', { name: 'Mettre en retrait' }))
+
+        expect(api.put).toHaveBeenCalledWith(`/groups/${design.id}/members/${bob.id}/hold`, { onHold: true })
+        expect(await screen.findByRole('button', { name: 'Réintégrer' })).toBeInTheDocument()
+    })
+
+    it('renames in place, and keeps the field open when refused', async () => {
+        const { user } = openGroup(true)
+        vi.mocked(api.put).mockRejectedValueOnce(apiError(409, 'Ce nom est déjà pris.'))
+
+        await user.click(await screen.findByRole('button', { name: 'Renommer' }))
+        const field = screen.getByRole('textbox', { name: 'Nom du groupe' })
+        await user.clear(field)
+        await user.type(field, 'Graphisme')
+        await user.click(screen.getByRole('button', { name: 'Enregistrer' }))
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('Ce nom est déjà pris.')
+        expect(screen.getByRole('textbox', { name: 'Nom du groupe' })).toHaveValue('Graphisme')
+    })
+
+    it('lets a member leave, after asking, and goes back to the carnet', async () => {
+        const { user, design } = openGroup(false)
+        vi.mocked(api.delete).mockResolvedValueOnce({ data: undefined })
+
+        expect(await screen.findByText('Géré par bob · 2 personnes')).toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: 'Mettre en retrait' })).toBeNull()
+        await user.click(screen.getByRole('button', { name: 'Quitter le groupe' }))
+        await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Quitter le groupe' }))
+
+        expect(api.delete).toHaveBeenCalledWith(`/groups/${design.id}/members/${alice.id}`)
+        await waitFor(() => expect(screen.getAllByTestId('current-path')[0]).toHaveTextContent('/carnet'))
     })
 })
 
