@@ -4,12 +4,15 @@ import UserAvatar from './UserAvatar'
 import { useApiQuery } from '../hooks/useApiQuery'
 import type { Group } from '../types'
 
-// The list, and nothing else: a card opens the group's own page, the way a
-// project card opens the project. Managing a list of people from inside a
-// row was never going to fit once the row had to hold a hold button too.
-//
-// No way to create one from here: groups are set up by an administrator,
-// who names the gérant, from the Administration page.
+/**
+ * The reader's groups, in the carnet. The list, and nothing else: a card
+ * opens the group's own page, the way a project card opens the project.
+ * Managing a list of people from inside a row was never going to fit once
+ * the row had to hold a hold button too.
+ *
+ * No way to create one from here: groups are set up by an administrator,
+ * who names the gérant, from the Administration page.
+ */
 export default function GroupList() {
     const { data: groups, loading, error, reload } = useApiQuery<Group[]>(
         '/groups',

@@ -1,8 +1,12 @@
 import { useState } from 'react'
 
-// A password field whose content can be read back. Typing eleven invisible
-// characters twice and being told they disagree is the usual way a signup
-// fails for no good reason.
+/**
+ * A password field whose content can be read back. Typing eleven invisible
+ * characters twice and being told they disagree is the usual way a signup
+ * fails for no good reason. The eye button stays out of the tab order.
+ *
+ * @param props the field's value, its look, and what to do as it changes
+ */
 export default function PasswordInput({
     value,
     onChange,
@@ -12,14 +16,22 @@ export default function PasswordInput({
     id,
     compact = false,
 }: {
+    /** What the field holds. */
     value: string
+    /** Called as the reader types. */
     onChange: (value: string) => void
+    /** The field's placeholder. */
     placeholder?: string
+    /** Marks the field as the one the server refused. */
     invalid?: boolean
+    /** The browser's autocomplete hint, such as `current-password`. */
     autoComplete?: string
+    /** For a `<label htmlFor>` outside the field. */
     id?: string
-    // The login form runs one size smaller than the signup form; the field
-    // follows whichever form it sits in.
+    /**
+     * One size smaller: the login form runs smaller than the signup form,
+     * and the field follows whichever form it sits in.
+     */
     compact?: boolean
 }) {
     const [shown, setShown] = useState(false)

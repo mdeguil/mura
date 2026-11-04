@@ -1,7 +1,10 @@
 import { useTheme } from '../hooks/useTheme'
 
-// Shows where a click will take you rather than where you are: a sun in the
-// dark, a moon in the light.
+/**
+ * The button that switches between the dark and the light theme. It shows
+ * where a click will take you rather than where you are: a sun in the
+ * dark, a moon in the light.
+ */
 export default function ThemeToggle() {
     const { theme, toggle } = useTheme()
     const label = theme === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'

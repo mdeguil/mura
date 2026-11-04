@@ -18,6 +18,11 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * One step in a task's history: the status it left, the one it reached,
+ * and when. The first step of every task has no {@code fromStatus}: it
+ * records the task's creation.
+ */
 @Entity
 @Table(name = "task_status_history")
 @Getter

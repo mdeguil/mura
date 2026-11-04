@@ -18,6 +18,11 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * A group: a list of people kept together so they can be brought onto a
+ * project at once. It opens nothing by itself. Its owner is its gérant,
+ * named by an administrator, who manages who is in it.
+ */
 @Entity
 @Table(name = "user_groups")
 @Getter

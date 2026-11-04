@@ -19,6 +19,12 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * An invitation to join a project, sent by whoever on its team invited.
+ * Answering it is the invitee's call alone; it lapses after the configured
+ * number of days. It also shows in the invitee's bell, which keeps its own
+ * read and dismissed marks.
+ */
 @Entity
 @Table(name = "project_invitations")
 @Getter

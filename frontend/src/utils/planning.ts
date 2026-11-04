@@ -1,8 +1,14 @@
 import { endOfMonth, startOfDay, startOfMonth } from 'date-fns'
 import type { Task } from '../types'
 
-// Open on the current month, unless nothing is planned there — then on the
-// month of the earliest task, so a planning view never opens empty.
+/**
+ * The month a planning view opens on: the current one, unless nothing is
+ * planned there -- then the month of the earliest task, so a planning view
+ * never opens empty.
+ *
+ * @param tasks the tasks shown
+ * @returns the first day of that month
+ */
 export function initialPlanningMonth(tasks: Task[]): Date {
     const thisMonth = startOfMonth(new Date())
     if (tasks.length === 0) return thisMonth

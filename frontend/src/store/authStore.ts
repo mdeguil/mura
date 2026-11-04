@@ -3,13 +3,19 @@ import { persist } from 'zustand/middleware'
 import type { Account } from '../types'
 
 interface AuthState {
+  /** The JWT sent with every request, or null when signed out. */
   token: string | null
+  /** The signed-in account, or null when signed out. */
   user: Account | null
+  /** Signs in: keeps the token and the account. */
   setAuth: (token: string, user: Account) => void
-  // The account alone, for refreshing what the server says about it without
-  // touching the token: a role can have been granted or taken away since
-  // this session signed in.
+  /**
+   * Replaces the account alone, for refreshing what the server says about
+   * it without touching the token: a role can have been granted or taken
+   * away since this session signed in.
+   */
   setUser: (user: Account) => void
+  /** Signs out: forgets the token and the account. */
   logout: () => void
 }
 

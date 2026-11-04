@@ -22,6 +22,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * The carnet: the people an account knows, worked out from shared projects
+ * and invitations, plus what it decided about them -- asked for, starred,
+ * taken out.
+ */
 @Service
 @RequiredArgsConstructor
 public class DirectoryService {
@@ -31,6 +36,15 @@ public class DirectoryService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
 
+    /**
+     * Everyone in the reader's carnet: people they share an active project
+     * with, people they invited or were invited by, people who agreed to be
+     * added, and the requests they sent that are still waiting. Someone
+     * taken out on purpose stays out, whatever else would put them back.
+     *
+     * @param userId the reader
+     * @return the carnet, favourites first, then by name
+     */
     @Transactional(readOnly = true)
     public List<KnownUserResponse> listKnownTo(UUID userId) {
         Map<UUID, User> people = new LinkedHashMap<>();
@@ -107,6 +121,19 @@ public class DirectoryService {
                 .toList();
     }
 
+    /**
+     * Asks someone to join the reader's carnet, and tells them. If they had
+     * already asked the reader, this accepts their request instead. Asking
+     * again after a refusal, or re-adding someone taken out, reuses the row.
+     *
+     * @param ownerId the reader
+     * @param request the address of the person to add
+     * @return the person as the carnet now shows them: pending, or accepted
+     *         when their request was waiting
+     * @throws ApiException 404 if no account uses the address; 409 when
+     *         adding oneself, someone already in the carnet, or someone who
+     *         has not answered yet
+     */
     @Transactional
     public KnownUserResponse addContact(UUID ownerId, AddContactRequest request) {
         String email = request.email().trim();
@@ -174,10 +201,16 @@ public class DirectoryService {
         );
     }
 
-    // Removing from the carnet, for anyone in it. The row is kept and marked
-    // hidden rather than deleted: someone arriving through a shared project
-    // would otherwise be rebuilt on the next read. Adding them again by
-    // email undoes it.
+    /**
+     * Takes someone out of the reader's carnet, however they got there. The
+     * row is kept and marked hidden rather than deleted: someone arriving
+     * through a shared project would otherwise be rebuilt on the next read.
+     * Adding them again by email undoes it. Nothing changes on their side.
+     *
+     * @param ownerId the reader
+     * @param personId the person to take out
+     * @throws ApiException 404 if the person's account does not exist
+     */
     @Transactional
     public void removeContact(UUID ownerId, UUID personId) {
         User owner = userRepository.findById(ownerId)
@@ -194,8 +227,18 @@ public class DirectoryService {
     }
 
 
-    // Favouriting someone who only appears through a shared project creates
-    // the row that remembers it — the same row that would hold them hidden.
+    /**
+     * Stars or un-stars someone in the reader's carnet. Starring someone who
+     * only appears through a shared project creates the row that remembers
+     * it -- the same row that would hold them hidden.
+     *
+     * @param ownerId the reader
+     * @param personId the person to star
+     * @param favourite true to star, false to take the star away
+     * @return the person as the carnet now shows them
+     * @throws ApiException 404 if the person's account does not exist, 409
+     *         if they were taken out of the carnet
+     */
     @Transactional
     public KnownUserResponse setFavourite(UUID ownerId, UUID personId, boolean favourite) {
         User owner = userRepository.findById(ownerId)
@@ -229,8 +272,14 @@ public class DirectoryService {
                 false
         );
     }
-    // The requests waiting on this person. Separate from the carnet: these
-    // are not entries yet, they are questions.
+
+    /**
+     * The requests waiting on the reader to answer. Separate from the
+     * carnet: these are not entries yet, they are questions.
+     *
+     * @param userId the reader
+     * @return who asked, newest first
+     */
     @Transactional(readOnly = true)
     public List<KnownUserResponse> listRequests(UUID userId) {
         return contactRepository.findPendingForPerson(userId).stream()
@@ -249,9 +298,17 @@ public class DirectoryService {
                 .toList();
     }
 
-    // Accepting is mutual: you end up in each other's carnets, the way
-    // accepting an invitation puts you on the team rather than leaving the
-    // relationship pointing one way.
+    /**
+     * Accepts a request. Accepting is mutual: both end up in each other's
+     * carnets, the way accepting an invitation puts you on the team rather
+     * than leaving the relationship pointing one way. The person who asked
+     * is told.
+     *
+     * @param userId the reader, who was asked
+     * @param requesterId the person who asked
+     * @return the requester as the reader's carnet now shows them
+     * @throws ApiException 404 if there is no pending request from them
+     */
     @Transactional
     public KnownUserResponse accept(UUID userId, UUID requesterId) {
         Contact request = requirePendingRequest(userId, requesterId);
@@ -283,9 +340,16 @@ public class DirectoryService {
         );
     }
 
-    // Refusing says nothing to the person who asked: a refusal they can see
-    // is an awkward conversation nobody asked for. The row is kept rather
-    // than deleted so asking again is possible -- people change their minds.
+    /**
+     * Turns a request down. The person who asked is not told: a refusal
+     * they can see is an awkward conversation nobody asked for. The row is
+     * kept rather than deleted so asking again is possible -- people change
+     * their minds.
+     *
+     * @param userId the reader, who was asked
+     * @param requesterId the person who asked
+     * @throws ApiException 404 if there is no pending request from them
+     */
     @Transactional
     public void decline(UUID userId, UUID requesterId) {
         Contact request = requirePendingRequest(userId, requesterId);
@@ -301,6 +365,7 @@ public class DirectoryService {
                         "Cette demande de contact n'existe plus."
                 ));
     }
+
     private List<KnownUserResponse.SharedProject> sharedProjectsBetween(UUID userId, UUID personId) {
         return directoryRepository.findSharedMemberships(userId).stream()
                 .filter(m -> m.getUser().getId().equals(personId))

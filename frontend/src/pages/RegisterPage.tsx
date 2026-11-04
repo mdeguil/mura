@@ -15,6 +15,11 @@ const USERNAME_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u
 
 type Field = 'username' | 'email' | 'password' | 'confirmPassword'
 
+/**
+ * The sign-up page, at /register: a username, an address and a password
+ * checked against the server's rules as they are typed, then the code
+ * screen.
+ */
 export default function RegisterPage() {
     const navigate = useNavigate()
     const setAuth = useAuthStore((s) => s.setAuth)

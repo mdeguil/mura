@@ -14,12 +14,25 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
+/**
+ * Issues and checks the signed tokens (JWT, HMAC-SHA) that sign a browser
+ * in. A token names its account by id; whether that account may still act
+ * is decided by {@link JwtAuthenticationFilter}, not by the token.
+ */
 @Service
 public class JwtService {
 
     private final SecretKey key;
     private final long expirationMs;
 
+    /**
+     * Builds the key once, from configuration.
+     *
+     * @param secret the signing key, from {@code mura.jwt.secret}; at least
+     *        32 bytes for HMAC-SHA256
+     * @param expirationMs how long a token stays valid, from
+     *        {@code mura.jwt.expiration-ms}
+     */
     public JwtService(
             @Value("${mura.jwt.secret}") String secret,
             @Value("${mura.jwt.expiration-ms}") long expirationMs
@@ -28,6 +41,12 @@ public class JwtService {
         this.expirationMs = expirationMs;
     }
 
+    /**
+     * Issues a token for the account, valid for the configured duration.
+     *
+     * @param user the account to sign in
+     * @return the signed token, with the account's id as subject
+     */
     public String generateToken(User user) {
         Instant now = Instant.now();
         return Jwts.builder()
@@ -40,10 +59,24 @@ public class JwtService {
                 .compact();
     }
 
+    /**
+     * Reads the account id out of a token.
+     *
+     * @param token a token for which {@link #isValid} answered true
+     * @return the id of the account it was issued to
+     * @throws io.jsonwebtoken.JwtException if the token is not valid
+     */
     public UUID extractUserId(String token) {
         return UUID.fromString(parseClaims(token).getSubject());
     }
 
+    /**
+     * Whether the token was signed with this instance's key and has not
+     * expired.
+     *
+     * @param token the token, without the {@code Bearer } prefix
+     * @return true when the token can be trusted
+     */
     public boolean isValid(String token) {
         try {
             parseClaims(token);

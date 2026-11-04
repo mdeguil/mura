@@ -5,13 +5,22 @@ import { useApiQuery } from '../hooks/useApiQuery'
 import Modal from './Modal'
 import type { Account, AccountDeletionPreview } from '../types'
 
+/**
+ * An administrator deleting an account: what will happen, worked out by the
+ * server, and the account's name to type back before anything is done.
+ *
+ * @param props the account and what to do once it is deleted
+ */
 export default function DeleteAccountDialog({
     account,
     onClose,
     onDeleted,
 }: {
+    /** The account to delete; it must already be suspended. */
     account: Account
+    /** Closes the dialog without deleting. */
     onClose: () => void
+    /** Called once the server has deleted it. */
     onDeleted: () => void
 }) {
     // Worked out by the server before anything happens, so the list below is
@@ -108,10 +117,22 @@ export default function DeleteAccountDialog({
     )
 }
 
-// What deleting an account does, as the server worked it out: shared by the
-// administrator's dialog and the one where someone closes their own account.
-// `own` only changes who the sentences speak to.
-export function DeletionConsequences({ preview, own }: { preview: AccountDeletionPreview; own: boolean }) {
+/**
+ * What deleting an account does, as the server worked it out: shared by the
+ * administrator's dialog and the one where someone closes their own
+ * account.
+ *
+ * @param props the consequences, and who the sentences speak to
+ */
+export function DeletionConsequences({
+    preview,
+    own,
+}: {
+    /** The consequences the server worked out. */
+    preview: AccountDeletionPreview
+    /** True when the reader is closing their own account: the sentences say « tu ». */
+    own: boolean
+}) {
     const n = preview.tasksUnassigned
     const plural = n > 1
 

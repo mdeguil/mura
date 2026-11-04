@@ -21,6 +21,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * A project: a team, its tasks and their planning. Its owner is also on its
+ * team as {@link ProjectRole#OWNER}; who may do what is decided by the
+ * memberships, through {@link ProjectAccessGuard}.
+ */
 @Entity
 @Table(name = "projects")
 @Getter

@@ -1,14 +1,21 @@
 import { useState } from 'react'
 
+/** The two themes; dark is the default. */
 export type Theme = 'dark' | 'light'
 
 // Where the choice is kept, and the key index.html reads before the first
 // paint: the two must agree.
 const STORAGE_KEY = 'mura-theme'
 
-// The theme lives on <html data-theme>, set once by index.html; this only
-// reads it and changes it. Kept per device, not per account: it is about the
-// screen in front of you.
+/**
+ * The theme on screen, and a way to switch it. The theme lives on
+ * `<html data-theme>`, set once by index.html before the first paint; this
+ * only reads it and changes it. The choice is kept per device, not per
+ * account: it is about the screen in front of you. Without storage the
+ * switch still works, it is just not remembered.
+ *
+ * @returns the current `theme`, and `toggle` to switch to the other one
+ */
 export function useTheme() {
     const [theme, setTheme] = useState<Theme>(() =>
         document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'

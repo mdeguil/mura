@@ -17,19 +17,38 @@ function blend(hex: string, amount: number, towards: 'white' | 'black'): string 
 const lighten = (hex: string, amount: number) => blend(hex, amount, 'white')
 const darken = (hex: string, amount: number) => blend(hex, amount, 'black')
 
-// A clearly visible light-to-dark gradient in the project's own hue.
+/**
+ * A clearly visible light-to-dark gradient in the project's own hue.
+ *
+ * @param hex the project's colour, as `#rrggbb`
+ * @param angle the gradient's direction, in degrees
+ * @returns a CSS `linear-gradient()`
+ */
 export function projectGradient(hex: string, angle = 135): string {
     return `linear-gradient(${angle}deg, ${lighten(hex, 0.3)}, ${darken(hex, 0.25)})`
 }
 
-// The two stop colors used by projectGradient, for callers (e.g. SVG
-// <linearGradient>) that need them separately rather than as a CSS string.
+/**
+ * The two stop colours used by projectGradient, for callers (e.g. SVG
+ * `<linearGradient>`) that need them separately rather than as a CSS
+ * string.
+ *
+ * @param hex the project's colour, as `#rrggbb`
+ * @returns the lighter and the darker stop, as `#rrggbb`
+ */
 export function projectGradientStops(hex: string): [string, string] {
     return [lighten(hex, 0.3), darken(hex, 0.25)]
 }
 
-// The gradient above topped with a diagonal glossy highlight, for a "glazed
-// glass" look (used on the project card accent bar and the color swatches).
+/**
+ * The gradient above topped with a diagonal glossy highlight, for a
+ * "glazed glass" look (used on the project card accent bar and the colour
+ * swatches).
+ *
+ * @param hex the project's colour, as `#rrggbb`
+ * @param angle the gradient's direction, in degrees
+ * @returns a CSS `background` value of two layered gradients
+ */
 export function projectGlassBackground(hex: string, angle = 135): string {
     return [
         'linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0) 45%)',
@@ -37,5 +56,5 @@ export function projectGlassBackground(hex: string, angle = 135): string {
     ].join(', ')
 }
 
-// The colours a project can be given, the first being the default.
+/** The colours a project can be given, the first being the default. */
 export const PROJECT_COLORS = ['#06b6d4', '#3b82f6', '#a855f7', '#ec4899', '#f97316', '#22c55e']

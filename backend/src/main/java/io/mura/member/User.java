@@ -16,6 +16,10 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * An account. Email and username are unique whatever their case; the
+ * password is stored as a BCrypt hash.
+ */
 @Entity
 @Table(name = "users")
 @Getter
@@ -45,20 +49,32 @@ public class User {
     @Column(name = "account_role", nullable = false)
     private AccountRole accountRole = AccountRole.USER;
 
-    // Set when an administrator suspends the account. Nothing it produced
-    // is removed; it simply cannot sign in, and its token stops working.
     @Column(name = "suspended_at")
     private Instant suspendedAt;
 
+    /**
+     * Whether an administrator has suspended the account. Nothing it
+     * produced is removed; it simply cannot sign in, and its token stops
+     * working.
+     *
+     * @return true while {@code suspendedAt} is set
+     */
     public boolean isSuspended() {
         return suspendedAt != null;
     }
 
-    // Set when the code mailed at registration came back. Accounts made
-    // before Mura asked for one were stamped verified by the migration.
+    // Accounts made before Mura asked for a code were stamped verified by
+    // the migration.
     @Column(name = "email_verified_at")
     private Instant emailVerifiedAt;
 
+    /**
+     * Whether the address has been confirmed with the code mailed at
+     * registration. Until then the account reaches only the verification
+     * routes.
+     *
+     * @return true once {@code emailVerifiedAt} is set
+     */
     public boolean isEmailVerified() {
         return emailVerifiedAt != null;
     }

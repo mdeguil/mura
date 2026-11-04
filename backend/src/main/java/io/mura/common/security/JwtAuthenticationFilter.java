@@ -17,6 +17,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Reads the {@code Authorization: Bearer} token of each request and, when
+ * it is valid, signs the request in as its account. The account is read
+ * again from the database every time, so a suspension or a deletion takes
+ * effect on the next request rather than when the token expires. The
+ * authenticated principal is the account's id ({@link UUID}).
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -33,6 +40,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
+    /**
+     * Signs the request in when its token is valid and its account may use
+     * it: not suspended, and with a confirmed address unless the route is
+     * one of the few an unconfirmed account may reach. Otherwise the request
+     * goes on unauthenticated, and a protected route answers 401.
+     *
+     * @param request the incoming request
+     * @param response the response, untouched here
+     * @param filterChain the rest of the chain
+     * @throws ServletException if a later filter fails
+     * @throws IOException if a later filter fails
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,

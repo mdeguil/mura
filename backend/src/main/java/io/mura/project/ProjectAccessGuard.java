@@ -23,6 +23,9 @@ public class ProjectAccessGuard {
      * The caller's place on the team. Every member works on the tasks:
      * the role only decides who runs the team.
      *
+     * @param userId the caller
+     * @param projectId the project
+     * @return the caller's membership, with its project and role
      * @throws ApiException 404 if the project does not exist, 403 if the caller is not on it
      */
     public ProjectMember requireMembership(UUID userId, UUID projectId) {
@@ -38,6 +41,9 @@ public class ProjectAccessGuard {
      * As {@link #requireMembership}, for what running the team takes:
      * editing the project, inviting, bringing a group, removing members.
      *
+     * @param userId the caller
+     * @param projectId the project
+     * @return the caller's membership, as owner or admin
      * @throws ApiException 403 as well if the caller is a plain member
      */
     public ProjectMember requireManager(UUID userId, UUID projectId) {
@@ -57,6 +63,9 @@ public class ProjectAccessGuard {
      * For what stays with the owner alone: roles, handing the project over,
      * the bin.
      *
+     * @param userId the caller
+     * @param projectId the project
+     * @return the project
      * @throws ApiException 404 if the project does not exist, 403 for anyone but its owner
      */
     public Project requireOwner(UUID userId, UUID projectId) {

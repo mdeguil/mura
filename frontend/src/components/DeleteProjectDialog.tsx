@@ -4,13 +4,22 @@ import { apiErrorMessage } from '../utils/apiError'
 import type { Project } from '../types'
 import Modal from './Modal'
 
+/**
+ * Deleting an archived project for good: the owner types its name back
+ * before anything is done.
+ *
+ * @param props the project and what to do once it is deleted
+ */
 export default function DeleteProjectDialog({
     project,
     onClose,
     onDeleted,
 }: {
+    /** The archived project to delete. */
     project: Project
+    /** Closes the dialog without deleting. */
     onClose: () => void
+    /** Called once the server has deleted it. */
     onDeleted: () => void
 }) {
     const [typed, setTyped] = useState('')

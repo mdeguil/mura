@@ -4,9 +4,13 @@ import UserAvatar, { SuspendedPill } from './UserAvatar'
 import type { KnownUser, Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
 
-// One person in the carnet: who they are, the projects shared with them,
-// and what can be done from here -- invite them on, star them, take them
-// out of the list.
+/**
+ * One person in the carnet: who they are, the projects shared with them,
+ * and what can be done from here -- invite them on, star them, take them
+ * out of the list.
+ *
+ * @param props the person, the reader's projects, and the two actions
+ */
 export default function ContactCard({
     person,
     projects,
@@ -14,11 +18,15 @@ export default function ContactCard({
     onToggleFavourite,
     onRemove,
 }: {
+    /** The person. */
     person: KnownUser
-    // The reader's own projects, to offer in the invite menu.
+    /** The reader's own projects, to offer in the invite menu. */
     projects: Project[]
+    /** The reader, to tell which projects they may invite onto. */
     currentUserId: string
+    /** Stars or un-stars the person. */
     onToggleFavourite: () => void
+    /** Asks to take the person out of the carnet. */
     onRemove: () => void
 }) {
     return (

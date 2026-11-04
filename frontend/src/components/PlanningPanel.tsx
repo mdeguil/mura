@@ -2,6 +2,7 @@ import GanttChart from './GanttChart'
 import MonthCalendar from './MonthCalendar'
 import type { Task } from '../types'
 
+/** The two ways of laying tasks out over time. */
 export type PlanningView = 'calendar' | 'gantt'
 
 const PLANNING_VIEWS: { key: PlanningView; label: string }[] = [
@@ -9,17 +10,25 @@ const PLANNING_VIEWS: { key: PlanningView; label: string }[] = [
     { key: 'gantt', label: '📊 Gantt' },
 ]
 
-// The same tasks laid out over time, as a month or as bars. The choice of
-// view is the page's to keep, so it survives a trip to another tab.
+/**
+ * The same tasks laid out over time, as a month or as bars. The choice of
+ * view is the page's to keep, so it survives a trip to another tab.
+ *
+ * @param props the tasks, the view, and the callbacks
+ */
 export default function PlanningPanel({
     tasks,
     view,
     onViewChange,
     onOpenTask,
 }: {
+    /** The tasks to lay out. */
     tasks: Task[]
+    /** The view shown. */
     view: PlanningView
+    /** Called with the view the reader picks. */
     onViewChange: (view: PlanningView) => void
+    /** Called with the task the reader opens. */
     onOpenTask: (task: Task) => void
 }) {
     return (

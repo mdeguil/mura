@@ -15,6 +15,11 @@ import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Issues and checks the secrets Mura mails: the code that confirms an
+ * address and the link that resets a password. Secrets are stored hashed,
+ * work once, expire, and are replaced by the next one of their kind.
+ */
 @Service
 @RequiredArgsConstructor
 public class EmailTokenService {
@@ -32,10 +37,22 @@ public class EmailTokenService {
     private final PasswordEncoder encoder;
     private final SecureRandom random = new SecureRandom();
 
-    // The clear-text secret, returned once so it can be mailed, and never
-    // recoverable afterwards.
+    /**
+     * A token just issued, with the clear-text secret: returned once so it
+     * can be mailed, and never recoverable afterwards.
+     *
+     * @param token the stored token, holding only a hash of the secret
+     * @param secret what to put in the mail
+     */
     public record Issued(EmailToken token, String secret) {}
 
+    /**
+     * Issues a six-digit code to confirm the account's address, valid for
+     * 15 minutes. Any earlier code stops working.
+     *
+     * @param user the account
+     * @return the token and the code to mail
+     */
     @Transactional
     public Issued issueCode(User user) {
         // Six digits with the leading zeros kept: 004271 is as good a code as
@@ -44,6 +61,14 @@ public class EmailTokenService {
         return issue(user, EmailTokenPurpose.EMAIL_VERIFICATION, code, CODE_LIFETIME);
     }
 
+    /**
+     * Issues a password-reset link secret, valid for an hour. Any earlier
+     * link stops working.
+     *
+     * @param user the account
+     * @return the token and the value to put in the link, as
+     *         {@code <token id>.<secret>}
+     */
     @Transactional
     public Issued issueResetLink(User user) {
         byte[] bytes = new byte[32];
@@ -79,7 +104,17 @@ public class EmailTokenService {
         }
     }
 
-    // Returns the account the code belongs to, and spends the code doing it.
+    /**
+     * Checks a code against the account's live one and spends it. A wrong
+     * code counts as an attempt; after five, the code is spent and a new
+     * one has to be asked for.
+     *
+     * @param userId the account the code was mailed to
+     * @param code the six digits as typed
+     * @return the account the code belongs to
+     * @throws ApiException 410 if there is no live code, 429 once five
+     *         attempts have been made, 400 for a wrong code
+     */
     @Transactional
     public User consumeCode(UUID userId, String code) {
         EmailToken token = tokenRepository
@@ -114,6 +149,15 @@ public class EmailTokenService {
         return token.getUser();
     }
 
+    /**
+     * Checks a reset link and spends it.
+     *
+     * @param value what the link carried, {@code <token id>.<secret>}
+     * @return the account the link belongs to
+     * @throws ApiException 410 with the same message for every way a link
+     *         can fail -- malformed, unknown, expired, spent or forged -- so
+     *         a wrong one tells a stranger nothing
+     */
     @Transactional
     public User consumeResetLink(String value) {
         // "<row id>.<secret>" — anything else was not issued here.

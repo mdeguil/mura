@@ -2,15 +2,19 @@ import { useState } from 'react'
 import ConfirmDialog from './ConfirmDialog'
 import type { Member } from '../types'
 
-// Handing the project to someone else on the team. Asked for twice, since
-// it cannot be undone from this side: only the new owner can hand it back.
+/**
+ * Handing the project to someone else on the team. Asked for twice, since
+ * it cannot be undone from this side: only the new owner can hand it back.
+ *
+ * @param props who can take the project over and how to hand it to them
+ */
 export default function TransferOwnership({
     candidates,
     onTransfer,
 }: {
-    // Everyone on the team but the owner.
+    /** Everyone on the team but the owner. */
     candidates: Member[]
-    // Answers whether the project changed hands.
+    /** Hands the project to the successor; answers whether it changed hands. */
     onTransfer: (successor: Member) => Promise<boolean>
 }) {
     const [successorId, setSuccessorId] = useState('')

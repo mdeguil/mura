@@ -18,6 +18,7 @@ import lombok.Setter;
 
 import java.time.Instant;
 
+/** One person's place on a project's team, with their role there. */
 @Entity
 @Table(name = "project_members")
 @Getter
@@ -45,6 +46,13 @@ public class ProjectMember {
     @Column(name = "joined_at", nullable = false, updatable = false)
     private Instant joinedAt;
 
+    /**
+     * A new membership.
+     *
+     * @param project the project
+     * @param user the person joining it
+     * @param role their role on it
+     */
     public ProjectMember(Project project, User user, ProjectRole role) {
         this.project = project;
         this.user = user;

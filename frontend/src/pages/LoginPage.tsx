@@ -7,6 +7,10 @@ import PasswordInput from '../components/PasswordInput'
 import LegalLinks from '../components/LegalLinks'
 import Logo from '../components/Logo'
 
+/**
+ * The sign-in page, at /login: an address and a password, then the
+ * projects.
+ */
 export default function LoginPage() {
     const navigate = useNavigate()
     const setAuth = useAuthStore((s) => s.setAuth)

@@ -8,6 +8,17 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * Creating a task.
+ *
+ * @param name up to 255 characters
+ * @param description up to 2000 characters, or null
+ * @param status where it starts, or null for {@link TaskStatus#A_FAIRE}
+ * @param startDate its first day
+ * @param endDate its last day
+ * @param assigneeId who is in charge, or null for nobody yet; the service
+ *        checks they are on the project's team
+ */
 public record CreateTaskRequest(
         @NotBlank(message = "Le nom de la tâche est requis.")
         @Size(max = 255, message = "Le nom de la tâche ne doit pas dépasser 255 caractères.")
@@ -24,7 +35,5 @@ public record CreateTaskRequest(
         @NotNull(message = "La date de fin est requise.")
         LocalDate endDate,
 
-        // Null means nobody is in charge yet. The service checks that anyone
-        // named here is actually a member of the project.
         UUID assigneeId
 ) {}

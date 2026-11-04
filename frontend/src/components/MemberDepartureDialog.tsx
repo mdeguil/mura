@@ -5,25 +5,40 @@ import type { Member } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
 import Modal from './Modal'
 
-// Removing someone and showing yourself out are the same act seen from two
-// sides, so they share one dialog — only the wording and the recipient of
-// the note differ.
-export type Departure = { member: Member; leaving: boolean }
+/** Someone about to leave a team, by their own choice or not. */
+export type Departure = {
+    /** The member. */
+    member: Member
+    /** True when they are showing themselves out, false when they are removed. */
+    leaving: boolean
+}
 
 const DEFAULT_MESSAGE = {
     removal: "L'équipe du projet a été réorganisée.",
     leaving: 'Je ne travaille plus sur ce projet.',
 }
 
+/**
+ * Removing someone from a team, or leaving it, with a note for the people
+ * told. Removing someone and showing yourself out are the same act seen
+ * from two sides, so they share one dialog -- only the wording and the
+ * recipient of the note differ.
+ *
+ * @param props the project, who is leaving, and what to do once they have
+ */
 export default function MemberDepartureDialog({
     projectId,
     departure,
     onClose,
     onDone,
 }: {
+    /** The project. */
     projectId: string
+    /** Who is leaving, and whether by their own choice. */
     departure: Departure
+    /** Closes the dialog; nobody leaves. */
     onClose: () => void
+    /** Called with the member's id once the server has taken them off. */
     onDone: (memberId: string) => void
 }) {
     const { member, leaving } = departure

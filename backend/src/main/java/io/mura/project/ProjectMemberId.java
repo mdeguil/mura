@@ -9,6 +9,7 @@ import lombok.Setter;
 import java.io.Serializable;
 import java.util.UUID;
 
+/** The key of a {@link ProjectMember}: which project, and who is on it. */
 @Embeddable
 @Getter
 @Setter
@@ -16,9 +17,18 @@ import java.util.UUID;
 @EqualsAndHashCode
 public class ProjectMemberId implements Serializable {
 
+    /** The project. */
     private UUID projectId;
+
+    /** The member. */
     private UUID userId;
 
+    /**
+     * Builds the key of one membership.
+     *
+     * @param projectId the project
+     * @param userId the member
+     */
     public ProjectMemberId(UUID projectId, UUID userId) {
         this.projectId = projectId;
         this.userId = userId;

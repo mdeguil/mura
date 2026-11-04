@@ -4,18 +4,25 @@ import GroupPicker, { type GroupSelection } from './GroupPicker'
 import { apiErrorMessage } from '../utils/apiError'
 import type { Member } from '../types'
 
-// Bringing people over from one of your groups, straight onto the team: no
-// invitation, they are in as soon as this is sent and are told so.
+/**
+ * Bringing people over from one of your groups, straight onto the team: no
+ * invitation, they are in as soon as this is sent and are told so.
+ *
+ * @param props the project, its team, and what to do once the group is in
+ */
 export default function GroupAddPanel({
     projectId,
     members,
     onAdded,
     onCancel,
 }: {
+    /** The project to bring the group onto. */
     projectId: string
+    /** Its team, so those already on it are left out. */
     members: Member[]
-    // The whole team as it now stands, and who among it just joined.
+    /** Called with the whole team as it now stands, and who among it just joined. */
     onAdded: (members: Member[], joinedIds: string[]) => void
+    /** Closes the panel without adding anyone. */
     onCancel: () => void
 }) {
     const [selection, setSelection] = useState<GroupSelection | null>(null)

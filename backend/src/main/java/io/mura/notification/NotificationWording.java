@@ -1,13 +1,30 @@
 package io.mura.notification;
 
-// What a notification says, in one place, so the bell and the mail cannot
-// drift into telling the same person two different things.
+/**
+ * What a notification says, in one place, so the bell and the mail cannot
+ * drift into telling the same person two different things.
+ */
 final class NotificationWording {
 
+    /**
+     * The words of one notification.
+     *
+     * @param subject the mail's subject
+     * @param heading the title inside the mail
+     * @param sentence what happened, in one sentence
+     * @param linkPath where in the app the mail's button leads
+     * @param linkLabel what that button says
+     */
     record Lines(String subject, String heading, String sentence, String linkPath, String linkLabel) {}
 
     private NotificationWording() {}
 
+    /**
+     * Words a notification.
+     *
+     * @param notification the stored notification
+     * @return what to say, and where to send the reader
+     */
     static Lines of(Notification notification) {
         String who = notification.getActorName();
         String name = notification.getProjectName() != null

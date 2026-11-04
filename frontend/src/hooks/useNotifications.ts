@@ -2,9 +2,11 @@ import { useApiQuery } from './useApiQuery'
 import api from '../services/api'
 import type { AppNotification, Invitation } from '../types'
 
-// Two sources share the bell: invitations, which are waiting for an answer
-// and survive being cleared, and notifications, which only report something
-// that already happened and are deleted when cleared.
+/**
+ * A line in the bell. Two sources share it: invitations, which are waiting
+ * for an answer and survive being cleared, and notifications, which only
+ * report something that already happened and are deleted when cleared.
+ */
 export type BellItem =
     | { kind: 'invitation'; id: string; createdAt: string; read: boolean; invitation: Invitation }
     | { kind: 'notification'; id: string; createdAt: string; read: boolean; notification: AppNotification }
@@ -17,6 +19,9 @@ export type BellItem =
  *
  * A bell that cannot load stays empty rather than interrupting whatever
  * page it sits on: the same news also arrives by mail.
+ *
+ * @returns the `items`, newest first; how many are `unread`; and
+ *          `markRead` and `clear` for one line
  */
 export function useNotifications() {
     const invitationsQuery = useApiQuery<Invitation[]>('/invitations', [], '')
@@ -99,6 +104,9 @@ export function useNotifications() {
  * Where a line leads when it is opened, and what to call the place. A
  * notification about a project opens the project; one about a carnet entry
  * opens the carnet. The rest lead nowhere, and say so by offering nothing.
+ *
+ * @param item the line
+ * @returns the address in the app and its name, or null
  */
 export function destinationOf(item: BellItem): { href: string; label: string } | null {
     if (item.kind === 'invitation') {

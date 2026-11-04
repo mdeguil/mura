@@ -1,8 +1,9 @@
 package io.mura.mail;
 
+/** What an {@link EmailToken} was mailed for. */
 public enum EmailTokenPurpose {
-    // Six digits, typed back into the app.
+    /** Confirming the address: six digits, typed back into the app. */
     EMAIL_VERIFICATION,
-    // A long random string, carried in a link.
+    /** Resetting the password: a long random string, carried in a link. */
     PASSWORD_RESET
 }

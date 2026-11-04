@@ -1,13 +1,19 @@
-// The round button that opens an "add someone" form and, turned a quarter,
-// closes it again.
+/**
+ * The round button that opens an "add someone" form and, turned a quarter,
+ * closes it again.
+ *
+ * @param props whether the form is open, what opening it does, and the click
+ */
 export default function AddToggleButton({
     open,
     label,
     onClick,
 }: {
+    /** Whether the form it controls is open; the button then reads Annuler. */
     open: boolean
-    // What opening it does, said to screen readers and on hover.
+    /** What opening it does, said to screen readers and on hover. */
     label: string
+    /** Opens or closes the form. */
     onClick: () => void
 }) {
     return (

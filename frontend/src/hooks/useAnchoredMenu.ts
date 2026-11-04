@@ -1,21 +1,35 @@
 import { useEffect, useRef, useState } from 'react'
 
+/** Where an anchored menu goes, in viewport pixels. */
 export type AnchoredPosition = {
+    /** Distance from the top of the viewport. */
     top: number
+    /** Distance from the left of the viewport. */
     left: number
+    /** The menu's minimum width: its button's, or the hook's minimum. */
     width: number
+    /** The tallest it may be before it scrolls. */
     maxHeight: number
 }
 
-// A menu hung off a button, laid out against the viewport rather than its
-// parent. Panels that scroll their own content -- the task modal, a list of
-// cards -- clip an absolutely positioned menu at their edge, and the longer
-// the menu the sooner it happens. Positioning it by hand costs a measurement
-// and buys a menu nothing can cut off.
-//
-// Returns the trigger ref to attach, the measured position (null until the
-// menu is open), and the usual open/close handling: a click elsewhere or
-// Escape closes it.
+/**
+ * A menu hung off a button, laid out against the viewport rather than its
+ * parent. Panels that scroll their own content -- the task modal, a list
+ * of cards -- clip an absolutely positioned menu at their edge, and the
+ * longer the menu the sooner it happens. Positioning it by hand costs a
+ * measurement and buys a menu nothing can cut off. It opens downwards
+ * unless there is plainly more room above, and follows its button on
+ * scroll and resize. A click elsewhere or Escape closes it.
+ *
+ * @param options what the menu needs
+ * @param options.open whether the menu is showing
+ * @param options.onClose called on a click outside or Escape
+ * @param options.minWidth the narrowest the menu may be, in pixels
+ * @param options.maxHeight the tallest the menu may be, in pixels
+ * @returns `wrapper` to put around button and menu, `trigger` to attach to
+ *          the button, and the measured `position` -- null until the menu
+ *          is open
+ */
 export function useAnchoredMenu({
     open,
     onClose,
@@ -84,7 +98,12 @@ export function useAnchoredMenu({
     return { wrapper, trigger, position }
 }
 
-// The style that puts the menu where the hook measured it.
+/**
+ * The style that puts the menu where the hook measured it.
+ *
+ * @param position what useAnchoredMenu measured
+ * @returns a fixed-position style for the menu
+ */
 export function anchoredStyle(position: AnchoredPosition): React.CSSProperties {
     return {
         position: 'fixed',

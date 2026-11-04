@@ -19,9 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
-// Creating, renaming, handing over and removing. The listing shows who is in
-// each group, but there is deliberately no endpoint here that changes it:
-// that is the gérant's list.
+/**
+ * Groups, for administrators, under {@code /api/admin/groups}: creating,
+ * renaming, handing over and removing. The listing shows who is in each
+ * group, but there is deliberately no endpoint here that changes it: that
+ * is the gérant's list. Every route answers 403 to anyone but an
+ * administrator.
+ */
 @RestController
 @RequestMapping("/api/admin/groups")
 @RequiredArgsConstructor
@@ -30,12 +34,26 @@ public class AdminGroupController {
     private final AdminGroupService adminGroupService;
     private final AccountService accountService;
 
+    /**
+     * {@code GET /api/admin/groups}: every group on the instance.
+     *
+     * @param userId the signed-in administrator
+     * @return 200 with the groups and their members, by name
+     */
     @GetMapping
     public ResponseEntity<List<AdminGroupResponse>> list(@AuthenticationPrincipal UUID userId) {
         accountService.requireAdmin(userId);
         return ResponseEntity.ok(adminGroupService.list());
     }
 
+    /**
+     * {@code POST /api/admin/groups}: creates a group and names its gérant.
+     *
+     * @param userId the signed-in administrator
+     * @param request the name and the gérant
+     * @return 201 with the group
+     * @see AdminGroupService#create(UUID, SaveAdminGroupRequest)
+     */
     @PostMapping
     public ResponseEntity<AdminGroupResponse> create(
             @AuthenticationPrincipal UUID userId,
@@ -45,6 +63,16 @@ public class AdminGroupController {
         return ResponseEntity.status(HttpStatus.CREATED).body(adminGroupService.create(userId, request));
     }
 
+    /**
+     * {@code PUT /api/admin/groups/{groupId}}: renames a group, or hands it
+     * to another gérant.
+     *
+     * @param userId the signed-in administrator
+     * @param groupId the group
+     * @param request the name and the gérant
+     * @return 200 with the group
+     * @see AdminGroupService#update(UUID, UUID, SaveAdminGroupRequest)
+     */
     @PutMapping("/{groupId}")
     public ResponseEntity<AdminGroupResponse> update(
             @AuthenticationPrincipal UUID userId,
@@ -55,6 +83,14 @@ public class AdminGroupController {
         return ResponseEntity.ok(adminGroupService.update(userId, groupId, request));
     }
 
+    /**
+     * {@code DELETE /api/admin/groups/{groupId}}: deletes a group.
+     *
+     * @param userId the signed-in administrator
+     * @param groupId the group
+     * @return 204
+     * @see AdminGroupService#delete(UUID, UUID)
+     */
     @DeleteMapping("/{groupId}")
     public ResponseEntity<Void> delete(
             @AuthenticationPrincipal UUID userId,

@@ -17,6 +17,10 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * A step of a task, ticked off or not. A task cannot reach Terminé while
+ * any of its subtasks is still open.
+ */
 @Entity
 @Table(name = "subtasks")
 @Getter

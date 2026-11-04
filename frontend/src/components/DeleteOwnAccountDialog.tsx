@@ -7,13 +7,19 @@ import { useApiQuery } from '../hooks/useApiQuery'
 import { DeletionConsequences } from './DeleteAccountDialog'
 import type { AccountDeletionPreview } from '../types'
 
-// Closing one's own account. The same consequences an administrator is
-// shown, worked out by the server; the password is what confirms it.
+/**
+ * Closing one's own account. The same consequences an administrator is
+ * shown, worked out by the server; the password is what confirms it.
+ *
+ * @param props what to do once the account is gone or the dialog closes
+ */
 export default function DeleteOwnAccountDialog({
     onClose,
     onDeleted,
 }: {
+    /** Closes the dialog, keeping the account. */
     onClose: () => void
+    /** Called once the server has deleted the account. */
     onDeleted: () => void
 }) {
     const { data: preview, error: previewError } = useApiQuery<AccountDeletionPreview | null>(

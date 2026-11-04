@@ -8,6 +8,11 @@ import type { Invitation, Member, Project, Task } from '../types'
  * holds an invitation gets the project's description and that invitation,
  * nothing more. The member-only requests wait until the project says which
  * of the two the reader is.
+ *
+ * @param id the project's id, from the address
+ * @returns the project and its team, tasks, archived tasks and
+ *          invitations, each with its setter; the reader's own invitation
+ *          when they are only invited; and the load errors with how to retry
  */
 export function useProject(id: string | undefined) {
     const projectQuery = useApiQuery<Project | null>(`/projects/${id}`, null, 'Impossible de charger ce projet.')

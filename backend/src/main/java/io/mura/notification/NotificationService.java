@@ -15,6 +15,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * The bell. Every notification is written through here, and every one is
+ * also mailed -- unless its recipient is suspended, since they cannot sign
+ * in to act on it.
+ */
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -22,6 +27,12 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final MailService mailService;
 
+    /**
+     * What a reader's bell holds.
+     *
+     * @param userId the reader
+     * @return their notifications, newest first
+     */
     @Transactional(readOnly = true)
     public List<NotificationResponse> listForUser(UUID userId) {
         return notificationRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
@@ -34,6 +45,12 @@ public class NotificationService {
      * unless their account is suspended. The project's name is copied, so
      * the line still reads correctly once the project is gone. A blank
      * message is dropped.
+     *
+     * @param recipient who to tell
+     * @param type what happened
+     * @param project the project it happened in
+     * @param actor who did it
+     * @param message a note from the actor, or null
      */
     @Transactional
     public void notify(User recipient, NotificationType type, Project project, User actor, String message) {
@@ -44,10 +61,17 @@ public class NotificationService {
         record(notification, recipient, type, actor.getUsername());
     }
 
-    // The group counterpart of notify(). A group owner is told about the
-    // people in their group, so the subject is the member whose account
-    // changed -- not the administrator who changed it, whose identity is
-    // nobody else's business.
+    /**
+     * The group counterpart of {@link #notify}. A group owner is told about
+     * the people in their group, so the subject is the member whose account
+     * or membership changed -- not the administrator who changed it, whose
+     * identity is nobody else's business.
+     *
+     * @param recipient who to tell
+     * @param type what happened
+     * @param group the group it concerns, which the line links to
+     * @param subject who the line is about
+     */
     @Transactional
     public void notifyAboutGroup(User recipient, NotificationType type, UserGroup group, User subject) {
         Notification notification = new Notification();
@@ -56,9 +80,16 @@ public class NotificationService {
         record(notification, recipient, type, subject.getUsername());
     }
 
-    // The name without the group behind it, for a reader who has nothing
-    // left to open: they were taken out of it, or it no longer exists. The
-    // name is a snapshot, which is why the line still reads correctly.
+    /**
+     * A line about a group by name only, for a reader who has nothing left
+     * to open: they were taken out of it, or it no longer exists. The name
+     * is a snapshot, which is why the line still reads correctly.
+     *
+     * @param recipient who to tell
+     * @param type what happened
+     * @param groupName the group's name
+     * @param subject who the line is about
+     */
     @Transactional
     public void notifyAboutFormerGroup(
             User recipient, NotificationType type, String groupName, User subject
@@ -68,8 +99,14 @@ public class NotificationService {
         record(notification, recipient, type, subject.getUsername());
     }
 
-    // Neither a project nor a group: this one is about a person, and the
-    // person is the subject already.
+    /**
+     * A line about a person: neither a project nor a group, and the person
+     * is the subject already. Used for carnet requests.
+     *
+     * @param recipient who to tell
+     * @param type what happened
+     * @param subject who the line is about
+     */
     @Transactional
     public void notifyAboutPerson(User recipient, NotificationType type, User subject) {
         record(new Notification(), recipient, type, subject.getUsername());
@@ -105,6 +142,15 @@ public class NotificationService {
         );
     }
 
+    /**
+     * Marks a notification as read. Reading it again keeps the first date.
+     *
+     * @param userId the reader
+     * @param notificationId the notification
+     * @return the notification, now read
+     * @throws ApiException 404 if it does not exist, 403 if it is someone
+     *         else's
+     */
     @Transactional
     public NotificationResponse markRead(UUID userId, UUID notificationId) {
         Notification notification = requireOwn(userId, notificationId);
@@ -114,8 +160,16 @@ public class NotificationService {
         return NotificationResponse.from(notification);
     }
 
-    // Nothing else holds these, so clearing one deletes it outright —
-    // unlike an invitation, which is still waiting for an answer.
+    /**
+     * Clears a notification from the bell. Nothing else holds these, so it
+     * is deleted outright -- unlike an invitation, which is still waiting
+     * for an answer.
+     *
+     * @param userId the reader
+     * @param notificationId the notification
+     * @throws ApiException 404 if it does not exist, 403 if it is someone
+     *         else's
+     */
     @Transactional
     public void delete(UUID userId, UUID notificationId) {
         notificationRepository.delete(requireOwn(userId, notificationId));

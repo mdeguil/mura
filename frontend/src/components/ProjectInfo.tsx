@@ -14,6 +14,13 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
     )
 }
 
+/**
+ * The Informations tab of a project: its facts, how its tasks stand and its
+ * team. Someone only invited sees the facts and the team with the
+ * invitation to answer, and nothing of the tasks.
+ *
+ * @param props the project, its tasks and team, and what to do as they change
+ */
 export default function ProjectInfo({
     project,
     invitation,
@@ -30,20 +37,33 @@ export default function ProjectInfo({
     onMemberRemoved,
     onMembersChanged,
 }: {
+    /** The project shown. */
     project: Project
-    // Set only when the viewer holds a live invitation to this project.
+    /** Set only when the viewer holds a live invitation to this project. */
     invitation: Invitation | null
+    /** Called with `true` to join the project, `false` to decline. */
     onAnswerInvitation: (accepted: boolean) => void
+    /** The project's live tasks. */
     tasks: Task[]
+    /** How many of its tasks are archived. */
     archivedCount: number
+    /** The project's members. */
     members: Member[]
+    /** The invitations still waiting for an answer. */
     invitations: Invitation[]
+    /** Whether the viewer may invite and remove members. */
     canManage: boolean
+    /** Whether the viewer owns the project. */
     isOwner: boolean
+    /** The viewer's account id. */
     currentUserId: string
+    /** Called with an invitation just sent. */
     onInvited: (invitation: Invitation) => void
+    /** Called with the id of an invitation just withdrawn. */
     onInvitationCancelled: (invitationId: string) => void
+    /** Called with the id of a member just removed. */
     onMemberRemoved: (memberId: string) => void
+    /** Called with the whole team when it changed some other way. */
     onMembersChanged: (members: Member[]) => void
 }) {
     const invitedOnly = project.access === 'INVITED'

@@ -4,6 +4,10 @@ import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import Logo from '../components/Logo'
 
+/**
+ * The forgotten-password page, at /mot-de-passe-oublie: asks for an address
+ * and has a reset link mailed to it.
+ */
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('')
     const [sent, setSent] = useState(false)

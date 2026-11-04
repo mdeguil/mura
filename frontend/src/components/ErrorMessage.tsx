@@ -1,13 +1,20 @@
-// A failure the reader has to know about, announced to screen readers as it
-// appears. With onRetry it offers to ask again, which is usually all a lost
-// connection needs.
+/**
+ * A failure the reader has to know about, announced to screen readers as
+ * it appears. With onRetry it offers to ask again, which is usually all a
+ * lost connection needs.
+ *
+ * @param props the message, and how to try again
+ */
 export default function ErrorMessage({
     children,
     onRetry,
     className = '',
 }: {
+    /** What went wrong. */
     children: React.ReactNode
+    /** Shows a Réessayer button that calls it. */
     onRetry?: () => void
+    /** Classes for spacing around the box. */
     className?: string
 }) {
     return (

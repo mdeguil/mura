@@ -15,9 +15,11 @@ import { useAuthStore } from '../store/authStore'
 import { apiErrorMessage } from '../utils/apiError'
 import type { Group, GroupMember } from '../types'
 
-// A group gets a page of its own, like a project: the gérant manages it
-// from here rather than from a row in a list, and a member can at least see
-// who else is in it.
+/**
+ * A group's page, at /groupe/:id. A group gets a page of its own, like a
+ * project: the gérant manages it from here rather than from a row in a
+ * list, and a member can at least see who else is in it.
+ */
 export default function GroupPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()

@@ -8,8 +8,11 @@ import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
 import { useAuthStore } from '../store/authStore'
 
-// Where a person exercises the rights the RGPD gives them over their data
-// without having to ask anybody: take a copy of it, or close the account.
+/**
+ * The account page, at /compte. Where a person exercises the rights the
+ * RGPD gives them over their data without having to ask anybody: take a
+ * copy of it, or close the account.
+ */
 export default function AccountPage() {
     const navigate = useNavigate()
     const user = useAuthStore((s) => s.user)

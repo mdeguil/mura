@@ -1,6 +1,17 @@
 import type { PasswordRule } from '../utils/passwordRules'
 
-export default function PasswordStrength({ rules }: { rules: PasswordRule[] }) {
+/**
+ * How far a password is from meeting the rules: a bar, and each rule ticked
+ * or not.
+ *
+ * @param props the rules, from passwordRules()
+ */
+export default function PasswordStrength({
+    rules,
+}: {
+    /** The rules, each marked met or not. */
+    rules: PasswordRule[]
+}) {
     const met = rules.filter((r) => r.met).length
     const ratio = met / rules.length
 

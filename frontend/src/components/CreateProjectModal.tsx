@@ -13,11 +13,19 @@ import ProjectFormFields, {
     type ProjectFormValues,
 } from './ProjectFormFields'
 
+/**
+ * The form that creates a project: its details, the people to invite, and
+ * optionally one of the reader's groups to bring on whole.
+ *
+ * @param props what to do once it is created or the form closes
+ */
 export default function CreateProjectModal({
     onClose,
     onCreated,
 }: {
+    /** Closes the form without creating anything. */
     onClose: () => void
+    /** Called with the project once the server has created it. */
     onCreated: (project: Project) => void
 }) {
     const [values, setValues] = useState<ProjectFormValues>({

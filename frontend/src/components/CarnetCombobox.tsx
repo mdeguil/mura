@@ -8,9 +8,15 @@ import type { KnownUser } from '../types'
 // faces is the thing it is meant to replace.
 const MAX_SUGGESTIONS = 8
 
-// The invite field, with the carnet behind it. Typing two letters of a name
-// is quicker than recalling an address and quicker than picking a face out
-// of a long list -- and the field still takes an address nobody has met yet.
+/**
+ * The invite field, with the carnet behind it. Typing two letters of a name
+ * is quicker than recalling an address and quicker than picking a face out
+ * of a long list -- and the field still takes an address nobody has met
+ * yet. Suggestions starting with what was typed come first; the arrows and
+ * Enter pick one, Escape closes the list before anything else.
+ *
+ * @param props the field's value, who not to offer, and the callbacks
+ */
 export default function CarnetCombobox({
     value,
     onChange,
@@ -23,16 +29,25 @@ export default function CarnetCombobox({
     className = '',
     id,
 }: {
+    /** What the field holds. */
     value: string
+    /** Called as the reader types. */
     onChange: (value: string) => void
+    /** Called with the person picked from the list. */
     onPick: (person: KnownUser) => void
+    /** People not to suggest, by id. */
     excludeIds?: string[]
+    /** People not to suggest, by address. */
     excludeEmails?: string[]
+    /** The field's placeholder. */
     placeholder?: string
+    /** Takes the focus when it appears. */
     autoFocus?: boolean
+    /** Called on Escape when the list is already closed. */
     onEscape?: () => void
+    /** Classes for the wrapper. */
     className?: string
-    // For a <label htmlFor> outside the field.
+    /** For a `<label htmlFor>` outside the field. */
     id?: string
 }) {
     // Suggestions only: if the carnet cannot be read, the field still takes

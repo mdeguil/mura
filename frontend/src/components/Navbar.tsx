@@ -4,6 +4,11 @@ import NotificationBell from './NotificationBell'
 import ThemeToggle from './ThemeToggle'
 import Logo from './Logo'
 
+/**
+ * The bar at the top of every signed-in page: the sections, the theme
+ * switch, the bell, the account and signing out. Administration shows only
+ * to administrators.
+ */
 export default function Navbar() {
     const navigate = useNavigate()
     const user = useAuthStore((s) => s.user)

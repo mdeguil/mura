@@ -2,9 +2,12 @@ import { Link } from 'react-router-dom'
 import LegalLayout, { LegalSection } from '../components/LegalLayout'
 import { LEGAL_INFO } from '../legal/legalInfo'
 
-// Politique de confidentialité (RGPD, art. 13). Every sentence here
-// describes what the code actually does: when a behaviour changes -- what
-// is collected, who sees it, how long it stays -- this page changes with it.
+/**
+ * The politique de confidentialité, at /confidentialite (RGPD, art. 13).
+ * Every sentence here describes what the code actually does: when a
+ * behaviour changes -- what is collected, who sees it, how long it stays --
+ * this page changes with it.
+ */
 export default function PrivacyPage() {
     const { publisher, host, privacyContact } = LEGAL_INFO
 

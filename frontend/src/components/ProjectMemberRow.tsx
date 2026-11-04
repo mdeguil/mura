@@ -7,9 +7,13 @@ const ROLE_LABELS: Record<ProjectRole, string> = {
     MEMBER: 'Membre',
 }
 
-// One person on the team. The owner changes roles from here; the owner and
-// the admins can take someone out. Nobody removes themself from their own
-// row: leaving has a button of its own.
+/**
+ * One person on the team. The owner changes roles from here; the owner and
+ * the admins can take someone out. Nobody removes themself from their own
+ * row: leaving has a button of its own.
+ *
+ * @param props the member, what the reader may do and what to do on each action
+ */
 export default function ProjectMemberRow({
     member,
     isMe,
@@ -18,12 +22,17 @@ export default function ProjectMemberRow({
     onRoleChange,
     onRemove,
 }: {
+    /** The member shown. */
     member: Member
+    /** Whether the row is the reader's own. */
     isMe: boolean
-    // Whether the reader owns the project, not whether this member does.
+    /** Whether the reader owns the project, not whether this member does. */
     isOwner: boolean
+    /** Whether the reader may take members out. */
     canManage: boolean
+    /** Called with the role picked for this member. */
     onRoleChange: (role: ProjectRole) => void
+    /** Called to take this member out. */
     onRemove: () => void
 }) {
     return (

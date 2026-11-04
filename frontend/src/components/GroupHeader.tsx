@@ -1,19 +1,26 @@
 import { useState } from 'react'
 import type { Group } from '../types'
 
-// The group's name, renamed in place by its gérant, and what can be done to
-// the group as a whole: the gérant renames or deletes it, anyone else can
-// only leave.
+/**
+ * The group's name, renamed in place by its gérant, and what can be done
+ * to the group as a whole: the gérant renames or deletes it, anyone else
+ * can only leave.
+ *
+ * @param props the group and its three actions
+ */
 export default function GroupHeader({
     group,
     onRename,
     onDelete,
     onLeave,
 }: {
+    /** The group. */
     group: Group
-    // Answers whether the new name was kept, so the field knows to close.
+    /** Saves a new name; answers whether it was kept, so the field knows to close. */
     onRename: (name: string) => Promise<boolean>
+    /** Asks to delete the group. */
     onDelete: () => void
+    /** Asks to leave the group. */
     onLeave: () => void
 }) {
     const [renaming, setRenaming] = useState(false)

@@ -6,15 +6,23 @@ import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
 import { projectTypeLabel } from '../utils/projectMeta'
 
-// Rows rather than cards: these are projects you are deciding about, not
-// ones you are working in, and the two actions matter more than the look.
+/**
+ * The owner's bin: archived projects, each with Restaurer and Supprimer.
+ * Rows rather than cards: these are projects you are deciding about, not
+ * ones you are working in, and the two actions matter more than the look.
+ *
+ * @param props the projects and what to do once one is restored or deleted
+ */
 export default function ArchivedProjectList({
     projects,
     onRestored,
     onDeleted,
 }: {
+    /** The archived projects to list. */
     projects: Project[]
+    /** Called with the project once the server has restored it. */
     onRestored: (project: Project) => void
+    /** Called with the project's id once the server has deleted it. */
     onDeleted: (projectId: string) => void
 }) {
     const [error, setError] = useState('')

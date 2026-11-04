@@ -2,10 +2,13 @@ import { Link } from 'react-router-dom'
 import LegalLayout, { LegalSection } from '../components/LegalLayout'
 import { LEGAL_INFO } from '../legal/legalInfo'
 
-// Mentions légales (LCEN, art. 6-III). Mura is software; what has to be
-// declared is who publishes and hosts this particular instance, which the
-// instance supplies through legal/legalInfo.ts. Only what it declared is
-// shown -- never a placeholder standing in for a name.
+/**
+ * The mentions légales, at /mentions-legales (LCEN, art. 6-III). Mura is
+ * software; what has to be declared is who publishes and hosts this
+ * particular instance, which the instance supplies through
+ * legal/legalInfo.ts. Only what it declared is shown -- never a placeholder
+ * standing in for a name.
+ */
 export default function LegalNoticePage() {
     const { publisher, host } = LEGAL_INFO
 

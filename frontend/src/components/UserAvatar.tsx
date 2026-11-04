@@ -5,13 +5,22 @@ const SIZES = {
     md: 'w-7 h-7 text-xs',
 } as const
 
+/**
+ * A person's initial in a coloured disc, greyed out and badged when their
+ * account is suspended.
+ *
+ * @param props the person, the size and the tooltip
+ */
 export default function UserAvatar({
     user,
     size = 'md',
     title,
 }: {
+    /** The person shown. */
     user: User
+    /** How big the disc is, `md` by default. */
     size?: keyof typeof SIZES
+    /** The tooltip; the name, and the suspension if any, by default. */
     title?: string
 }) {
     const suspended = user.suspended === true
@@ -46,9 +55,16 @@ export default function UserAvatar({
     )
 }
 
-// The word, for the places that have room for it. The avatar badge carries
-// the same news where a pill would not fit.
-export function SuspendedPill({ className = '' }: { className?: string }) {
+/**
+ * The "Suspendu" pill, for the places that have room for the word. The
+ * avatar badge carries the same news where a pill would not fit.
+ *
+ * @param props extra classes for the pill
+ */
+export function SuspendedPill({ className = '' }: {
+    /** Classes added to the pill's own. */
+    className?: string
+}) {
     return (
         <span
             className={`shrink-0 text-[10px] font-medium rounded-full px-1.5 py-0.5 border border-red-200 bg-red-50 text-red-600 ${className}`}

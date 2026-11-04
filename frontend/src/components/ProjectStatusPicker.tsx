@@ -4,16 +4,24 @@ import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS } from '../utils/projectM
 
 const STATUSES = Object.keys(PROJECT_STATUS_LABELS) as ProjectStatus[]
 
-// The badge was already the clearest statement of where a project stands;
-// making it the control too means changing it no longer sends anyone
-// through a form.
+/**
+ * A project's status badge, which opens the list of statuses when clicked.
+ * The badge was already the clearest statement of where a project stands;
+ * making it the control too means changing it no longer sends anyone
+ * through a form.
+ *
+ * @param props the status, whether it may be changed and what to do on a change
+ */
 export default function ProjectStatusPicker({
     status,
     canEdit,
     onChange,
 }: {
+    /** The project's current status. */
     status: ProjectStatus
+    /** Whether the badge opens the list; a plain badge otherwise. */
     canEdit: boolean
+    /** Called with the status picked. */
     onChange: (status: ProjectStatus) => void
 }) {
     const [open, setOpen] = useState(false)

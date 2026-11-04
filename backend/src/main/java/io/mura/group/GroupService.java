@@ -19,6 +19,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Groups as their members and gérant use them: reading one, renaming it,
+ * adding and removing people, setting someone aside. Creating a group and
+ * naming its gérant are an administrator's, in
+ * {@link io.mura.admin.AdminGroupService}.
+ */
 @Service
 @RequiredArgsConstructor
 public class GroupService {
@@ -28,6 +34,13 @@ public class GroupService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
 
+    /**
+     * The groups a person belongs to, each with its members, in two queries
+     * whatever their number.
+     *
+     * @param userId the reader
+     * @return their groups, ordered by name
+     */
     @Transactional(readOnly = true)
     public List<GroupResponse> listForUser(UUID userId) {
         List<UserGroup> groups = groupRepository.findAllForMember(userId);
@@ -48,8 +61,16 @@ public class GroupService {
                 .toList();
     }
 
-    // One group on its own page. Open to everyone in it, not just the
-    // gérant: a member should be able to see who else is there.
+    /**
+     * One group, for its own page. Open to everyone in it, not just the
+     * gérant: a member should be able to see who else is there.
+     *
+     * @param userId the reader
+     * @param groupId the group
+     * @return the group and its members
+     * @throws ApiException 404 if the group does not exist, 403 if the
+     *         reader is not in it
+     */
     @Transactional(readOnly = true)
     public GroupResponse get(UUID userId, UUID groupId) {
         UserGroup group = require(groupId);
@@ -61,6 +82,16 @@ public class GroupService {
         return GroupResponse.from(group, userId, membersOf(groupId));
     }
 
+    /**
+     * Renames a group.
+     *
+     * @param actorId the gérant
+     * @param groupId the group
+     * @param request the new name
+     * @return the group, renamed
+     * @throws ApiException 404 if the group does not exist, 403 for anyone
+     *         but the gérant
+     */
     @Transactional
     public GroupResponse rename(UUID actorId, UUID groupId, SaveGroupRequest request) {
         UserGroup group = requireOwner(actorId, groupId);
@@ -72,7 +103,10 @@ public class GroupService {
      * Deletes the group. Its members are told by name; the projects it
      * brought people onto keep them.
      *
-     * @throws ApiException 403 for anyone but the gérant
+     * @param actorId the gérant
+     * @param groupId the group
+     * @throws ApiException 404 if the group does not exist, 403 for anyone
+     *         but the gérant
      */
     @Transactional
     public void delete(UUID actorId, UUID groupId) {
@@ -91,8 +125,13 @@ public class GroupService {
 
     /**
      * Adds an account to the group outright, with no invitation to answer,
-     * and tells them so.
+     * and tells them so: a group opens nothing on its own, so there is no
+     * access to consent to.
      *
+     * @param actorId the gérant
+     * @param groupId the group
+     * @param request the address of the person to add
+     * @return the group, with them in it
      * @throws ApiException 403 for anyone but the gérant, 404 if no account
      *         uses the email, 409 if they are already in it
      */
@@ -124,6 +163,18 @@ public class GroupService {
         return GroupResponse.from(group, actorId, membersOf(groupId));
     }
 
+    /**
+     * Takes someone out of a group, or lets them leave it when actor and
+     * member are the same person. Someone taken out is told by the group's
+     * name; someone leaving tells the gérant.
+     *
+     * @param actorId the gérant, or the member leaving
+     * @param groupId the group
+     * @param memberId the member to take out
+     * @throws ApiException 404 if the group does not exist or the person is
+     *         not in it; 409 for the gérant, who deletes the group instead
+     *         of leaving it; 403 for a member taking someone else out
+     */
     @Transactional
     public void removeMember(UUID actorId, UUID groupId, UUID memberId) {
         UserGroup group = require(groupId);
@@ -161,9 +212,21 @@ public class GroupService {
         }
     }
 
-    // Set aside without being removed, and brought back. Deliberately not
-    // called suspending: the account is untouched, and this group is the
-    // only thing concerned.
+    /**
+     * Sets a member aside without removing them, or brings them back.
+     * Deliberately not called suspending: the account is untouched, and this
+     * group is the only thing concerned. The member is told, unless nothing
+     * changed -- two clicks in a row should not send two mails.
+     *
+     * @param actorId the gérant
+     * @param groupId the group
+     * @param memberId the member
+     * @param onHold true to set them aside, false to bring them back
+     * @return the group
+     * @throws ApiException 404 if the group does not exist or the person is
+     *         not in it, 403 for anyone but the gérant, 409 for the gérant
+     *         themself
+     */
     @Transactional
     public GroupResponse setMemberHold(UUID actorId, UUID groupId, UUID memberId, boolean onHold) {
         UserGroup group = requireOwner(actorId, groupId);

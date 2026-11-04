@@ -7,9 +7,12 @@ import Logo from '../components/Logo'
 
 const LENGTH = 6
 
-// The only thing a freshly registered account can do. Nothing else is worth
-// showing until the address is confirmed, so this is not a page you navigate
-// to -- it is what the app is until the code comes back.
+/**
+ * The code screen that confirms an address. The only thing a freshly
+ * registered account can do. Nothing else is worth showing until the
+ * address is confirmed, so this is not a page you navigate to -- it is what
+ * the app is until the code comes back.
+ */
 export default function VerifyEmailPage() {
     const user = useAuthStore((s) => s.user)
     const setUser = useAuthStore((s) => s.setUser)

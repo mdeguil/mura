@@ -3,8 +3,12 @@ import type { Project, ProjectStatus } from '../types'
 import { projectGlassBackground } from '../utils/color'
 import { projectTypeLabel } from '../utils/projectMeta'
 
-// The project's name and what can be done to it as a whole. Editing is part
-// of running the team; archiving stays with the owner.
+/**
+ * The project's name and what can be done to it as a whole. Editing is part
+ * of running the team; archiving stays with the owner.
+ *
+ * @param props the project, what the viewer may do and what to do on each action
+ */
 export default function ProjectHeader({
     project,
     canManage,
@@ -13,11 +17,17 @@ export default function ProjectHeader({
     onEdit,
     onArchive,
 }: {
+    /** The project shown. */
     project: Project
+    /** Whether the viewer may edit it and change its status. */
     canManage: boolean
+    /** Whether the viewer owns it, and so may archive it. */
     isOwner: boolean
+    /** Called with the status picked. */
     onStatusChange: (status: ProjectStatus) => void
+    /** Called to open the edit dialog. */
     onEdit: () => void
+    /** Called to open the archive dialog. */
     onArchive: () => void
 }) {
     return (

@@ -1,9 +1,21 @@
 import UserAvatar, { SuspendedPill } from './UserAvatar'
 import type { User } from '../types'
 
-// Who a row is about: face, name, and the address when the reader may see
-// it. The reader's own row says so.
-export default function PersonIdentity({ person, isMe }: { person: User; isMe: boolean }) {
+/**
+ * Who a row is about: face, name, and the address when the reader may see
+ * it. The reader's own row says so.
+ *
+ * @param props the person, and whether it is the reader
+ */
+export default function PersonIdentity({
+    person,
+    isMe,
+}: {
+    /** The person. */
+    person: User
+    /** Whether the person is the reader; adds « · toi ». */
+    isMe: boolean
+}) {
     return (
         <>
             <UserAvatar user={person} />

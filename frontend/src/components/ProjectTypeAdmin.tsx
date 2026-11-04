@@ -10,6 +10,11 @@ import type { ProjectType } from '../types'
 // hunting for the system picker. The field takes anything typed into it.
 const SUGGESTED = ['🌐', '📱', '📣', '🎉', '📁', '🔬', '🧪', '🎨', '📊', '🛠️', '🚀', '📚', '💡', '🏗️']
 
+/**
+ * The Types tab of the administration: every project type with how many
+ * projects it holds, and creating, editing and deleting them. The fallback
+ * type can be neither edited nor deleted.
+ */
 export default function ProjectTypeAdmin() {
     const {
         data: types,

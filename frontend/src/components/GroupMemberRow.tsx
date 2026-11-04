@@ -1,8 +1,12 @@
 import PersonIdentity from './PersonIdentity'
 import type { GroupMember } from '../types'
 
-// One person in a group. The gérant's row is marked and cannot be touched;
-// for the others, the gérant can set them aside or take them out.
+/**
+ * One person in a group. The gérant's row is marked and cannot be touched;
+ * for the others, the gérant can set them aside or take them out.
+ *
+ * @param props the member, who is looking, and the gérant's two actions
+ */
 export default function GroupMemberRow({
     member,
     isManager,
@@ -11,11 +15,17 @@ export default function GroupMemberRow({
     onToggleHold,
     onRemove,
 }: {
+    /** The member. */
     member: GroupMember
+    /** Whether this member is the gérant. */
     isManager: boolean
+    /** Whether this member is the reader. */
     isMe: boolean
+    /** Whether the reader is the gérant, and so may act on the row. */
     canManage: boolean
+    /** Sets the member aside, or brings them back. */
     onToggleHold: () => void
+    /** Asks to take the member out of the group. */
     onRemove: () => void
 }) {
     return (

@@ -19,6 +19,11 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * A code or link mailed to an account. Only a hash of its secret is kept:
+ * what is mailed out is the only copy of the real thing. A token works once,
+ * until it expires, and only the newest of its kind works at all.
+ */
 @Entity
 @Table(name = "email_tokens")
 @Getter
@@ -62,6 +67,12 @@ public class EmailToken {
         }
     }
 
+    /**
+     * Whether the token can still be used.
+     *
+     * @param now the moment to judge it at
+     * @return true if it is unspent and not yet expired
+     */
     public boolean isLive(Instant now) {
         return consumedAt == null && expiresAt.isAfter(now);
     }

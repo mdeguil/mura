@@ -3,21 +3,30 @@ import { anchoredStyle, useAnchoredMenu } from '../hooks/useAnchoredMenu'
 import UserAvatar from './UserAvatar'
 import type { Member } from '../types'
 
-// The same idea as the project status badge: the pill that states who is in
-// charge is also the control that changes it, so naming a responsable no
-// longer means opening a form and picking a line out of a dropdown.
+/**
+ * Who is in charge of a task, as a pill that is also the control that
+ * changes it -- the same idea as the project status badge, so naming a
+ * responsable no longer means opening a form and picking a line out of a
+ * dropdown.
+ *
+ * @param props the team, the current choice, and what to do on a change
+ */
 export default function AssigneePicker({
     members,
     value,
     onChange,
     disabled,
-    // The create form wants a field that lines up with its other inputs.
     fullWidth = false,
 }: {
+    /** The project's team, the people a task can be given to. */
     members: Member[]
+    /** The current responsable's id, or null for nobody. */
     value: string | null
+    /** Called with the new responsable's id, or null to leave it to nobody. */
     onChange: (assigneeId: string | null) => void | Promise<void>
+    /** Greys the pill out. */
     disabled?: boolean
+    /** Fills its row, for the create form, which wants a field that lines up with its other inputs. */
     fullWidth?: boolean
 }) {
     const [open, setOpen] = useState(false)

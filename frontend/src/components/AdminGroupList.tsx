@@ -7,6 +7,11 @@ import { useApiQuery } from '../hooks/useApiQuery'
 import UserAvatar, { SuspendedPill } from './UserAvatar'
 import type { Account, AdminGroup } from '../types'
 
+/**
+ * The Groupes tab of the administration: every group with its gérant and
+ * members, and creating, renaming, handing over and deleting groups. The
+ * members are shown, not edited: that stays the gérant's business.
+ */
 export default function AdminGroupList() {
     const groupsQuery = useApiQuery<AdminGroup[]>('/admin/groups', [], 'Impossible de charger les groupes.')
     // The gérant is picked from the accounts, so both lists are needed

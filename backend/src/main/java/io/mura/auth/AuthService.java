@@ -23,6 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Registration, sign-in, confirming the address and resetting a forgotten
+ * password.
+ */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -37,6 +41,8 @@ public class AuthService {
      * Creates the account, signs it in and mails a six-digit code. Until the
      * code is entered, the token only reaches the verification routes.
      *
+     * @param request the name, address and password, already normalised
+     * @return the token and the new, unconfirmed account
      * @throws ApiException 409 if the email or the username is taken, in any
      *         case; 400 if the password is the email or the username
      */
@@ -96,8 +102,12 @@ public class AuthService {
      * Confirms the address with the code that was mailed. Does nothing for
      * an address already confirmed.
      *
+     * @param userId the signed-in account
+     * @param request the code
+     * @return the account, now confirmed
      * @throws ApiException 400 for a wrong code, 429 once five have been
-     *         tried, 410 if the code has expired or been replaced
+     *         tried, 410 if the code has expired or been replaced; 401 if
+     *         the account no longer exists
      */
     @Transactional
     public AccountResponse verifyEmail(UUID userId, VerifyEmailRequest request) {
@@ -111,6 +121,13 @@ public class AuthService {
         return AccountResponse.from(user);
     }
 
+    /**
+     * Mails a new code, which replaces the previous one. Does nothing for an
+     * address already confirmed.
+     *
+     * @param userId the signed-in account
+     * @throws ApiException 401 if the account no longer exists
+     */
     @Transactional
     public void resendCode(UUID userId) {
         User user = requireUser(userId);
@@ -121,9 +138,14 @@ public class AuthService {
         mailService.sendVerificationCode(user.getEmail(), user.getUsername(), issued.secret());
     }
 
-    // Answers the same way whether or not the address is in use. Telling a
-    // stranger which addresses have accounts is telling them where to
-    // aim.
+    /**
+     * Mails a reset link, valid for an hour, to the account using the
+     * address -- unless it is suspended. Behaves the same way whether or
+     * not the address is in use: telling a stranger which addresses have
+     * accounts is telling them where to aim.
+     *
+     * @param request the address
+     */
     @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
         userRepository.findByEmailIgnoreCase(request.email())
@@ -139,6 +161,7 @@ public class AuthService {
      * Sets a new password from the link that was mailed, and spends the
      * link. Also confirms the address if it was not yet.
      *
+     * @param request the link's token and the new password
      * @throws ApiException 410 if the link is unknown, expired or used; 400
      *         if the password is the old one, the email or the username
      */
@@ -169,6 +192,11 @@ public class AuthService {
     }
 
     /**
+     * Signs in. An account whose address is not confirmed signs in too; the
+     * token then reaches only the verification routes.
+     *
+     * @param request the address, in any case, and the password
+     * @return a new token and the account
      * @throws ApiException 401 for an unknown email or a wrong password,
      *         with the same message for both; 403 for a suspended account
      */
@@ -209,8 +237,14 @@ public class AuthService {
         }
     }
 
-    // Read from the database, never from the token: a role taken away an
-    // hour ago must read as taken away now.
+    /**
+     * The account as it stands. Read from the database, never from the
+     * token: a role taken away an hour ago must read as taken away now.
+     *
+     * @param userId the signed-in account
+     * @return the account
+     * @throws ApiException 401 if the account no longer exists
+     */
     public AccountResponse me(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Ce compte n'existe plus."));

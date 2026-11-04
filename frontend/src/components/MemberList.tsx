@@ -11,8 +11,13 @@ import TransferOwnership from './TransferOwnership'
 import type { Invitation, Member, ProjectRole } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
 
-// The team of a project, the people invited onto it, and what the reader's
-// role lets them do about either.
+/**
+ * The team of a project, the people invited onto it, and what the reader's
+ * role lets them do about either.
+ *
+ * @param props the team, the invitations, the reader's rights, and the
+ *        callbacks that keep the page in step
+ */
 export default function MemberList({
     projectId,
     members,
@@ -25,17 +30,25 @@ export default function MemberList({
     onRemoved,
     onMembersChanged,
 }: {
+    /** The project. */
     projectId: string
+    /** Its team, owner first. */
     members: Member[]
+    /** Its invitations that did not end in a member. */
     invitations: Invitation[]
-    // Owner or admin: may invite, cancel an invitation, remove members.
+    /** Owner or admin: may invite, cancel an invitation, remove members. */
     canManage: boolean
-    // Owner only: may change roles and hand the project over.
+    /** Owner only: may change roles and hand the project over. */
     isOwner: boolean
+    /** The reader. */
     currentUserId: string
+    /** Called with an invitation just sent. */
     onInvited: (invitation: Invitation) => void
+    /** Called with the id of an invitation that is gone. */
     onInvitationCancelled: (invitationId: string) => void
+    /** Called with the id of a member who left or was removed. */
     onRemoved: (memberId: string) => void
+    /** Called with the whole team after a change of role, a handover or a group joining. */
     onMembersChanged: (members: Member[]) => void
 }) {
     const [inviting, setInviting] = useState(false)

@@ -80,11 +80,20 @@ function barsForWeek(tasks: Task[], lanes: Map<string, number>, weekStart: Date,
         .filter((bar): bar is Bar => bar !== null)
 }
 
+/**
+ * The tasks over a month, as bars across its weeks. A task keeps its lane
+ * for the whole month. It opens on the current month, or on the first one
+ * with something planned.
+ *
+ * @param props the tasks, and what to do when one is opened
+ */
 export default function MonthCalendar({
     tasks,
     onOpenTask,
 }: {
+    /** The tasks to lay out. */
     tasks: Task[]
+    /** Called with the task whose bar was clicked. */
     onOpenTask: (task: Task) => void
 }) {
     const [month, setMonth] = useState(() => initialPlanningMonth(tasks))

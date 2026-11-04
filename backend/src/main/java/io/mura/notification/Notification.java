@@ -21,6 +21,12 @@ import org.hibernate.annotations.UuidGenerator;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * A line in someone's bell. It names its project or group as text, copied
+ * when it was written, so it still reads correctly once that project or
+ * group is out of reach; carnet notifications name neither, only the
+ * person. Unread while {@code readAt} is null.
+ */
 @Entity
 @Table(name = "notifications")
 @Getter
@@ -50,8 +56,8 @@ public class Notification {
     @Column(name = "project_name")
     private String projectName;
 
-    // The other possible subject. Exactly one of the two is set, which the
-    // database enforces.
+    // The other possible subject. At most one of the two is set -- neither,
+    // for news about a person -- which the database enforces.
     @Column(name = "group_name")
     private String groupName;
 

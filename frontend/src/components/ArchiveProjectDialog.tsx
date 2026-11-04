@@ -5,13 +5,23 @@ import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
 import Modal from './Modal'
 
+/**
+ * Asks the owner to confirm putting a project in the bin, says what that
+ * means, and archives it.
+ *
+ * @param props the project and what to do once it is archived or the dialog
+ *        closes
+ */
 export default function ArchiveProjectDialog({
     project,
     onClose,
     onArchived,
 }: {
+    /** The project to archive. */
     project: Project
+    /** Closes the dialog without archiving. */
     onClose: () => void
+    /** Called once the server has archived it. */
     onArchived: () => void
 }) {
     const [error, setError] = useState('')

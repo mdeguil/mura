@@ -4,18 +4,27 @@ import { apiErrorMessage } from '../utils/apiError'
 import { anchoredStyle, useAnchoredMenu } from '../hooks/useAnchoredMenu'
 import type { KnownUser, Project } from '../types'
 
-// Inviting someone used to mean opening the project, finding the Infos tab
-// and typing an address you already have in front of you. From the carnet
-// the address is the one thing we do not need to ask for.
+/**
+ * The menu that invites a person of the carnet onto one of the reader's
+ * projects. Inviting someone used to mean opening the project, finding the
+ * Infos tab and typing an address you already have in front of you. From
+ * the carnet the address is the one thing we do not need to ask for.
+ *
+ * @param props the person, the reader's projects and the reader's id
+ */
 export default function ProjectInviteMenu({
     person,
     projects,
     currentUserId,
 }: {
+    /** The person to invite. */
     person: KnownUser
-    // Everything the reader can see; the ones they may invite to are worked
-    // out here rather than by the caller.
+    /**
+     * Everything the reader can see; the ones they may invite to are worked
+     * out here rather than by the caller.
+     */
     projects: Project[]
+    /** The reader's account id. */
     currentUserId: string
 }) {
     const [open, setOpen] = useState(false)

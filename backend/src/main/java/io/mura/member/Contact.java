@@ -17,6 +17,12 @@ import lombok.Setter;
 
 import java.time.Instant;
 
+/**
+ * What one account decided about another in its carnet. Most carnet entries
+ * are worked out from shared projects and invitations rather than stored;
+ * a row exists only once someone acts: asks to add a person, stars them, or
+ * takes them out of the list.
+ */
 @Entity
 @Table(name = "contacts")
 @Getter
@@ -55,6 +61,12 @@ public class Contact {
     @Column(nullable = false)
     private ContactStatus status = ContactStatus.PENDING;
 
+    /**
+     * A new entry, pending until the person agrees.
+     *
+     * @param owner the account whose carnet holds the entry
+     * @param person the account the entry is about
+     */
     public Contact(User owner, User person) {
         this.owner = owner;
         this.person = person;

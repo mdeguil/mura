@@ -18,6 +18,12 @@ type Pending =
     | { kind: 'role'; account: Account; role: AccountRole }
     | { kind: 'suspend'; account: Account; suspended: boolean }
 
+/**
+ * The administration, at /administration, for administrators only, in
+ * three tabs: the accounts with their role and suspension, the groups and
+ * the project types. A role change or a suspension is confirmed before it
+ * is sent.
+ */
 export default function AdminPage() {
     const me = useAuthStore((s) => s.user)
     const setUser = useAuthStore((s) => s.setUser)

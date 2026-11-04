@@ -73,6 +73,12 @@ function useAccountRefresh() {
   }, [token, setUser])
 }
 
+/**
+ * The application: its routes, and which of them need a signed-in account,
+ * a confirmed address or the administrator role. The account is read again
+ * from the server on load, so a role taken away since sign-in reads as
+ * taken away.
+ */
 export default function App() {
   useAccountRefresh()
 

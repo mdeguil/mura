@@ -27,6 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * A task of a project, spanning a start and an end date, with its subtasks
+ * and the history of its status. Any member of the project works on it.
+ * Archived tasks leave the board and the planning; only an archived task
+ * can be deleted.
+ */
 @Entity
 @Table(name = "tasks")
 @Getter

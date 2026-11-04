@@ -16,8 +16,9 @@ const openDialogs: symbol[] = []
  * dialog owes keyboard and screen-reader users -- its role and name, Échap
  * to close, focus moved in on opening and handed back on closing.
  *
- * `labelledBy` is the id of the dialog's heading. What goes inside, the
- * coloured band included, is the dialog's own.
+ * What goes inside, the coloured band included, is the dialog's own.
+ *
+ * @param props the dialog's name, how it closes, its size and content
  */
 export default function Modal({
     labelledBy,
@@ -26,10 +27,15 @@ export default function Modal({
     className = '',
     children,
 }: {
+    /** The id of the dialog's heading, which names it for screen readers. */
     labelledBy: string
+    /** Called on Escape, when this dialog is the one on top. */
     onClose: () => void
+    /** How wide the panel may grow. */
     size?: keyof typeof SIZES
+    /** Extra classes for the panel: padding, height, overflow. */
     className?: string
+    /** The dialog's content. */
     children: React.ReactNode
 }) {
     const panel = useRef<HTMLDivElement>(null)

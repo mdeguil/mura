@@ -13,6 +13,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * The project types. Everyone reads them -- they fill the picker and the
+ * filters -- but only an administrator writes them, which the admin
+ * controller enforces before calling in here.
+ */
 @Service
 @RequiredArgsConstructor
 public class ProjectTypeService {
@@ -20,8 +25,11 @@ public class ProjectTypeService {
     private final ProjectTypeRepository typeRepository;
     private final ProjectRepository projectRepository;
 
-    // Everyone reads them -- they fill the picker and the filters -- but only
-    // an administrator writes them, which the controller enforces.
+    /**
+     * Every type, in the order offered.
+     *
+     * @return the types, without their project counts
+     */
     @Transactional(readOnly = true)
     public List<ProjectTypeResponse> list() {
         return typeRepository.findAllByOrderByPositionAscLabelAsc().stream()
@@ -29,7 +37,12 @@ public class ProjectTypeService {
                 .toList();
     }
 
-    // The administration page needs to know what a deletion would move.
+    /**
+     * Every type with how many projects it holds, in two queries: the
+     * administration page needs to know what a deletion would move.
+     *
+     * @return the types, with their project counts
+     */
     @Transactional(readOnly = true)
     public List<ProjectTypeResponse> listWithCounts() {
         Map<UUID, Long> counts = projectRepository.countPerType().stream()
@@ -39,6 +52,13 @@ public class ProjectTypeService {
                 .toList();
     }
 
+    /**
+     * Creates a type, placed last in the list.
+     *
+     * @param request its label and emoji
+     * @return the type, holding no projects yet
+     * @throws ApiException 409 if the label is taken, whatever its case
+     */
     @Transactional
     public ProjectTypeResponse create(SaveProjectTypeRequest request) {
         refuseDuplicate(request.label(), null);
@@ -54,6 +74,15 @@ public class ProjectTypeService {
         return ProjectTypeResponse.of(typeRepository.save(type), 0L);
     }
 
+    /**
+     * Changes a type's label and emoji.
+     *
+     * @param id the type
+     * @param request its new label and emoji
+     * @return the type, with its project count
+     * @throws ApiException 404 if the type does not exist; 409 for the
+     *         fallback type, or if the label is taken by another type
+     */
     @Transactional
     public ProjectTypeResponse update(UUID id, SaveProjectTypeRequest request) {
         ProjectType type = require(id);
@@ -67,8 +96,9 @@ public class ProjectTypeService {
      * Deletes a type after moving its projects to the fallback type, so no
      * project is lost or left without one.
      *
-     * @throws ApiException 409 for the fallback type itself, which can be
-     *         neither edited nor deleted
+     * @param id the type
+     * @throws ApiException 404 if the type does not exist; 409 for the
+     *         fallback type itself, which can be neither edited nor deleted
      */
     @Transactional
     public void delete(UUID id) {
@@ -102,6 +132,13 @@ public class ProjectTypeService {
         }
     }
 
+    /**
+     * A type by id, for the services that file a project under one.
+     *
+     * @param id the type
+     * @return the type
+     * @throws ApiException 404 if it does not exist
+     */
     ProjectType require(UUID id) {
         return typeRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Ce type de projet n'existe pas."));

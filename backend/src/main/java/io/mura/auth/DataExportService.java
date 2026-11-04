@@ -18,11 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.UUID;
 
-// One person's data, gathered for them to take away: the right of access
-// and the right to portability (RGPD, art. 15 and 20), without having to
-// ask anybody. Only what concerns them -- their own account, the projects
-// and groups they are in, the tasks in their charge, their carnet, their
-// invitations and notifications -- never other people's work.
+/**
+ * One person's data, gathered for them to take away: the right of access
+ * and the right to portability (RGPD, art. 15 and 20), without having to
+ * ask anybody. Only what concerns them -- their own account, the projects
+ * and groups they are in, the tasks in their charge, their carnet, their
+ * invitations and notifications -- never other people's work.
+ */
 @Service
 @RequiredArgsConstructor
 public class DataExportService {
@@ -35,6 +37,13 @@ public class DataExportService {
     private final ProjectInvitationRepository invitationRepository;
     private final NotificationRepository notificationRepository;
 
+    /**
+     * Gathers the person's data.
+     *
+     * @param userId the signed-in account
+     * @return everything Mura holds about them, without their password
+     * @throws ApiException 404 if the account no longer exists
+     */
     @Transactional(readOnly = true)
     public DataExport export(UUID userId) {
         User user = userRepository.findById(userId)

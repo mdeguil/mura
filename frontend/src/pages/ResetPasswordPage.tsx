@@ -7,6 +7,10 @@ import PasswordStrength from '../components/PasswordStrength'
 import { passwordRules } from '../utils/passwordRules'
 import Logo from '../components/Logo'
 
+/**
+ * The page a reset mail points at, /reset-password?token=…: a new password,
+ * checked against the server's rules, set with the token from the link.
+ */
 export default function ResetPasswordPage() {
     const navigate = useNavigate()
     const [params] = useSearchParams()

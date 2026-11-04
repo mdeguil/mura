@@ -1,18 +1,28 @@
 import { addMonths, format, startOfMonth, subMonths } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
+/**
+ * The previous and next arrows of a planning view, around the month shown.
+ *
+ * @param props the month, how to move it, and what to call it
+ */
 export default function MonthNav({
     month,
     onChange,
     label,
 }: {
+    /** The month shown. */
     month: Date
-    // Takes an updater rather than a value: clicking twice before React
-    // re-renders would otherwise compute both steps from the same month and
-    // only move one.
+    /**
+     * Moves the month. Takes an updater rather than a value: clicking twice
+     * before React re-renders would otherwise compute both steps from the
+     * same month and only move one.
+     */
     onChange: (update: (current: Date) => Date) => void
-    // Defaults to the month itself; views spanning several months pass their
-    // own range label here.
+    /**
+     * What to call the period. Defaults to the month itself; views spanning
+     * several months pass their own range label here.
+     */
     label?: string
 }) {
     return (

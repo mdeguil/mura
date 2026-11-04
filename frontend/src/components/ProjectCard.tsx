@@ -5,7 +5,16 @@ import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, projectTypeLabel } from '../utils/projectMeta'
 
-export default function ProjectCard({ project }: { project: Project }) {
+/**
+ * A project's card in the list: its name, type, dates, description and team
+ * size, as a link to the project's page.
+ *
+ * @param props the project shown
+ */
+export default function ProjectCard({ project }: {
+    /** The project shown. */
+    project: Project
+}) {
     return (
         <Link
             to={`/project/${project.id}`}

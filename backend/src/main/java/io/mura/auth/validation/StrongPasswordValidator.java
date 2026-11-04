@@ -3,14 +3,28 @@ package io.mura.auth.validation;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
+/** Checks {@link StrongPassword}. */
 public class StrongPasswordValidator implements ConstraintValidator<StrongPassword, String> {
 
-    // 72 is BCrypt's limit, not a policy: beyond it the encoder silently
-    // ignores the rest, so a longer password would authenticate on its
-    // first 72 characters alone.
+    /** The shortest password accepted. */
     public static final int MIN_LENGTH = 8;
+
+    /**
+     * The longest password accepted. 72 is BCrypt's limit, not a policy:
+     * beyond it the encoder silently ignores the rest, so a longer password
+     * would authenticate on its first 72 characters alone.
+     */
     public static final int MAX_LENGTH = 72;
 
+    /**
+     * Judges a password, reporting the first rule it breaks in a message of
+     * its own rather than reciting the whole rule. An absent or empty
+     * password passes: that is {@code @NotBlank}'s business.
+     *
+     * @param password the password as typed
+     * @param context where the message is written
+     * @return whether the password meets every rule
+     */
     @Override
     public boolean isValid(String password, ConstraintValidatorContext context) {
         // Absence is @NotBlank's business; this one only judges what is there.

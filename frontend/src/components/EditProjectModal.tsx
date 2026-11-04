@@ -9,13 +9,22 @@ import Modal from './Modal'
 
 const STATUSES = Object.keys(PROJECT_STATUS_LABELS) as ProjectStatus[]
 
+/**
+ * The form that edits a project's details and status, for its owner and
+ * admins.
+ *
+ * @param props the project and what to do once it is saved
+ */
 export default function EditProjectModal({
     project,
     onClose,
     onSaved,
 }: {
+    /** The project as it stands. */
     project: Project
+    /** Closes the form without saving. */
     onClose: () => void
+    /** Called with the project as the server saved it. */
     onSaved: (project: Project) => void
 }) {
     const [values, setValues] = useState<ProjectFormValues>({

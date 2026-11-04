@@ -24,6 +24,11 @@ const TABS: { key: ProjectTab; label: string }[] = [
     { key: 'ARCHIVED', label: 'Archivés' },
 ]
 
+/**
+ * The project list, at /projets: the reader's projects in tabs by status,
+ * the archived ones apart, the invitations still to answer, and creating a
+ * new project.
+ */
 export default function HomePage() {
     const { types } = useProjectTypes()
     const {

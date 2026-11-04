@@ -5,15 +5,24 @@ import AssigneePicker from './AssigneePicker'
 import type { Member, Task } from '../types'
 import Modal from './Modal'
 
+/**
+ * The form that creates a task: name, dates, responsable and description.
+ *
+ * @param props the project, its team, and what to do once it is created
+ */
 export default function CreateTaskModal({
     projectId,
     members,
     onClose,
     onCreated,
 }: {
+    /** The project the task belongs to. */
     projectId: string
+    /** Its team, to pick a responsable from. */
     members: Member[]
+    /** Closes the form without creating anything. */
     onClose: () => void
+    /** Called with the task once the server has created it. */
     onCreated: (task: Task) => void
 }) {
     const [name, setName] = useState('')

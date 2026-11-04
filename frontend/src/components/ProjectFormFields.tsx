@@ -2,27 +2,43 @@ import { useEffect } from 'react'
 import { useProjectTypes } from '../hooks/useProjectTypes'
 import { PROJECT_COLORS, projectGlassBackground } from '../utils/color'
 
+/** The classes of a text field in the project forms. */
 export const FIELD =
     'w-full h-10 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition'
+/** The classes of a field's label in the project forms. */
 export const LABEL = 'block text-xs font-medium text-slate-600 mb-1.5'
 
+/** What the project forms hold, as the fields edit it. */
 export type ProjectFormValues = {
+    /** The project's name. */
     name: string
+    /** Its description, `''` for none. */
     description: string
+    /** Its colour, as `#rrggbb`. */
     color: string
+    /** Its type's id, `''` until the types have loaded. */
     typeId: string
+    /** When it starts, as `YYYY-MM-DD`, `''` for none. */
     startDate: string
 }
 
-// Shared by the create and edit dialogs so the two never drift apart; what
-// differs between them (who to invite, what status) stays in each dialog.
+/**
+ * The fields of a project: name, type, start date and description. Shared
+ * by the create and edit dialogs so the two never drift apart; what differs
+ * between them (who to invite, what status) stays in each dialog.
+ *
+ * @param props the values and what to do as they change
+ */
 export default function ProjectFormFields({
     values,
     onChange,
     autoFocus = false,
 }: {
+    /** What the fields show. */
     values: ProjectFormValues
+    /** Called with the fields that changed. */
     onChange: (patch: Partial<ProjectFormValues>) => void
+    /** Puts the focus on the name. */
     autoFocus?: boolean
 }) {
     const { types, loading: loadingTypes, error: typesError } = useProjectTypes()
@@ -103,11 +119,18 @@ export default function ProjectFormFields({
     )
 }
 
+/**
+ * The row of colour swatches a project can be given.
+ *
+ * @param props the chosen colour and what to do on a change
+ */
 export function ColorPicker({
     color,
     onChange,
 }: {
+    /** The chosen colour, as `#rrggbb`. */
     color: string
+    /** Called with the swatch clicked. */
     onChange: (color: string) => void
 }) {
     return (

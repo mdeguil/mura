@@ -11,6 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+/**
+ * A task's subtasks. Any member of the project can add, tick off and delete
+ * them, not just its owner.
+ */
 @Service
 @RequiredArgsConstructor
 public class SubtaskService {
@@ -19,6 +23,17 @@ public class SubtaskService {
     private final TaskRepository taskRepository;
     private final ProjectAccessGuard access;
 
+    /**
+     * Adds a subtask, not ticked off.
+     *
+     * @param userId a member of the project
+     * @param projectId the project
+     * @param taskId the task
+     * @param request the subtask's name
+     * @return the subtask
+     * @throws ApiException 404 if the project does not exist or the task is
+     *         not one of its tasks, 403 if the caller is not on the team
+     */
     @Transactional
     public SubtaskResponse create(UUID userId, UUID projectId, UUID taskId, CreateSubtaskRequest request) {
         Task task = requireAccessibleTask(userId, projectId, taskId);
@@ -31,6 +46,18 @@ public class SubtaskService {
         return SubtaskResponse.from(subtask);
     }
 
+    /**
+     * Ticks a subtask off, or reopens it.
+     *
+     * @param userId a member of the project
+     * @param projectId the project
+     * @param taskId the task
+     * @param subtaskId the subtask
+     * @return the subtask, flipped
+     * @throws ApiException 404 if the project, the task or the subtask does
+     *         not exist or they do not belong together, 403 if the caller is
+     *         not on the team
+     */
     @Transactional
     public SubtaskResponse toggle(UUID userId, UUID projectId, UUID taskId, UUID subtaskId) {
         requireAccessibleTask(userId, projectId, taskId);
@@ -39,6 +66,17 @@ public class SubtaskService {
         return SubtaskResponse.from(subtask);
     }
 
+    /**
+     * Deletes a subtask.
+     *
+     * @param userId a member of the project
+     * @param projectId the project
+     * @param taskId the task
+     * @param subtaskId the subtask
+     * @throws ApiException 404 if the project, the task or the subtask does
+     *         not exist or they do not belong together, 403 if the caller is
+     *         not on the team
+     */
     @Transactional
     public void delete(UUID userId, UUID projectId, UUID taskId, UUID subtaskId) {
         requireAccessibleTask(userId, projectId, taskId);

@@ -4,9 +4,19 @@ import { fr } from 'date-fns/locale'
 import type { Invitation } from '../types'
 import { projectGlassBackground } from '../utils/color'
 
-// Deliberately not a ProjectCard: this is not one of your projects yet, and
-// a dashed edge says so before the text does.
-export default function InvitedProjectCard({ invitation }: { invitation: Invitation }) {
+/**
+ * A project the reader is invited to, leading to it so they can look and
+ * answer. Deliberately not a ProjectCard: this is not one of your projects
+ * yet, and a dashed edge says so before the text does.
+ *
+ * @param props the invitation
+ */
+export default function InvitedProjectCard({
+    invitation,
+}: {
+    /** The pending invitation. */
+    invitation: Invitation
+}) {
     return (
         <Link
             to={`/project/${invitation.projectId}`}

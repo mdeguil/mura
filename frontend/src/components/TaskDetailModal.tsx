@@ -8,6 +8,12 @@ import type { Member, Subtask, Task } from '../types'
 import { apiErrorMessage } from '../utils/apiError'
 import { TASK_STATUS_BAR_CLASSES, TASK_STATUS_CLASSES, TASK_STATUS_LABELS } from '../utils/taskMeta'
 
+/**
+ * The dialog of one task: its dates and responsable, edited in place, and
+ * its subtasks, added, ticked and deleted from here.
+ *
+ * @param props the task, its project's team and what to do as it changes
+ */
 export default function TaskDetailModal({
     task,
     projectId,
@@ -18,17 +24,25 @@ export default function TaskDetailModal({
     onSubtaskToggled,
     onSubtaskDeleted,
 }: {
+    /** The task shown. */
     task: Task
+    /** The id of the project it belongs to. */
     projectId: string
+    /** The project's team, to pick the responsable from. */
     members: Member[]
+    /** Called to close the dialog. */
     onClose: () => void
+    /** Saves the dates and the responsable; resolves to what went wrong, or `null` once saved. */
     onSave: (
         taskId: string,
         changes: { startDate: string; endDate: string; assigneeId: string | null }
         // What went wrong, or null once saved.
     ) => Promise<string | null>
+    /** Called with the task and the subtask just added to it. */
     onSubtaskAdded: (taskId: string, subtask: Subtask) => void
+    /** Called with the task and the subtask just ticked or unticked. */
     onSubtaskToggled: (taskId: string, subtask: Subtask) => void
+    /** Called with the task and the id of the subtask just deleted. */
     onSubtaskDeleted: (taskId: string, subtaskId: string) => void
 }) {
     const [name, setName] = useState('')

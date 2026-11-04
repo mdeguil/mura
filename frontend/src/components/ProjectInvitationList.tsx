@@ -2,10 +2,14 @@ import { formatDistanceToNow } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import type { Invitation } from '../types'
 
-// The people asked to join who are not on the team: those still to answer,
-// kept apart from the members so the two are never read as the same thing,
-// and those who refused or let it lapse. Neither of the latter is a dead
-// end: asking again replaces the old invitation.
+/**
+ * The people asked to join who are not on the team: those still to answer,
+ * kept apart from the members so the two are never read as the same thing,
+ * and those who refused or let it lapse. Neither of the latter is a dead
+ * end: asking again replaces the old invitation.
+ *
+ * @param props the invitations, what the viewer may do and what to do on each action
+ */
 export default function ProjectInvitationList({
     invitations,
     canManage,
@@ -13,11 +17,15 @@ export default function ProjectInvitationList({
     onCancel,
     onReinvite,
 }: {
+    /** The project's invitations, whatever their status. */
     invitations: Invitation[]
+    /** Whether the viewer may withdraw and resend them. */
     canManage: boolean
-    // An invitation is on its way: Réinviter waits for it.
+    /** An invitation is on its way: Réinviter waits for it. */
     busy: boolean
+    /** Called with the pending invitation to withdraw. */
     onCancel: (invitation: Invitation) => void
+    /** Called with the address to invite again. */
     onReinvite: (email: string) => void
 }) {
     const pending = invitations.filter((i) => i.status === 'PENDING')

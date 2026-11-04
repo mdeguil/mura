@@ -5,6 +5,12 @@ import { fr } from 'date-fns/locale'
 import { destinationOf, useNotifications, type BellItem } from '../hooks/useNotifications'
 import type { AppNotification } from '../types'
 
+/**
+ * The bell and its panel: invitations and notifications, newest first,
+ * with the unread count on the bell. Opening a line marks it read; double
+ * clicking it opens what it is about; clearing it removes it. A click
+ * elsewhere or Escape closes the panel.
+ */
 export default function NotificationBell() {
     const navigate = useNavigate()
     const { items, unread, markRead, clear } = useNotifications()

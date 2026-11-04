@@ -12,6 +12,10 @@ import { useApiQuery } from '../hooks/useApiQuery'
 import { useAuthStore } from '../store/authStore'
 import type { KnownUser, Project } from '../types'
 
+/**
+ * The carnet, at /carnet: the people the reader knows, the contact
+ * requests waiting on an answer, and the reader's groups.
+ */
 export default function DirectoryPage() {
     const peopleQuery = useApiQuery<KnownUser[]>('/directory', [], 'Impossible de charger ton carnet.')
     const { data: people, setData: setPeople, loading } = peopleQuery

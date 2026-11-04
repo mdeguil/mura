@@ -14,6 +14,13 @@ import {
 } from '../utils/taskMeta'
 import { projectGlassBackground } from '../utils/color'
 
+/**
+ * The Tâches tab of a project: one column for the archived tasks, then one
+ * per status, each card moving on to the next status, being archived,
+ * restored or deleted for good.
+ *
+ * @param props the tasks and what to do on each action
+ */
 export default function TaskBoard({
     tasks,
     archivedTasks,
@@ -23,12 +30,19 @@ export default function TaskBoard({
     onDeletePermanently,
     onOpenTask,
 }: {
+    /** The live tasks, spread over the status columns. */
     tasks: Task[]
+    /** The archived tasks, in a column of their own. */
     archivedTasks: Task[]
+    /** Called with a task and the status it moves to. */
     onStatusChange: (taskId: string, status: TaskStatus) => void
+    /** Called with the id of a task to archive. */
     onArchive: (taskId: string) => void
+    /** Called with the id of an archived task to bring back. */
     onRestore: (taskId: string) => void
+    /** Called with the id of an archived task to delete for good. */
     onDeletePermanently: (taskId: string) => void
+    /** Called with the task whose card was opened. */
     onOpenTask: (task: Task) => void
 }) {
     return (

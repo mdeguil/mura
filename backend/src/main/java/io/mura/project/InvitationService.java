@@ -16,6 +16,12 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Invitations to join a project: sending them, cancelling them, and the
+ * invitee answering. An invitation lapses after a configured number of
+ * days; expiry is applied whenever an invitation is read, not by a
+ * scheduled sweep.
+ */
 @Service
 public class InvitationService {
 
@@ -29,6 +35,17 @@ public class InvitationService {
     // touching the rule that applies it.
     private final Duration lifetime;
 
+    /**
+     * Builds the service with its collaborators and the invitations' window.
+     *
+     * @param access the project access checks
+     * @param projectMemberRepository the teams
+     * @param invitationRepository the invitations
+     * @param userRepository the accounts
+     * @param mailService the mail sender
+     * @param lifetimeDays how many days an invitation can be answered, from
+     *        {@code mura.invitations.lifetime-days}
+     */
     public InvitationService(
             ProjectAccessGuard access,
             ProjectMemberRepository projectMemberRepository,
@@ -51,6 +68,10 @@ public class InvitationService {
      * replaced; the invitation itself lapses after the configured number of
      * days.
      *
+     * @param actorId the owner or an admin of the project
+     * @param projectId the project
+     * @param request the invitee's address
+     * @return the invitation
      * @throws ApiException 403 unless the actor manages the project, 404 if no
      *         account uses the email, 409 if the person is already on the
      *         team or already has an invitation waiting
@@ -113,10 +134,20 @@ public class InvitationService {
         return toResponse(invitation);
     }
 
-
-    // Used when a project is created with people already listed. The caller
-    // owns the transaction: one unknown address rolls the whole creation
-    // back, so nobody ends up with a project half of whose team is missing.
+    /**
+     * Invites everyone listed when a project is created. The caller owns the
+     * transaction: one unknown address rolls the whole creation back, so
+     * nobody ends up with a project half of whose team is missing. Each
+     * address is invited once, whatever its case, and mailed once the
+     * creation commits.
+     *
+     * @param project the project just created
+     * @param owner its creator, who sends the invitations
+     * @param emails the addresses listed; blanks and repeats are ignored
+     * @return the invitations sent
+     * @throws ApiException 404 for an address no account uses, 409 if the
+     *         creator listed their own
+     */
     @Transactional
     public List<InvitationResponse> inviteAll(Project project, User owner, List<String> emails) {
         if (emails == null || emails.isEmpty()) {
@@ -169,7 +200,17 @@ public class InvitationService {
                 .toList();
     }
 
-    // Not read-only: reading is what applies expiry.
+    /**
+     * A project's invitations that did not end in a member: waiting, refused
+     * or lapsed. Any member may read them; only managers act on them. Not
+     * read-only: reading is what applies expiry.
+     *
+     * @param userId the reader, who must be on the team
+     * @param projectId the project
+     * @return the invitations, oldest first
+     * @throws ApiException 404 if the project does not exist, 403 if the
+     *         reader is not on it
+     */
     @Transactional
     public List<InvitationResponse> listOpenForProject(UUID userId, UUID projectId) {
         access.requireMembership(userId, projectId);
@@ -179,6 +220,14 @@ public class InvitationService {
                 .toList();
     }
 
+    /**
+     * The invitations waiting on a person, dismissed from the bell or not.
+     * Anything that has lapsed is marked expired and left out in the same
+     * breath, so nobody is offered a dead invitation.
+     *
+     * @param userId the invitee
+     * @return their pending invitations, oldest first
+     */
     @Transactional
     public List<InvitationResponse> listPendingForUser(UUID userId) {
         // Anything that expired drops out of this list in the same breath as
@@ -189,6 +238,16 @@ public class InvitationService {
                 .toList();
     }
 
+    /**
+     * Withdraws a pending invitation. The invitee is not told.
+     *
+     * @param actorId the owner or an admin of the project
+     * @param projectId the project
+     * @param invitationId the invitation
+     * @throws ApiException 403 unless the actor manages the project; 404 if
+     *         the invitation does not exist or belongs to another project;
+     *         409 if it has lapsed or was already answered
+     */
     @Transactional
     public void cancel(UUID actorId, UUID projectId, UUID invitationId) {
         access.requireManager(actorId, projectId);
@@ -204,8 +263,11 @@ public class InvitationService {
     /**
      * Joins the project as a plain member. Only the invitee may answer.
      *
-     * @throws ApiException 403 for anyone else, 409 if the invitation has
-     *         lapsed or was already answered
+     * @param userId the invitee
+     * @param invitationId the invitation
+     * @return the invitation, accepted
+     * @throws ApiException 404 if it does not exist, 403 for anyone but the
+     *         invitee, 409 if it has lapsed or was already answered
      */
     @Transactional
     public InvitationResponse accept(UUID userId, UUID invitationId) {
@@ -227,6 +289,16 @@ public class InvitationService {
         return toResponse(invitation);
     }
 
+    /**
+     * Turns the invitation down. The project can invite the person again;
+     * the new invitation replaces this one.
+     *
+     * @param userId the invitee
+     * @param invitationId the invitation
+     * @return the invitation, declined
+     * @throws ApiException 404 if it does not exist, 403 for anyone but the
+     *         invitee, 409 if it has lapsed or was already answered
+     */
     @Transactional
     public InvitationResponse decline(UUID userId, UUID invitationId) {
         ProjectInvitation invitation = requireOwnInvitation(userId, invitationId);
@@ -235,9 +307,18 @@ public class InvitationService {
         return toResponse(invitation);
     }
 
-
-    // Opening the notification is all it takes: the bell stops counting it,
-    // while the invitation itself stays pending until it is answered.
+    /**
+     * Marks the invitation as read in the bell. Opening the notification is
+     * all it takes: the bell stops counting it, while the invitation itself
+     * stays pending until it is answered. Reading it again keeps the first
+     * date.
+     *
+     * @param userId the invitee
+     * @param invitationId the invitation, whatever its status
+     * @return the invitation
+     * @throws ApiException 404 if it does not exist, 403 for anyone but the
+     *         invitee
+     */
     @Transactional
     public InvitationResponse markRead(UUID userId, UUID invitationId) {
         ProjectInvitation invitation = requireAddressedTo(userId, invitationId);
@@ -251,8 +332,17 @@ public class InvitationService {
         return toResponse(invitation);
     }
 
-    // Clearing the notification, not the invitation: the bell forgets it,
-    // the projects list still offers it. Answering stays a separate act.
+    /**
+     * Clears the notification, not the invitation: the bell forgets it, the
+     * projects list still offers it. Answering stays a separate act.
+     * Clearing it also counts as having read it.
+     *
+     * @param userId the invitee
+     * @param invitationId the invitation, whatever its status
+     * @return the invitation
+     * @throws ApiException 404 if it does not exist, 403 for anyone but the
+     *         invitee
+     */
     @Transactional
     public InvitationResponse dismiss(UUID userId, UUID invitationId) {
         ProjectInvitation invitation = requireAddressedTo(userId, invitationId);

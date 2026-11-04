@@ -1,8 +1,14 @@
 import { useId, useState } from 'react'
 import Modal from './Modal'
 
-// A browser confirm cannot name what is at stake, cannot be styled, and
-// cannot say what will survive the action. This can.
+/**
+ * Asks before doing something. A browser confirm cannot name what is at
+ * stake, cannot be styled, and cannot say what will survive the action.
+ * This can. The button shows the action is running while `onConfirm`'s
+ * promise is pending.
+ *
+ * @param props what to ask, how, and what to do with the answer
+ */
 export default function ConfirmDialog({
     title,
     body,
@@ -12,13 +18,19 @@ export default function ConfirmDialog({
     onCancel,
     onConfirm,
 }: {
+    /** The question, as the dialog's heading. */
     title: string
+    /** What happens, and what does not. */
     body: React.ReactNode
+    /** What the confirm button says. */
     confirmLabel: string
-    // Carried into the heading, where it is doing the work of a warning.
+    /** An emoji carried into the heading, where it is doing the work of a warning. */
     icon?: string
+    /** Red for what cannot be undone, the brand colour otherwise. */
     tone?: 'danger' | 'neutral'
+    /** Called on Annuler and Escape. */
     onCancel: () => void
+    /** Called on the confirm button; the dialog waits for it. */
     onConfirm: () => void | Promise<void>
 }) {
     const [busy, setBusy] = useState(false)

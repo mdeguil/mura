@@ -25,11 +25,19 @@ const LABEL_WIDTH = 180
 // so it reads as its own pane next to the timeline.
 const LABEL_SEPARATOR = '1px 0 0 0 rgb(203 213 225), 6px 0 8px -6px rgb(15 23 42 / 0.18)'
 
+/**
+ * The tasks as bars over the days of a month, one row per task, with the
+ * month to move through.
+ *
+ * @param props the tasks, and what to do when one is opened
+ */
 export default function GanttChart({
     tasks,
     onOpenTask,
 }: {
+    /** The tasks to lay out. */
     tasks: Task[]
+    /** Called with the task whose bar or name was clicked. */
     onOpenTask: (task: Task) => void
 }) {
     // A two-month window sliding one month at a time, so consecutive views

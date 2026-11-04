@@ -3,33 +3,49 @@ import UserAvatar, { SuspendedPill } from './UserAvatar'
 import { useApiQuery } from '../hooks/useApiQuery'
 import type { Group, GroupMember } from '../types'
 
+/** The group chosen in a GroupPicker. */
 export interface GroupSelection {
+    /** The group's id. */
     groupId: string
+    /** The group's name. */
     groupName: string
-    // How many of its people will actually come, for the button and the
-    // summary. The server works the list out again on its own.
+    /**
+     * How many of its people will actually come, for the button and the
+     * summary. The server works the list out again on its own.
+     */
     joiningCount: number
 }
 
-// One of the reader's groups, taken whole. Nobody is picked one by one: the
-// list underneath only says who will come and who will not, and why. What
-// happens to the group is the caller's business -- added to a project now,
-// or once it is created.
+/**
+ * One of the reader's groups, taken whole. Nobody is picked one by one: the
+ * list underneath only says who will come and who will not, and why. What
+ * happens to the group is the caller's business -- added to a project now,
+ * or once it is created.
+ *
+ * @param props who to leave out, how to start, and where the choice goes
+ */
 export default function GroupPicker({
     leftOut,
     allowNone = false,
     countOnly = false,
     onChange,
 }: {
-    // Why the caller has no use for someone -- already on the team, say --
-    // or null. Being set aside and being suspended are handled here.
+    /**
+     * Why the caller has no use for someone -- already on the team, say --
+     * or null. Being set aside and being suspended are handled here.
+     */
     leftOut: (person: GroupMember) => string | null
-    // Start on "no group" rather than the first one, where bringing a group
-    // along is optional and must not happen just because the field exists.
+    /**
+     * Start on "no group" rather than the first one, where bringing a group
+     * along is optional and must not happen just because the field exists.
+     */
     allowNone?: boolean
-    // Say how many will come, without listing them. The creation form asks
-    // for that: it is a form among others there, not a team to look over.
+    /**
+     * Say how many will come, without listing them. The creation form asks
+     * for that: it is a form among others there, not a team to look over.
+     */
     countOnly?: boolean
+    /** Called with the chosen group, or null, whenever the choice changes. */
     onChange: (selection: GroupSelection | null) => void
 }) {
     const { data: groups, loading, error } = useApiQuery<Group[]>('/groups', [], 'Impossible de charger tes groupes.')

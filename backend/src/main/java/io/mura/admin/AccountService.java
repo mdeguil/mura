@@ -30,6 +30,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * The accounts, as administrators manage them -- roles, suspension,
+ * deletion -- and the closing of one's own account. Nobody may remove the
+ * last active administrator, whichever way they try.
+ */
 @Service
 @RequiredArgsConstructor
 public class AccountService {
@@ -42,6 +47,13 @@ public class AccountService {
     private final NotificationService notificationService;
     private final PasswordEncoder passwordEncoder;
 
+    /**
+     * Every account on the instance.
+     *
+     * @param actorId an administrator
+     * @return the accounts, administrators first, then by username
+     * @throws ApiException 403 unless the actor is an administrator
+     */
     @Transactional(readOnly = true)
     public List<AccountResponse> list(UUID actorId) {
         requireAdmin(actorId);
@@ -55,14 +67,20 @@ public class AccountService {
                 .toList();
     }
 
-    @Transactional
     /**
      * Makes an account an administrator of the instance, or a plain user
-     * again. It gives no rights inside anyone's project.
+     * again. It gives no rights inside anyone's project. An administrator
+     * may step down, unless they are the last active one.
      *
-     * @throws ApiException 403 unless the actor is an administrator, 409 if
-     *         it would leave no active administrator
+     * @param actorId an administrator
+     * @param targetId the account
+     * @param request the new role
+     * @return the account
+     * @throws ApiException 403 unless the actor is an administrator, 404 if
+     *         the account does not exist, 409 if it would leave no active
+     *         administrator
      */
+    @Transactional
     public AccountResponse changeRole(UUID actorId, UUID targetId, ChangeAccountRoleRequest request) {
         requireAdmin(actorId);
         User target = requireAccount(targetId);
@@ -79,15 +97,21 @@ public class AccountService {
         return AccountResponse.from(target);
     }
 
-    @Transactional
     /**
      * Suspends or restores an account. A suspended account can no longer
-     * sign in, and its next request is refused. The owners of its projects
-     * and groups are notified, except the actor.
+     * sign in, and its next request is refused; nothing it produced is
+     * removed. The owners of the projects and groups it is in are told,
+     * except the actor -- unless nothing changed.
      *
-     * @throws ApiException 403 unless the actor is an administrator, 409 when
-     *         acting on oneself or suspending the last active administrator
+     * @param actorId an administrator
+     * @param targetId the account
+     * @param suspended true to suspend, false to restore
+     * @return the account
+     * @throws ApiException 403 unless the actor is an administrator, 404 if
+     *         the account does not exist, 409 when acting on oneself or
+     *         suspending the last active administrator
      */
+    @Transactional
     public AccountResponse setSuspended(UUID actorId, UUID targetId, boolean suspended) {
         requireAdmin(actorId);
         User target = requireAccount(targetId);
@@ -140,8 +164,15 @@ public class AccountService {
                 .toList();
     }
 
-    // Public so the other administration endpoints can lean on the one
-    // definition of who counts as an administrator.
+    /**
+     * Refuses anyone but an administrator. Public so the other
+     * administration endpoints can lean on the one definition of who counts
+     * as an administrator.
+     *
+     * @param actorId the caller
+     * @throws ApiException 403 unless the caller is an administrator, 404 if
+     *         their account no longer exists
+     */
     public void requireAdmin(UUID actorId) {
         if (!requireAccount(actorId).getAccountRole().administers()) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Cette page est réservée aux administrateurs.");
@@ -180,14 +211,30 @@ public class AccountService {
         }
     }
 
+    /**
+     * What deleting an account would do, for an administrator about to.
+     *
+     * @param actorId an administrator
+     * @param targetId the account
+     * @return the projects handed over or deleted, the groups deleted and the
+     *         tasks left without assignee
+     * @throws ApiException 403 unless the actor is an administrator, 404 if
+     *         the account does not exist
+     */
     @Transactional(readOnly = true)
     public AccountDeletionPreview deletionPreview(UUID actorId, UUID targetId) {
         requireAdmin(actorId);
         return previewFor(requireAccount(targetId));
     }
 
-    // The same preview for someone closing their own account: they are owed
-    // the same account of what goes and what stays as an administrator gets.
+    /**
+     * The same preview for someone closing their own account: they are owed
+     * the same account of what goes and what stays as an administrator gets.
+     *
+     * @param userId the account
+     * @return the consequences of deleting it
+     * @throws ApiException 404 if the account no longer exists
+     */
     @Transactional(readOnly = true)
     public AccountDeletionPreview ownDeletionPreview(UUID userId) {
         return previewFor(requireAccount(userId));
@@ -218,16 +265,19 @@ public class AccountService {
         );
     }
 
-    @Transactional
     /**
      * Deletes a suspended account for good. Each project it owns passes to
      * another member when there is one, and goes with the account otherwise;
      * its tasks lose their assignee. See {@link #deletionPreview} for what
      * that means for a given account before doing it.
      *
-     * @throws ApiException 403 unless the actor is an administrator, 409 when
-     *         acting on oneself or if the account was not suspended first
+     * @param actorId an administrator
+     * @param targetId the account
+     * @throws ApiException 403 unless the actor is an administrator, 404 if
+     *         the account does not exist, 409 when acting on oneself or if
+     *         the account was not suspended first
      */
+    @Transactional
     public void delete(UUID actorId, UUID targetId) {
         requireAdmin(actorId);
         User target = requireAccount(targetId);
@@ -247,11 +297,19 @@ public class AccountService {
         erase(target, actorId);
     }
 
-    // Someone closing their own account: the right to erasure (RGPD,
-    // art. 17) without having to ask anybody. There is no suspension step
-    // here -- that step exists so an administrator cannot remove someone
-    // else in one click. Here the person asks for it themself, and typing
-    // their password is the deliberate step instead.
+    /**
+     * Someone closing their own account: the right to erasure (RGPD,
+     * art. 17) without having to ask anybody. There is no suspension step
+     * here -- that step exists so an administrator cannot remove someone
+     * else in one click. Here the person asks for it themself, and typing
+     * their password is the deliberate step instead.
+     *
+     * @param userId the account
+     * @param password its current password
+     * @throws ApiException 404 if the account no longer exists; 403 for a
+     *         wrong password, naming the field; 409 for the last active
+     *         administrator
+     */
     @Transactional
     public void deleteOwn(UUID userId, String password) {
         User target = requireAccount(userId);

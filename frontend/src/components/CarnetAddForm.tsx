@@ -1,9 +1,13 @@
 import { useId, useState } from 'react'
 import CarnetCombobox from './CarnetCombobox'
 
-// Adding someone by name or by address, with the carnet behind the field:
-// two letters of a name are enough, and an address nobody has met yet still
-// goes through. Picking a suggestion sends it straight away.
+/**
+ * Adding someone by name or by address, with the carnet behind the field:
+ * two letters of a name are enough, and an address nobody has met yet still
+ * goes through. Picking a suggestion sends it straight away.
+ *
+ * @param props the wording, who not to offer, and what to do with the address
+ */
 export default function CarnetAddForm({
     label,
     submitLabel,
@@ -14,14 +18,21 @@ export default function CarnetAddForm({
     onEscape,
     hint,
 }: {
+    /** The field's label, tied to it for screen readers. */
     label: string
+    /** What the button says. */
     submitLabel: string
+    /** What the button says while the request is on its way. */
     busyLabel: string
+    /** Whether a request is on its way; the button waits for it. */
     busy: boolean
-    // People the list should not offer: already in, or already asked.
+    /** People the list should not offer: already in, or already asked. */
     excludeIds: string[]
+    /** Called with the address typed or picked, trimmed. */
     onSubmit: (address: string) => void
+    /** Called when Escape is pressed with the list closed. */
     onEscape: () => void
+    /** A line under the field, if any. */
     hint?: string
 }) {
     const [email, setEmail] = useState('')

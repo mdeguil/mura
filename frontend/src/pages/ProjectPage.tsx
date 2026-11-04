@@ -31,6 +31,12 @@ const DEFAULT_TAB: ProjectTab = 'info'
 
 const byStartDate = (a: Task, b: Task) => a.startDate.localeCompare(b.startDate)
 
+/**
+ * A project's page, at /project/:id: its header, then the Infos, Planning
+ * and Tâches tabs, the open one kept in the address. Someone only invited
+ * gets the Infos tab, with the invitation to answer; the other two stay
+ * locked.
+ */
 export default function ProjectPage() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()

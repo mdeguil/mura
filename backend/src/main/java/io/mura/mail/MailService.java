@@ -14,6 +14,13 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Writes and sends Mura's mails, in French, as HTML. Every mail waits for
+ * the transaction that asked for it to commit, then leaves off the request
+ * thread; a mail that fails to leave is logged, never thrown. What people
+ * typed -- names, project names, messages -- is escaped before it goes into
+ * a page somebody else opens.
+ */
 @Service
 @RequiredArgsConstructor
 public class MailService {
@@ -30,6 +37,13 @@ public class MailService {
     @Value("${mura.app.url}")
     private String appUrl;
 
+    /**
+     * Mails the code that confirms a new account's address.
+     *
+     * @param to the address to confirm
+     * @param username who to greet
+     * @param code the six digits
+     */
     public void sendVerificationCode(String to, String username, String code) {
         deliver(to, "Ton code de vérification Mura", body(
                 "Bienvenue, " + escape(username) + " 👋",
@@ -41,6 +55,14 @@ public class MailService {
         ));
     }
 
+    /**
+     * Mails a link to choose a new password. The link points at the app
+     * ({@code mura.app.url}), not at the API.
+     *
+     * @param to the account's address
+     * @param username who to greet
+     * @param token the value the link carries
+     */
     public void sendPasswordReset(String to, String username, String token) {
         String link = appUrl + "/reset-password?token=" + token;
         deliver(to, "Réinitialiser ton mot de passe Mura", body(
@@ -56,9 +78,22 @@ public class MailService {
         ));
     }
 
-    // Every notification goes out as mail too. The bell only reaches
-    // somebody who happens to be looking at Mura; most of what it carries
-    // is news they would rather not wait to see.
+    /**
+     * Mails a notification. Every notification goes out as mail too: the
+     * bell only reaches somebody who happens to be looking at Mura, and most
+     * of what it carries is news they would rather not wait to see.
+     *
+     * @param to the recipient's address
+     * @param username who to greet
+     * @param subject the mail's subject
+     * @param heading the title inside the mail
+     * @param sentence what happened, in one sentence
+     * @param message the note that came with it, quoted; null or blank for
+     *        none
+     * @param linkPath where in the app the button leads, such as
+     *        {@code /projets}
+     * @param linkLabel what the button says
+     */
     public void sendNotification(
             String to,
             String username,
@@ -84,6 +119,14 @@ public class MailService {
         ));
     }
 
+    /**
+     * Mails an invitation to join a project.
+     *
+     * @param to the invitee's address
+     * @param username who to greet
+     * @param inviter the username of whoever sent it
+     * @param project the project's name
+     */
     public void sendProjectInvitation(String to, String username, String inviter, String project) {
         deliver(to, inviter + " t'invite sur " + project, body(
                 "Une invitation t'attend",

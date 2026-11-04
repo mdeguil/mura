@@ -4,9 +4,22 @@ import Logo from './Logo'
 import LegalLinks from './LegalLinks'
 import { LEGAL_INFO, legalInfoDeclared } from '../legal/legalInfo'
 
-// The frame of a legal page. Open to everyone, signed in or not: someone
-// deciding whether to create an account has to be able to read these first.
-export default function LegalLayout({ title, children }: { title: string; children: React.ReactNode }) {
+/**
+ * The frame of a legal page. Open to everyone, signed in or not: someone
+ * deciding whether to create an account has to be able to read these
+ * first. An instance that has not declared who runs it says so at the top.
+ *
+ * @param props the page's title and text
+ */
+export default function LegalLayout({
+    title,
+    children,
+}: {
+    /** The page's heading. */
+    title: string
+    /** The page's sections. */
+    children: React.ReactNode
+}) {
     return (
         <div className="min-h-screen bg-app px-4 py-10">
             <div className="max-w-2xl mx-auto">
@@ -43,7 +56,20 @@ export default function LegalLayout({ title, children }: { title: string; childr
     )
 }
 
-export function LegalSection({ title, children }: { title: string; children: React.ReactNode }) {
+/**
+ * One titled section of a legal page.
+ *
+ * @param props the section's title and text
+ */
+export function LegalSection({
+    title,
+    children,
+}: {
+    /** The section's heading. */
+    title: string
+    /** What it says. */
+    children: React.ReactNode
+}) {
     return (
         <section className="space-y-2 pt-2">
             <h2 className="text-base font-semibold text-slate-800">{title}</h2>
