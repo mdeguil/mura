@@ -73,6 +73,15 @@ class MailServiceTest {
     }
 
     @Test
+    void aTrailingSlashInTheInstanceAddressGivesNoDoubleSlash() throws Exception {
+        ReflectionTestUtils.setField(service, "appUrl", "https://mura.example/");
+
+        service.sendPasswordReset("bob@mura.test", "bob", "tok-123");
+
+        assertThat(html(sent())).contains("https://mura.example/reset-password?token=tok-123");
+    }
+
+    @Test
     void aNotificationCarriesItsMessageAndALinkIntoTheApp() throws Exception {
         service.sendNotification("bob@mura.test", "bob", "Sujet", "Titre", "Phrase.", "Un mot",
                 "/projets", "Voir mes projets");

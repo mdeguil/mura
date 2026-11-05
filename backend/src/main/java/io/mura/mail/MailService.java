@@ -63,7 +63,7 @@ public class MailService {
      * @param token the value the link carries
      */
     public void sendPasswordReset(String to, String username, String token) {
-        String link = appUrl + "/reset-password?token=" + token;
+        String link = link("/reset-password?token=" + token);
         deliver(to, "Réinitialiser ton mot de passe Mura", body(
                 "Mot de passe oublié ?",
                 "<p>Bonjour " + escape(username) + ",</p>"
@@ -114,7 +114,7 @@ public class MailService {
                 "<p>Bonjour " + escape(username) + ",</p>"
                         + "<p>" + escape(sentence) + "</p>"
                         + note
-                        + button(appUrl + linkPath, linkLabel)
+                        + button(link(linkPath), linkLabel)
         ));
     }
 
@@ -132,7 +132,7 @@ public class MailService {
                 "<p>Bonjour " + escape(username) + ",</p>"
                         + "<p><strong>" + escape(inviter) + "</strong> t'invite à rejoindre le projet "
                         + "<strong>" + escape(project) + "</strong> sur Mura.</p>"
-                        + button(appUrl + "/projets", "Voir l'invitation")
+                        + button(link("/projets"), "Voir l'invitation")
                         + "<p style=\"color:#64748b\">Tu la retrouveras aussi dans tes notifications. "
                         + "Elle expire dans 14 jours.</p>"
         ));
@@ -182,6 +182,15 @@ public class MailService {
                   </div>
                 </div>
                 """.formatted(heading, content);
+    }
+
+    /**
+     * A page of the app, as a mail can link to it. The instance's address
+     * comes from the operator's {@code MURA_URL}; a trailing slash typed
+     * there is dropped so the link does not get a double one.
+     */
+    private String link(String path) {
+        return appUrl.replaceAll("/+$", "") + path;
     }
 
     private String button(String href, String label) {

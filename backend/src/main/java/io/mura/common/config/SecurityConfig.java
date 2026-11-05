@@ -46,6 +46,8 @@ public class SecurityConfig {
 
     /**
      * The origins allowed to call the API from a browser, with credentials.
+     * A browser sends its origin without a trailing slash, so one typed in
+     * the instance's address is dropped, as are spaces around the commas.
      *
      * @param allowedOrigins comma-separated origins, from
      *        {@code mura.cors.allowed-origins}
@@ -56,7 +58,10 @@ public class SecurityConfig {
             @Value("${mura.cors.allowed-origins}") String allowedOrigins
     ) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        configuration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                .map(origin -> origin.trim().replaceAll("/+$", ""))
+                .filter(origin -> !origin.isEmpty())
+                .toList());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
