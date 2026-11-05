@@ -11,6 +11,7 @@ import io.mura.auth.dto.RegisterRequest;
 import io.mura.auth.dto.ResetPasswordRequest;
 import io.mura.auth.dto.VerifyEmailRequest;
 import io.mura.common.exception.ApiException;
+import io.mura.mail.MailThrottle;
 import io.mura.member.dto.AccountResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -43,6 +44,7 @@ public class AuthController {
     private final DataExportService dataExportService;
     private final AccountService accountService;
     private final LoginThrottle loginThrottle;
+    private final MailThrottle mailThrottle;
 
     /**
      * {@code POST /api/auth/register}: creates an account and signs it in.
@@ -131,13 +133,20 @@ public class AuthController {
     /**
      * {@code POST /api/auth/password/forgot}: mails a reset link. Always
      * answers the same, whether or not the address has an account: which
-     * addresses are registered is not a stranger's business.
+     * addresses are registered is not a stranger's business. One client may
+     * only ask so often (see {@link MailThrottle}).
      *
      * @param request the address
+     * @param http the request, for the client's IP address
      * @return 204
+     * @throws ApiException 429 if this client has asked too often
      */
     @PostMapping("/password/forgot")
-    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<Void> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request,
+            HttpServletRequest http
+    ) {
+        mailThrottle.takeRequest(http.getRemoteAddr());
         authService.forgotPassword(request);
         return ResponseEntity.noContent().build();
     }

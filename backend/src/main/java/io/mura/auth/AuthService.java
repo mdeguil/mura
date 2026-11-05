@@ -10,6 +10,7 @@ import io.mura.auth.dto.VerifyEmailRequest;
 import io.mura.common.security.JwtService;
 import io.mura.mail.EmailTokenService;
 import io.mura.mail.MailService;
+import io.mura.mail.MailThrottle;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
 import io.mura.member.dto.AccountResponse;
@@ -36,6 +37,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final EmailTokenService emailTokenService;
     private final MailService mailService;
+    private final MailThrottle mailThrottle;
 
     /**
      * Creates the account, signs it in and mails a six-digit code. Until the
@@ -81,8 +83,10 @@ public class AuthService {
             );
         }
 
-        var issued = emailTokenService.issueCode(user);
-        mailService.sendVerificationCode(user.getEmail(), user.getUsername(), issued.secret());
+        if (mailThrottle.trySend(user.getEmail())) {
+            var issued = emailTokenService.issueCode(user);
+            mailService.sendVerificationCode(user.getEmail(), user.getUsername(), issued.secret());
+        }
 
         String token = jwtService.generateToken(user);
         return new AuthResponse(token, AccountResponse.from(user));
@@ -117,10 +121,12 @@ public class AuthService {
 
     /**
      * Mails a new code, which replaces the previous one. Does nothing for an
-     * address already confirmed.
+     * address already confirmed. The {@link MailThrottle} caps how many
+     * codes one address receives: whoever registered may not own it.
      *
      * @param userId the signed-in account
-     * @throws ApiException 401 if the account no longer exists
+     * @throws ApiException 401 if the account no longer exists; 429 if the
+     *         address has received enough mail for now
      */
     @Transactional
     public void resendCode(UUID userId) {
@@ -128,6 +134,7 @@ public class AuthService {
         if (user.isEmailVerified()) {
             return;
         }
+        mailThrottle.sendOrRefuse(user.getEmail());
         var issued = emailTokenService.issueCode(user);
         mailService.sendVerificationCode(user.getEmail(), user.getUsername(), issued.secret());
     }
@@ -136,7 +143,9 @@ public class AuthService {
      * Mails a reset link, valid for an hour, to the account using the
      * address -- unless it is suspended. Behaves the same way whether or
      * not the address is in use: telling a stranger which addresses have
-     * accounts is telling them where to aim.
+     * accounts is telling them where to aim. For the same reason, an
+     * address that has received enough mail for now (see
+     * {@link MailThrottle}) is skipped without a word.
      *
      * @param request the address
      */
@@ -144,6 +153,7 @@ public class AuthService {
     public void forgotPassword(ForgotPasswordRequest request) {
         userRepository.findByEmailIgnoreCase(request.email())
                 .filter(user -> !user.isSuspended())
+                .filter(user -> mailThrottle.trySend(user.getEmail()))
                 .ifPresent(user -> {
                     var issued = emailTokenService.issueResetLink(user);
                     mailService.sendPasswordReset(

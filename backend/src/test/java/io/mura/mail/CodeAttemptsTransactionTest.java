@@ -107,7 +107,7 @@ class CodeAttemptsTransactionTest {
         when(emailTokenService.consumeCode(any(), anyString()))
                 .thenThrow(new ApiException(HttpStatus.BAD_REQUEST, "Code incorrect."));
         AuthService service = probe.wrap(
-                new AuthService(userRepository, passwordEncoder, jwtService, emailTokenService, mailService));
+                new AuthService(userRepository, passwordEncoder, jwtService, emailTokenService, mailService, new MailThrottle()));
 
         assertThatThrownBy(() -> service.verifyEmail(alice.getId(), new VerifyEmailRequest("000000")))
                 .isInstanceOf(ApiException.class);

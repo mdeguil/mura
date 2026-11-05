@@ -7,6 +7,7 @@ import io.mura.auth.dto.LoginRequest;
 import io.mura.auth.dto.RegisterRequest;
 import io.mura.auth.dto.ResetPasswordRequest;
 import io.mura.common.exception.ApiException;
+import io.mura.mail.MailThrottle;
 import io.mura.member.dto.AccountResponse;
 import io.mura.support.ControllerTestSupport;
 import io.mura.support.Fixtures;
@@ -50,7 +51,7 @@ class AuthControllerTest extends ControllerTestSupport {
 
     @BeforeEach
     void setUp() {
-        mount(new AuthController(authService, dataExportService, accountService, new LoginThrottle()));
+        mount(new AuthController(authService, dataExportService, accountService, new LoginThrottle(), new MailThrottle()));
         account = AccountResponse.from(Fixtures.user("alice"));
     }
 
@@ -132,6 +133,19 @@ class AuthControllerTest extends ControllerTestSupport {
 
         when(authService.verifyEmail(any(), any())).thenReturn(account);
         mvc.perform(withJson(post("/api/auth/verify"), Map.of("code", "123456"))).andExpect(status().isOk());
+    }
+
+    @Test
+    void oneClientAskingForTooManyResetLinksIsHeldBack() throws Exception {
+        for (int i = 0; i < 10; i++) {
+            mvc.perform(withJson(post("/api/auth/password/forgot"), Map.of("email", "person" + i + "@mura.test")))
+                    .andExpect(status().isNoContent());
+        }
+        mvc.perform(withJson(post("/api/auth/password/forgot"), Map.of("email", "one-more@mura.test")))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.message").value(containsString("Trop de demandes.")));
+
+        verify(authService, times(10)).forgotPassword(any());
     }
 
     @Test

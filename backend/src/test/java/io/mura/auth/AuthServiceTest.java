@@ -11,6 +11,7 @@ import io.mura.common.security.JwtService;
 import io.mura.mail.EmailToken;
 import io.mura.mail.EmailTokenService;
 import io.mura.mail.MailService;
+import io.mura.mail.MailThrottle;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
 import io.mura.support.Fixtures;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -32,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -49,6 +52,8 @@ class AuthServiceTest {
     private EmailTokenService emailTokenService;
     @Mock
     private MailService mailService;
+    @Spy
+    private MailThrottle mailThrottle = new MailThrottle();
     @InjectMocks
     private AuthService service;
 
@@ -187,6 +192,36 @@ class AuthServiceTest {
         when(emailTokenService.issueResetLink(alice)).thenReturn(new EmailTokenService.Issued(new EmailToken(), "id.secret"));
         service.forgotPassword(new ForgotPasswordRequest("alice@mura.test"));
         verify(mailService).sendPasswordReset("alice@mura.test", "alice", "id.secret");
+    }
+
+    @Test
+    void anInboxThatHadEnoughGetsNoMoreResetLinksAndNobodyIsTold() {
+        when(userRepository.findByEmailIgnoreCase("alice@mura.test")).thenReturn(Optional.of(alice));
+        when(emailTokenService.issueResetLink(alice)).thenReturn(new EmailTokenService.Issued(new EmailToken(), "id.secret"));
+
+        for (int i = 0; i <= MailThrottle.MAX_PER_RECIPIENT; i++) {
+            service.forgotPassword(new ForgotPasswordRequest("alice@mura.test"));
+        }
+
+        verify(mailService, times(MailThrottle.MAX_PER_RECIPIENT)).sendPasswordReset("alice@mura.test", "alice", "id.secret");
+        verify(emailTokenService, times(MailThrottle.MAX_PER_RECIPIENT)).issueResetLink(alice);
+    }
+
+    @Test
+    void askingForTheCodeTooOftenIsRefusedOpenly() {
+        alice.setEmailVerifiedAt(null);
+        when(userRepository.findById(alice.getId())).thenReturn(Optional.of(alice));
+        when(emailTokenService.issueCode(alice)).thenReturn(new EmailTokenService.Issued(new EmailToken(), "042913"));
+
+        for (int i = 0; i < MailThrottle.MAX_PER_RECIPIENT; i++) {
+            service.resendCode(alice.getId());
+        }
+
+        assertThatThrownBy(() -> service.resendCode(alice.getId()))
+                .isInstanceOfSatisfying(ApiException.class,
+                        e -> assertThat(e.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS))
+                .hasMessageStartingWith("Trop d'e-mails envoyés à cette adresse.");
+        verify(mailService, times(MailThrottle.MAX_PER_RECIPIENT)).sendVerificationCode("alice@mura.test", "alice", "042913");
     }
 
     @Test
