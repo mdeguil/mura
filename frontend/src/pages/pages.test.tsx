@@ -12,9 +12,6 @@ import { renderAt } from '../test/render'
 
 vi.mock('../services/api')
 
-// Answers by address rather than by call order: the top bar and the bell ask
-// for their own things whenever a page mounts. Anything not listed comes
-// back empty.
 function emptyServer(answers: Record<string, unknown> = {}) {
     vi.mocked(api.get).mockImplementation(async (url: string) => {
         if (url in answers) return { data: answers[url] }
@@ -130,8 +127,6 @@ describe('AccountPage', () => {
 describe('ProjectPage', () => {
     const alice = account('alice')
 
-    // Alice's own project, opened on `tab`; `more` adds answers for the
-    // project's other addresses, given its id.
     function openProject(more: (projectId: string) => Record<string, unknown> = () => ({}), tab = '') {
         const refonte = project('Refonte', alice)
         useAuthStore.setState({ token: 'jwt', user: alice })

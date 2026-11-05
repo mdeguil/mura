@@ -46,17 +46,12 @@ public class Contact {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    // A row can mean two opposite things: someone put in the carnet, or
-    // someone taken out of it who would otherwise keep coming back through
-    // a shared project.
     @Column(nullable = false)
     private boolean hidden;
 
     @Column(nullable = false)
     private boolean favourite;
 
-    // Adding someone is a request now: nothing reaches either carnet
-    // until they agree.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ContactStatus status = ContactStatus.PENDING;

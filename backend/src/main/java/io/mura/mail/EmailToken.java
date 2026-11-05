@@ -43,8 +43,6 @@ public class EmailToken {
     @Column(nullable = false)
     private EmailTokenPurpose purpose;
 
-    // Hashed with the same encoder as a password. What is mailed out is the
-    // only copy of the real thing.
     @Column(name = "token_hash", nullable = false)
     private String tokenHash;
 

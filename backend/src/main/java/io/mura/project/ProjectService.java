@@ -66,8 +66,6 @@ public class ProjectService {
         Map<UUID, List<ProjectMember>> membersByProject = projectMemberRepository
                 .findAllForProjects(projects.stream().map(Project::getId).toList())
                 .stream()
-                // Read through the embedded id rather than getProject(): the
-                // association is a lazy proxy, and this keeps it uninitialised.
                 .collect(Collectors.groupingBy(member -> member.getId().getProjectId()));
 
         return projects.stream()
@@ -105,8 +103,6 @@ public class ProjectService {
             );
         }
 
-        // Not what the team is working on, and not their email addresses:
-        // ProjectResponse drops those for anyone who is not a member yet.
         if (invitationRepository.existsByProjectIdAndInvitedUserIdAndStatus(
                 projectId, userId, InvitationStatus.PENDING)) {
             return ProjectResponse.from(
@@ -273,16 +269,10 @@ public class ProjectService {
 
         projectMemberRepository.save(new ProjectMember(project, owner, ProjectRole.OWNER));
 
-        // The group's people are checked first and brought on last, so an
-        // unknown address in the invitations stops the creation before
-        // anything about the group is written. Mails wait for the commit:
-        // a creation rolled back reaches nobody's inbox.
         List<User> fromGroup = request.groupId() == null
                 ? List.of()
                 : joinersFromGroup(ownerId, project.getId(), request.groupId());
 
-        // Someone both in the group and typed in by address is simply in:
-        // there is nothing left to invite them to.
         Set<String> joiningEmails = fromGroup.stream()
                 .map(user -> user.getEmail().toLowerCase())
                 .collect(Collectors.toSet());
@@ -406,8 +396,6 @@ public class ProjectService {
                 .toList();
     }
 
-    // Who from a group can come onto the project, worked out without writing
-    // anything, so a refusal leaves nothing half done.
     private List<User> joinersFromGroup(UUID actorId, UUID projectId, UUID groupId) {
         if (!groupRepository.existsById(groupId)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "Groupe introuvable.");
@@ -425,16 +413,11 @@ public class ProjectService {
                 .toList();
     }
 
-    // The writing half, once joinersFromGroup has said yes to everyone.
     private void bringOn(Project project, User actor, List<User> joining) {
         if (joining.isEmpty()) {
             return;
         }
 
-        // Whatever invitation they still had -- waiting, refused or lapsed --
-        // no longer has anything to ask: they are in. Cleared before any
-        // notification is written, see the note on
-        // UserGroupRepository.deleteGroupById.
         invitationRepository.deleteOutstandingFor(project.getId(), joining.stream().map(User::getId).toList());
         projectMemberRepository.saveAll(joining.stream()
                 .map(user -> new ProjectMember(project, user, ProjectRole.MEMBER))
@@ -475,9 +458,6 @@ public class ProjectService {
 
         ProjectMember target = requireMemberOf(projectId, memberId);
 
-        // Anyone may show themselves out. Removing someone else takes a
-        // manager, and an admin may only remove plain members — otherwise two
-        // admins could show each other the door.
         if (!actorId.equals(memberId)) {
             ProjectMember actor = access.requireManager(actorId, projectId);
             if (actor.getRole() == ProjectRole.ADMIN && target.getRole() != ProjectRole.MEMBER) {
@@ -493,18 +473,12 @@ public class ProjectService {
         User actor = userRepository.findById(actorId)
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
 
-        // Their tasks stay, but nobody is in charge of them any more: leaving
-        // a dangling assignee would show a name that can no longer act on it.
         taskService.unassignMember(projectId, memberId);
         projectMemberRepository.delete(target);
 
         if (actorId.equals(memberId)) {
-            // Leaving: the people running the project are the ones who need
-            // to know, and to read why.
             projectMemberRepository.findAllForProject(projectId).stream()
                     .filter(m -> m.getRole().manages())
-                    // The delete above may not have flushed yet, so the
-                    // leaver can still show up in that query.
                     .filter(m -> !m.getUser().getId().equals(actorId))
                     .forEach(m -> notificationService.notify(
                             m.getUser(), NotificationType.MEMBER_LEFT_PROJECT, project, actor, message));
@@ -515,9 +489,6 @@ public class ProjectService {
     }
 
 
-    // Reaching Achevé stamps the date; leaving it clears the stamp, so a
-    // reopened project does not keep claiming it finished. Staying on
-    // Achevé through an unrelated edit keeps the original date.
     private void applyStatus(Project project, ProjectStatus status) {
         if (status == project.getStatus()) {
             return;

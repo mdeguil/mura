@@ -129,8 +129,6 @@ class DataExportServiceTest {
             assertThat(n.read()).isFalse();
         });
 
-        // Written the way the endpoint writes it: no hash of the password
-        // anywhere in the file.
         String json = new ObjectMapper().registerModule(new JavaTimeModule()).writeValueAsString(export);
         assertThat(json).doesNotContain(alice.getPassword()).doesNotContain("password");
     }

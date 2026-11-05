@@ -44,17 +44,12 @@ export default function AdminPage() {
         setAccounts((prev) =>
             prev
                 .map((a) => (a.id === account.id ? account : a))
-                // The same order the server sends: administrators first,
-                // then alphabetically. Without it a promotion leaves the
-                // row where it was until the next reload.
                 .sort(
                     (a, b) =>
                         Number(b.accountRole === 'ADMIN') - Number(a.accountRole === 'ADMIN') ||
                         a.username.localeCompare(b.username, 'fr', { sensitivity: 'base' })
                 )
         )
-        // Stepping down from the role is allowed, and the navigation has to
-        // notice: this page is about to stop being reachable.
         if (me && account.id === me.id) setUser(account)
     }
 
@@ -196,9 +191,6 @@ export default function AdminPage() {
                                                 {isAdmin ? 'Retirer le rôle' : 'Nommer admin'}
                                             </button>
 
-                                            {/* Suspending yourself locks you out on the spot and
-                                                only someone else can undo it, so the button is
-                                                not offered at all. */}
                                             {!isMe && (
                                                 <button
                                                     onClick={() =>
@@ -218,9 +210,6 @@ export default function AdminPage() {
                                                 </button>
                                             )}
 
-                                            {/* Only once suspended, the way a project is
-                                                archived before it can be deleted: a step
-                                                in front of something irreversible. */}
                                             {!isMe && account.suspended && (
                                                 <button
                                                     onClick={() => setDeleting(account)}

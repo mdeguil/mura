@@ -62,7 +62,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(message, field));
     }
 
-    // Where a field is declared in the request record; anything else sorts last.
     private static int position(Object target, String field) {
         if (target != null && target.getClass().isRecord()) {
             RecordComponent[] components = target.getClass().getRecordComponents();
@@ -74,10 +73,6 @@ public class GlobalExceptionHandler {
         }
         return Integer.MAX_VALUE;
     }
-
-    // The handlers below are for the caller's mistakes, not the server's: without
-    // them each would reach handleUnexpected, answer 500 and be logged as a
-    // fault.
 
     /**
      * A path variable that cannot be read as its type, usually an id that

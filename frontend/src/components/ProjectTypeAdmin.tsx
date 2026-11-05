@@ -6,8 +6,6 @@ import ErrorMessage from './ErrorMessage'
 import { useApiQuery } from '../hooks/useApiQuery'
 import type { ProjectType } from '../types'
 
-// A handful of emoji that suit a project, offered so nobody has to go
-// hunting for the system picker. The field takes anything typed into it.
 const SUGGESTED = ['🌐', '📱', '📣', '🎉', '📁', '🔬', '🧪', '🎨', '📊', '🛠️', '🚀', '📚', '💡', '🏗️']
 
 /**
@@ -23,7 +21,6 @@ export default function ProjectTypeAdmin() {
         error: loadError,
         reload,
     } = useApiQuery<ProjectType[]>('/admin/project-types', [], 'Impossible de charger les types.')
-    // What went wrong with a save or a deletion, apart from the list itself.
     const [error, setError] = useState('')
 
     const [editing, setEditing] = useState<ProjectType | null>(null)
@@ -86,8 +83,6 @@ export default function ProjectTypeAdmin() {
             setTypes((prev) =>
                 prev
                     .filter((t) => t.id !== type.id)
-                    // Whatever it held has moved to the fallback, so that
-                    // count is no longer what the server last said.
                     .map((t) =>
                         t.fallback
                             ? { ...t, projectCount: (t.projectCount ?? 0) + (type.projectCount ?? 0) }
@@ -215,9 +210,6 @@ export default function ProjectTypeAdmin() {
                         </span>
 
                         <div className="flex items-center gap-2 shrink-0 w-[168px] justify-end">
-                            {/* Neither offered on the fallback: it is where every
-                                other deletion sends its projects, so it has to
-                                stay, and stay called what the dialogs say it is. */}
                             {type.fallback ? (
                                 <span className="text-xs text-slate-400">Non modifiable</span>
                             ) : (

@@ -84,7 +84,6 @@ public class SubtaskService {
         subtaskRepository.delete(subtask);
     }
 
-    // Any member of the project can tick off subtasks, not just its owner.
     private Task requireAccessibleTask(UUID userId, UUID projectId, UUID taskId) {
         access.requireMembership(userId, projectId);
 

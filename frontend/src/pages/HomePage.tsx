@@ -10,9 +10,6 @@ import { PROJECT_STATUS_LABELS } from '../utils/projectMeta'
 import { useApiQuery } from '../hooks/useApiQuery'
 import { useProjectTypes } from '../hooks/useProjectTypes'
 
-// Archived sits alongside the statuses rather than under them: it is where a
-// project goes, not how its work is going. Keeping it as its own tab is also
-// what keeps it out of every other one.
 type ProjectTab = 'ALL' | ProjectStatus | 'ARCHIVED'
 
 const TABS: { key: ProjectTab; label: string }[] = [
@@ -38,10 +35,7 @@ export default function HomePage() {
         error,
         reload,
     } = useApiQuery<Project[]>('/projects', [], 'Impossible de charger tes projets.')
-    // Pending invitations, dismissed from the bell or not: this list is
-    // where someone comes back to find a project they were invited to.
     const invitationsQuery = useApiQuery<Invitation[]>('/invitations', [], 'Impossible de charger tes invitations.')
-    // The owner's bin: restoring or deleting from here is the only way out.
     const archivedQuery = useApiQuery<Project[]>('/projects/archived', [], 'Impossible de charger tes projets archivés.')
     const invitations = invitationsQuery.data
     const { data: archived, setData: setArchived } = archivedQuery
@@ -50,8 +44,6 @@ export default function HomePage() {
     const [tab, setTab] = useState<ProjectTab>('ALL')
     const [showCreateModal, setShowCreateModal] = useState(false)
 
-    // Search and type narrow whatever tab is open, so the counts on the tabs
-    // always match what opening one would show.
     const narrow = useMemo(() => {
         const q = query.trim().toLowerCase()
         return (list: Project[]) =>
@@ -111,10 +103,6 @@ export default function HomePage() {
                     </section>
                 )}
 
-                {/* overflow-y-hidden on purpose: overflow-x alone computes y to
-                    auto, and the tabs' -mb-px overlap makes the content one
-                    pixel taller than the bar, which is enough for a stray
-                    vertical scrollbar. */}
                 <div className="flex items-center gap-6 border-b border-border mb-5 overflow-x-auto overflow-y-hidden">
                     {TABS.map((entry) => {
                         const count = countFor(entry.key)
@@ -173,8 +161,6 @@ export default function HomePage() {
                     ))}
                 </div>
 
-                {/* A list that failed to load is not an empty one: the
-                    "Aucun projet" panels below would say something untrue. */}
                 {loading ? (
                     <div className="text-sm text-slate-500">Chargement…</div>
                 ) : tab === 'ARCHIVED' && archivedQuery.error ? (

@@ -63,7 +63,6 @@ class ProjectTypeServiceTest {
     @Test
     void listWithCountsGivesEachTypeItsProjectCountInOneQuery() {
         when(typeRepository.findAllByOrderByPositionAscLabelAsc()).thenReturn(List.of(web, other));
-        // A type nobody uses has no row of its own.
         when(projectRepository.countPerType()).thenReturn(List.of(count(web, 3)));
 
         List<ProjectTypeResponse> types = service.listWithCounts();

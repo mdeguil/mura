@@ -33,9 +33,6 @@ type Bar = {
     endsHere: boolean
 }
 
-// Lanes are assigned once for the whole month rather than per week, so a
-// task spanning several weeks stays on the same line instead of hopping
-// up and down as other tasks start and end around it.
 function assignLanes(tasks: Task[]): Map<string, number> {
     const sorted = [...tasks].sort(
         (a, b) => a.startDate.localeCompare(b.startDate) || b.endDate.localeCompare(a.endDate)

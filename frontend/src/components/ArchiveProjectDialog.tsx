@@ -56,8 +56,6 @@ export default function ArchiveProjectDialog({
             </div>
 
             <div className="px-6 py-5">
-                {/* Said plainly, because the word "archiver" alone does not
-                    tell anyone whether their work is about to disappear. */}
                 <ul className="flex flex-col gap-2 text-sm text-slate-600">
                     <li className="flex gap-2">
                         <span className="text-emerald-600">✓</span>

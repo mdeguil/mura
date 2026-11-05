@@ -29,8 +29,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TaskService {
 
-    // A task only moves forward through the pipeline (À faire -> En cours ->
-    // Terminé): never backward, never skipping a stage. Terminé is final.
     private static final Map<TaskStatus, Set<TaskStatus>> ALLOWED_STATUS_TRANSITIONS = Map.of(
             TaskStatus.A_FAIRE, EnumSet.of(TaskStatus.A_FAIRE, TaskStatus.EN_COURS),
             TaskStatus.EN_COURS, EnumSet.of(TaskStatus.EN_COURS, TaskStatus.TERMINE),
@@ -238,9 +236,6 @@ public class TaskService {
         change.setTask(task);
         change.setFromStatus(from);
         change.setToStatus(to);
-        // Set eagerly rather than relying on @PrePersist: the response is
-        // built from this in-memory object before Hibernate flushes the
-        // insert, so the lifecycle callback would run too late.
         change.setChangedAt(Instant.now());
         return change;
     }

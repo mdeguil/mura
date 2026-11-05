@@ -81,8 +81,6 @@ class AccountServiceTest {
         when(userGroupRepository.findAllByOwnerId(any())).thenReturn(List.of());
     }
 
-    // The accounts on the instance: listed whole, and counted the way the
-    // database would for the last-administrator rule.
     private void everyone(User... users) {
         List<User> all = List.of(users);
         when(userRepository.findAll()).thenReturn(all);

@@ -22,8 +22,6 @@ export default function ResetPasswordPage() {
     const [loading, setLoading] = useState(false)
     const [done, setDone] = useState(false)
 
-    // No email or username to compare against here: the link says who this
-    // is, and the page deliberately does not.
     const rules = useMemo(() => passwordRules(password, '', ''), [password])
     const passwordOk = rules.every((r) => r.met)
     const confirmOk = confirmPassword.length > 0 && confirmPassword === password
@@ -45,8 +43,6 @@ export default function ResetPasswordPage() {
         try {
             await api.post('/auth/password/reset', { token, password })
             setDone(true)
-            // A moment to read the confirmation before the login form
-            // replaces it.
             setTimeout(() => navigate('/login'), 2200)
         } catch (err) {
             setError(apiErrorMessage(err, "Le mot de passe n'a pas pu être changé."))

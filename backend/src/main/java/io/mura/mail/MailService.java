@@ -28,7 +28,6 @@ public class MailService {
     private static final Logger log = LoggerFactory.getLogger(MailService.class);
 
     private final JavaMailSender sender;
-    // Spring Boot's application executor.
     private final TaskExecutor executor;
 
     @Value("${mura.mail.from}")
@@ -139,12 +138,6 @@ public class MailService {
         ));
     }
 
-    // Every mail leaves once the transaction that asked for it has committed,
-    // and off the request thread. After the commit, because a mail cannot be
-    // called back: an invitation rolled back with its project must not reach
-    // anyone. Off-thread, because a slow mail server has no business holding
-    // up a registration, and a mail that fails to leave must not undo the
-    // account just made. Outside a transaction it simply goes now.
     private void deliver(String to, String subject, String html) {
         Runnable delivery = () -> executor.execute(() -> send(to, subject, html));
 
@@ -173,8 +166,6 @@ public class MailService {
             sender.send(message);
             log.debug("Sent \"{}\" to {}", subject, to);
         } catch (Exception e) {
-            // Logged rather than thrown: the caller's work is already done and
-            // correct, and there is nothing it could do about a mail server.
             log.error("Could not send \"{}\" to {}", subject, to, e);
         }
     }
@@ -199,8 +190,6 @@ public class MailService {
                 + "padding:12px 20px;border-radius:10px;font-weight:600\">" + escape(label) + "</a></p>";
     }
 
-    // A username is whatever its owner typed, and it goes into a page that
-    // somebody else opens.
     private String escape(String value) {
         return value == null
                 ? ""

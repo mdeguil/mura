@@ -85,14 +85,8 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                // Named one by one rather than /api/auth/**:
-                                // /api/auth/me needs the token to know whose
-                                // account to answer with, and a wildcard here
-                                // would hand it a null caller.
                                 "/api/auth/login",
                                 "/api/auth/register",
-                                // Reached by somebody who cannot sign in --
-                                // that is the whole point of them.
                                 "/api/auth/password/forgot",
                                 "/api/auth/password/reset",
                                 "/swagger-ui/**",
@@ -101,10 +95,6 @@ public class SecurityConfig {
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
-                // Without this, a missing or expired token answers 403, the same as a
-                // logged-in user reaching someone else's project, so the client
-                // cannot tell "sign in again" from "not allowed". 401 means the
-                // first, and 403 is left to mean only the second.
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

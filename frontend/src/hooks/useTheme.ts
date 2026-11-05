@@ -3,8 +3,6 @@ import { useState } from 'react'
 /** The two themes; dark is the default. */
 export type Theme = 'dark' | 'light'
 
-// Where the choice is kept, and the key index.html reads before the first
-// paint: the two must agree.
 const STORAGE_KEY = 'mura-theme'
 
 /**
@@ -24,13 +22,12 @@ export function useTheme() {
     function toggle() {
         const next: Theme = theme === 'dark' ? 'light' : 'dark'
         document.documentElement.dataset.theme = next
-        // Unavailable storage only means the choice will not be remembered.
+        setTheme(next)
         try {
             localStorage.setItem(STORAGE_KEY, next)
         } catch {
-            // nothing to do
+            return
         }
-        setTheme(next)
     }
 
     return { theme, toggle }

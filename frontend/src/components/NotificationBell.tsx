@@ -17,8 +17,6 @@ export default function NotificationBell() {
     const [open, setOpen] = useState(false)
     const panel = useRef<HTMLDivElement>(null)
 
-    // Clicking anywhere else closes the panel, the way a menu is expected to
-    // behave; Échap does the same from the keyboard.
     useEffect(() => {
         if (!open) return
 
@@ -69,8 +67,6 @@ export default function NotificationBell() {
 
                 {unread > 0 && (
                     <>
-                        {/* The halo is the only thing that moves: it fades out
-                            on its own, so the header is not left pulsing. */}
                         <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-rose-400 animate-ping opacity-75 motion-reduce:hidden" />
                         <span className="absolute top-0.5 right-0.5 min-w-[1rem] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-semibold leading-4 text-center">
                             {unread}
@@ -168,16 +164,11 @@ export default function NotificationBell() {
     )
 }
 
-// One line per kind. A project notification names the project; an account
-// one names whichever of the two the reader owns -- never the
-// administrator who acted, whose identity is nobody else's business.
 function NotificationLine({ notification }: { notification: AppNotification }) {
     const who = <span className="font-medium">{notification.actorName}</span>
     const name = (
         <span className="font-medium">{notification.projectName ?? notification.groupName}</span>
     )
-    // The same news reaches a group owner and a project owner, so the line
-    // has to say which of theirs it is about.
     const where = notification.groupName ? (
         <>dans ton groupe {name}</>
     ) : (
@@ -255,7 +246,6 @@ function NotificationLine({ notification }: { notification: AppNotification }) {
                     {who} a quitté ton groupe {name}
                 </>
             )
-        // « En retrait », jamais « suspendu » : le compte n'est pas touché.
         case 'HELD_IN_GROUP':
             return (
                 <>

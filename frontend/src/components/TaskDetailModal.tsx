@@ -36,7 +36,6 @@ export default function TaskDetailModal({
     onSave: (
         taskId: string,
         changes: { startDate: string; endDate: string; assigneeId: string | null }
-        // What went wrong, or null once saved.
     ) => Promise<string | null>
     /** Called with the task and the subtask just added to it. */
     onSubtaskAdded: (taskId: string, subtask: Subtask) => void
@@ -48,9 +47,6 @@ export default function TaskDetailModal({
     const [name, setName] = useState('')
     const [loading, setLoading] = useState(false)
 
-    // Edited in place, like the status badge and the responsable pill:
-    // the fields are simply there, and a change saves itself. No button
-    // stands between wanting a different date and having one.
     const [start, setStart] = useState(task.startDate)
     const [end, setEnd] = useState(task.endDate)
     const [assigneeId, setAssigneeId] = useState(task.assignee?.id ?? null)
@@ -63,9 +59,6 @@ export default function TaskDetailModal({
     const startedAt = task.statusHistory.find((c) => c.toStatus === 'EN_COURS')?.changedAt
     const finishedAt = task.statusHistory.find((c) => c.toStatus === 'TERMINE')?.changedAt
 
-    // Nothing here changes the task on its own: a half-entered pair of
-    // dates is not a decision, and neither is a responsable picked while
-    // still thinking. The task keeps what it has until Enregistrer.
     const changed =
         start !== task.startDate ||
         end !== task.endDate ||
@@ -84,8 +77,6 @@ export default function TaskDetailModal({
         setDateError('')
     }
 
-    // Both fields go together, because the pair is what has to make sense:
-    // a start on its own can be after an end it has not met yet.
     async function save(e: React.FormEvent) {
         e.preventDefault()
 
@@ -93,8 +84,6 @@ export default function TaskDetailModal({
             setDateError('Les deux dates sont requises.')
             return
         }
-        // Caught here rather than by the server, which would answer with a
-        // less helpful message about the whole task.
         if (end < start) {
             setDateError('La fin ne peut pas précéder le début.')
             return
@@ -105,7 +94,6 @@ export default function TaskDetailModal({
         try {
             const problem = await onSave(task.id, { startDate: start, endDate: end, assigneeId })
             if (problem) {
-                // The server kept what it had; the panel shows that, and why.
                 discard()
                 setDateError(problem)
             }
@@ -114,8 +102,6 @@ export default function TaskDetailModal({
         }
     }
 
-    // The subtasks change one click at a time, each with its own request: a
-    // failure says so here instead of leaving the box ticked for nothing.
     async function subtaskChange(action: () => Promise<void>, fallback: string) {
         setSubtaskError('')
         try {
@@ -167,11 +153,6 @@ export default function TaskDetailModal({
                 </button>
             </div>
 
-            {/* noValidate on purpose: min= greys out the bad days in the
-                picker, but it also makes the field natively invalid once
-                the start moves past the end, and the browser would then
-                block the submit with a tooltip of its own instead of
-                letting the form say it in French. */}
             <form id="task-edit" onSubmit={save} noValidate className="flex flex-wrap items-end gap-3 mt-3">
                 <span
                     className={`text-xs font-medium px-2.5 py-1 rounded-full mb-1.5 ${TASK_STATUS_CLASSES[task.status]}`}
@@ -204,9 +185,6 @@ export default function TaskDetailModal({
                         type="date"
                         value={end}
                         disabled={savingDates}
-                        // Nothing before the start is offered by the
-                        // picker; saveDates still says so in French for
-                        // the ways round it.
                         min={start}
                         onChange={(e) => editDates(start, e.target.value)}
                         className="h-9 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 outline-none focus:border-brand-500 transition disabled:opacity-60"
@@ -296,10 +274,6 @@ export default function TaskDetailModal({
                 )}
             </div>
 
-            {/* At the end of everything that can be edited, and before the
-                history, which only reports. The buttons sit outside the form
-                and name it instead: the subtasks below carry a form of their
-                own, and a form inside a form is not a thing. */}
             <div className="flex items-center gap-2 mt-6 pt-4 border-t border-border">
                 <button
                     type="submit"

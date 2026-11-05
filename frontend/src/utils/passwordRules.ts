@@ -30,14 +30,10 @@ export function passwordRules(password: string, email: string, username: string)
         { label: 'Un chiffre', met: /\d/.test(password) },
         {
             label: 'Un caractère spécial',
-            // Anything that is not a letter, a digit or a space. Spelling out
-            // a list would refuse perfectly good characters nobody thought of.
             met: /[^\p{L}\p{N}\s]/u.test(password),
         },
         {
             label: "Différent de ton email et de ton nom d'utilisateur",
-            // Unmet only once there is something to compare against, so the
-            // list does not open on a red cross for an empty form.
             met:
                 password.length > 0 &&
                 (trimmedEmail.length === 0 || lower !== trimmedEmail) &&

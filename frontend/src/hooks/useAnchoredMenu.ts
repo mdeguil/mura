@@ -59,7 +59,6 @@ export function useAnchoredMenu({
             const margin = 12
             const below = window.innerHeight - rect.bottom - gap - margin
             const above = rect.top - gap - margin
-            // Downwards unless there is plainly more room the other way.
             const dropDown = below >= Math.min(above, maxHeight - 16) || below >= above
             const height = Math.min(maxHeight, Math.max(dropDown ? below : above, 120))
 
@@ -72,8 +71,6 @@ export function useAnchoredMenu({
         }
 
         place()
-        // The menu is anchored to a point in the viewport, so anything that
-        // moves that point has to move it too.
         window.addEventListener('resize', place)
         window.addEventListener('scroll', place, true)
 

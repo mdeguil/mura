@@ -19,21 +19,17 @@ import type { KnownUser, Project } from '../types'
 export default function DirectoryPage() {
     const peopleQuery = useApiQuery<KnownUser[]>('/directory', [], 'Impossible de charger ton carnet.')
     const { data: people, setData: setPeople, loading } = peopleQuery
-    // Not carnet entries yet: questions waiting on an answer.
     const requestsQuery = useApiQuery<KnownUser[]>(
         '/directory/requests',
         [],
         'Impossible de charger les demandes reçues.'
     )
     const { data: requests, setData: setRequests } = requestsQuery
-    // Only to work out what the reader may invite someone onto.
     const projectsQuery = useApiQuery<Project[]>('/projects', [], 'Impossible de charger tes projets.')
     const projects = projectsQuery.data
-    // Without the projects, the invite menus would offer nothing.
     const loadFailures = [peopleQuery, requestsQuery, projectsQuery]
         .filter((q) => q.error)
         .map((q) => ({ message: q.error, retry: q.reload }))
-    // What went wrong answering a request, apart from the lists themselves.
     const [error, setError] = useState('')
     const [query, setQuery] = useState('')
     const [tab, setTab] = useState<'people' | 'groups'>('people')
@@ -45,8 +41,6 @@ export default function DirectoryPage() {
     const [saving, setSaving] = useState(false)
     const [removing, setRemoving] = useState<KnownUser | null>(null)
     const [favouritesOnly, setFavouritesOnly] = useState(false)
-    // Favourites stay on top whichever way this points: the star is a
-    // decision about importance, the sort only orders what is left.
     const [ascending, setAscending] = useState(true)
 
     async function acceptRequest(person: KnownUser) {
@@ -92,8 +86,6 @@ export default function DirectoryPage() {
         setFormError('')
         try {
             await api.delete(`/directory/${person.id}`)
-            // Out of the carnet whatever put them there; adding them again
-            // by email brings them back.
             setPeople((prev) => prev.filter((p) => p.id !== person.id))
         } catch (err) {
             setFormError(apiErrorMessage(err, 'Impossible de retirer cette personne.'))
@@ -102,8 +94,6 @@ export default function DirectoryPage() {
 
     async function toggleFavourite(person: KnownUser) {
         const next = !person.favourite
-        // Optimistic: the star is the feedback, and a round trip before it
-        // moves would make the list feel stuck.
         setPeople((prev) => prev.map((p) => (p.id === person.id ? { ...p, favourite: next } : p)))
         try {
             await api.put(`/directory/${person.id}/favourite`, { favourite: next })
@@ -126,8 +116,6 @@ export default function DirectoryPage() {
                     (p.email ?? '').toLowerCase().includes(q) ||
                     p.sharedProjects.some((s) => s.name.toLowerCase().includes(q))
             )
-            // Sorted here as well as on the server, so starring someone or
-            // flipping the order lands without waiting for a reload.
             .sort(
                 (a, b) =>
                     Number(b.favourite) - Number(a.favourite) ||
@@ -306,7 +294,6 @@ export default function DirectoryPage() {
                     {loading ? (
                         <div className="text-sm text-slate-500">Chargement…</div>
                     ) : peopleQuery.error ? (
-                        // Said above. Not "Ton carnet est vide": it may well not be.
                         null
                     ) : people.length === 0 ? (
                         <div className="bg-surface border border-border rounded-2xl py-16 px-6 flex flex-col items-center text-center">

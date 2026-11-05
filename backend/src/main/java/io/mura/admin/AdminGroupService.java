@@ -51,7 +51,6 @@ public class AdminGroupService {
             return List.of();
         }
 
-        // One query for the members of every group rather than one per row.
         Map<UUID, List<UserGroupMember>> byGroup = memberRepository
                 .findAllForGroups(groups.stream().map(UserGroup::getId).toList())
                 .stream()
@@ -84,14 +83,8 @@ public class AdminGroupService {
         group.setOwner(manager);
         groupRepository.save(group);
 
-        // The gérant is in their own group: one they are not part of would
-        // not appear in their carnet, which is where they manage it from.
         UserGroupMember founder = memberRepository.save(new UserGroupMember(group, manager));
 
-        // A group appearing in your carnet with your name on it, out of
-        // nowhere, deserves an explanation. The administrator is named here
-        // -- unlike a suspension, this is an organisational decision, and
-        // knowing who made it is the whole point of being told.
         if (!manager.getId().equals(actorId)) {
             notificationService.notifyAboutGroup(
                     manager, NotificationType.GROUP_ENTRUSTED, group, actor);
@@ -123,17 +116,10 @@ public class AdminGroupService {
 
         if (!previous.getId().equals(manager.getId())) {
             group.setOwner(manager);
-            // Handing a group over puts the new gérant in it, for the same
-            // reason creating one does. The previous one stays a member:
-            // losing the group entirely is not what changing its gérant
-            // was meant to do.
             if (!memberRepository.existsByGroupIdAndUserId(groupId, manager.getId())) {
                 memberRepository.save(new UserGroupMember(group, manager));
             }
 
-            // Both sides of the handover are told, and each is told the half
-            // that concerns them: one has a group to run, the other no
-            // longer has.
             if (!manager.getId().equals(actorId)) {
                 notificationService.notifyAboutGroup(
                         manager, NotificationType.GROUP_ENTRUSTED, group, actor);
@@ -162,17 +148,12 @@ public class AdminGroupService {
         User actor = requireUser(actorId);
         UserGroup group = require(groupId);
 
-        // Everyone who was in it, the gérant included: a list that vanishes
-        // from the carnet without a word looks like a bug.
         memberRepository.findAllForGroups(List.of(groupId)).stream()
                 .map(UserGroupMember::getUser)
                 .filter(member -> !member.getId().equals(actorId))
                 .forEach(member -> notificationService.notifyAboutFormerGroup(
                         member, NotificationType.GROUP_DELETED, group.getName(), actor));
 
-        // A statement, and checked: with the notifications above written
-        // first, delete(group) emitted no SQL and the call still answered
-        // 204. See the note on deleteGroupById.
         if (groupRepository.deleteGroupById(groupId) != 1) {
             throw new ApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,

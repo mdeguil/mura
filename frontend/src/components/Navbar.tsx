@@ -25,15 +25,10 @@ export default function Navbar() {
                 <Logo className="w-8 h-8" />
                 <span className="text-lg font-semibold text-slate-800">Mura</span>
 
-                {/* The halves of the app sit beside the mark, so the carnet
-                    is as reachable as the projects from anywhere. */}
                 <nav className="flex items-center gap-1 ml-4">
                     {[
                         { to: '/projets', label: 'Projets' },
                         { to: '/carnet', label: 'Carnet' },
-                        // Only for an administrator, and only as a
-                        // convenience: the server refuses every call this
-                        // page makes to anyone else.
                         ...(user?.accountRole === 'ADMIN'
                             ? [{ to: '/administration', label: 'Administration' }]
                             : []),
@@ -62,8 +57,6 @@ export default function Navbar() {
                     <NotificationBell />
                 </div>
 
-                {/* The way to one's own account: what Mura holds, a copy of
-                    it, and closing the account. */}
                 <NavLink
                     to="/compte"
                     title="Mon compte"

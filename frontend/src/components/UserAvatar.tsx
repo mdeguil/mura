@@ -29,8 +29,6 @@ export default function UserAvatar({
         <span className="relative inline-flex shrink-0">
             <span
                 className={`${SIZES[size]} rounded-full flex items-center justify-center text-white font-semibold ${
-                    // Drained of colour rather than hidden: the person is still
-                    // on the team, they just cannot be reached.
                     suspended
                         ? 'bg-slate-300'
                         : 'bg-brand-gradient-diagonal'
@@ -42,8 +40,6 @@ export default function UserAvatar({
             </span>
 
             {suspended && (
-                // A bar, not a cross: it reads at six pixels, where a cross
-                // turns into a smudge.
                 <span
                     className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-surface flex items-center justify-center"
                     aria-hidden="true"

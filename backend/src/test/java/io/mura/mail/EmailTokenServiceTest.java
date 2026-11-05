@@ -31,8 +31,6 @@ class EmailTokenServiceTest {
     @Mock
     private EmailTokenRepository tokenRepository;
 
-    // A real encoder at its lowest cost: the point is that what is stored is
-    // a hash that the clear secret matches, which a mock would only pretend.
     private final PasswordEncoder encoder = new BCryptPasswordEncoder(4);
     private EmailTokenService service;
     private User alice;

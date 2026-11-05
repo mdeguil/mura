@@ -43,9 +43,6 @@ export default function ProjectFormFields({
 }) {
     const { types, loading: loadingTypes, error: typesError } = useProjectTypes()
 
-    // A select whose value matches no option still shows the first one, so a
-    // form opened before the types arrived would read "Web" and submit
-    // nothing. Choosing one as soon as they land keeps the two honest.
     useEffect(() => {
         if (!values.typeId && types.length > 0) {
             onChange({ typeId: types[0].id })
@@ -77,9 +74,6 @@ export default function ProjectFormFields({
                         disabled={loadingTypes}
                         className={FIELD}
                     >
-                        {/* Empty only while the list is on its way: a project
-                            cannot be saved without a type, and the form would
-                            otherwise show the first one as if it were chosen. */}
                         {loadingTypes && <option value="">Chargement…</option>}
                         {types.map((t) => (
                             <option key={t.id} value={t.id}>

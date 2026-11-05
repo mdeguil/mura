@@ -51,8 +51,6 @@ public class GroupService {
         Map<UUID, List<UserGroupMember>> byGroup = memberRepository
                 .findAllForGroups(groups.stream().map(UserGroup::getId).toList())
                 .stream()
-                // Read through the embedded id rather than getGroup(): the
-                // association is a lazy proxy, and this keeps it uninitialised.
                 .collect(Collectors.groupingBy(m -> m.getId().getGroupId()));
 
         return groups.stream()
@@ -112,8 +110,6 @@ public class GroupService {
     public void delete(UUID actorId, UUID groupId) {
         UserGroup group = requireOwner(actorId, groupId);
 
-        // Told before the row goes, and told with the name rather than the
-        // group itself: there is nothing left to open by the time they read it.
         membersOf(groupId).stream()
                 .map(UserGroupMember::getUser)
                 .filter(member -> !member.getId().equals(actorId))
@@ -153,9 +149,6 @@ public class GroupService {
             );
         }
 
-        // Added outright rather than invited: a group opens nothing on its
-        // own, so there is no access to consent to. Being told is the least
-        // that is owed in exchange.
         memberRepository.save(new UserGroupMember(group, person));
         notificationService.notifyAboutGroup(
                 person, NotificationType.ADDED_TO_GROUP, group, group.getOwner());
@@ -186,8 +179,6 @@ public class GroupService {
             );
         }
 
-        // The owner manages the group; anyone else may still show themselves
-        // out, which is the only case where actor and target are the same.
         boolean leaving = actorId.equals(memberId);
         if (!leaving) {
             requireOwner(actorId, groupId);
@@ -203,7 +194,6 @@ public class GroupService {
         memberRepository.delete(membership);
 
         if (leaving) {
-            // The gérant still has the group, so the line can lead back to it.
             notificationService.notifyAboutGroup(
                     group.getOwner(), NotificationType.MEMBER_LEFT_GROUP, group, member);
         } else {
@@ -244,8 +234,6 @@ public class GroupService {
                         "Cette personne ne fait pas partie du groupe."
                 ));
 
-        // Already where it was asked to be: nothing changed, so nobody is
-        // told. Two clicks in a row should not send two mails.
         if (membership.isOnHold() != onHold) {
             membership.setOnHoldAt(onHold ? Instant.now() : null);
             notificationService.notifyAboutGroup(
@@ -259,9 +247,6 @@ public class GroupService {
         return GroupResponse.from(group, actorId, membersOf(groupId));
     }
 
-    // Nobody should be told a group is gone and then find it still there,
-    // which is exactly what delete(entity) did once notifications had been
-    // written first. See the statement in UserGroupRepository.
     private void requireDeleted(UUID groupId) {
         if (groupRepository.deleteGroupById(groupId) != 1) {
             throw new ApiException(

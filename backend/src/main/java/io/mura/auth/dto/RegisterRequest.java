@@ -21,9 +21,6 @@ import java.util.Locale;
 public record RegisterRequest(
         @NotBlank(message = "Le nom d'utilisateur est requis.")
         @Size(min = 3, max = 50, message = "Le nom d'utilisateur doit contenir entre 3 et 50 caractères.")
-        // \p{L} rather than a-z: Mathéo and Zoë are names, not typos. What is
-        // refused is whitespace and punctuation that would make a username
-        // impossible to say out loud or to type back into an invitation.
         @Pattern(
                 regexp = "^[\\p{L}\\p{N}][\\p{L}\\p{N}._-]*$",
                 message = "Le nom d'utilisateur accepte les lettres, chiffres, point, tiret et underscore, sans espace."
@@ -49,8 +46,6 @@ public record RegisterRequest(
      */
     public RegisterRequest {
         username = username == null ? null : username.trim();
-        // An email has one stored spelling, lowercase: it is the login, and
-        // it is how invitations and the carnet find a person.
         email = email == null ? null : email.trim().toLowerCase(Locale.ROOT);
     }
 }

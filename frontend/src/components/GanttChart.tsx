@@ -21,8 +21,6 @@ import { initialPlanningMonth } from '../utils/planning'
 
 const LABEL_WIDTH = 180
 
-// Crisp line plus a soft drop shadow on the right edge of the name column,
-// so it reads as its own pane next to the timeline.
 const LABEL_SEPARATOR = '1px 0 0 0 rgb(203 213 225), 6px 0 8px -6px rgb(15 23 42 / 0.18)'
 
 /**
@@ -40,8 +38,6 @@ export default function GanttChart({
     /** Called with the task whose bar or name was clicked. */
     onOpenTask: (task: Task) => void
 }) {
-    // A two-month window sliding one month at a time, so consecutive views
-    // overlap and a task straddling a month break stays readable.
     const [month, setMonth] = useState(() => initialPlanningMonth(tasks))
 
     const secondMonth = addMonths(month, 1)
@@ -49,8 +45,6 @@ export default function GanttChart({
     const windowEnd = endOfMonth(secondMonth)
     const dayCount = differenceInCalendarDays(windowEnd, windowStart) + 1
 
-    // Two months always fit the available width, so positions are percentages
-    // of the timeline rather than fixed pixels per day — no horizontal scroll.
     const percent = (days: number) => (days / dayCount) * 100
 
     const today = startOfDay(new Date())
@@ -75,9 +69,6 @@ export default function GanttChart({
         .map((day) => differenceInCalendarDays(day, windowStart))
         .filter((offset) => offset > 0)
 
-    // A Monday landing on a month label would collide with it, and one in the
-    // last days of the window would overflow the right edge — both keep their
-    // guide but lose their number.
     const labelledWeekOffsets = weekOffsets.filter(
         (offset) =>
             dayCount - offset > 2 &&
@@ -140,8 +131,6 @@ export default function GanttChart({
                         </div>
                     </div>
 
-                    {/* isolate + negative z-index keeps the guides behind the rows,
-                        so they don't paint over the horizontal separators. */}
                     <div className="relative isolate">
                         <div
                             className="absolute inset-y-0 pointer-events-none"
@@ -202,7 +191,6 @@ export default function GanttChart({
                                         {task.name}
                                     </div>
                                     <div className="relative flex-1 h-full">
-                                        {/* Square edges where the task runs past the window. */}
                                         <button
                                             onClick={() => onOpenTask(task)}
                                             className={`absolute top-1.5 h-6 transition hover:opacity-90 ${

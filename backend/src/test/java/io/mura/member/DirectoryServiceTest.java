@@ -32,8 +32,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-// The carnet is read from several sources at once; each test stubs them all
-// to empty and then fills only the one it is about.
 @MockitoSettings(strictness = Strictness.LENIENT)
 class DirectoryServiceTest {
 

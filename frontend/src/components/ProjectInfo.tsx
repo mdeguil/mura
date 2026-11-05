@@ -128,8 +128,6 @@ export default function ProjectInfo({
                     )}
                 </section>
 
-                {/* Who is already on it is part of deciding whether to join.
-                    Read-only here, and the server withholds their emails. */}
                 <MemberList
                     projectId={project.id}
                     members={members}
@@ -154,8 +152,6 @@ export default function ProjectInfo({
 
     return (
         <div className="flex flex-col gap-4">
-            {/* The one thing worth coming to this tab for: where the project
-                stands, in the same colours the task board already taught. */}
             <section className="bg-surface border border-border rounded-xl p-5">
                 <div className="flex items-baseline justify-between gap-4 mb-3">
                     <h2 className="text-sm font-semibold text-slate-800">Avancement</h2>

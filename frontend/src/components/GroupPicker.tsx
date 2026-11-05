@@ -53,8 +53,6 @@ export default function GroupPicker({
 
     const group = groups.find((g) => g.id === groupId) ?? null
 
-    // Set aside by the gérant is the gérant's call, and a suspended account
-    // cannot sign in to use the project: neither is brought along.
     function reasonLeftOut(person: GroupMember): string | null {
         const own = leftOut(person)
         if (own) return own
@@ -69,20 +67,14 @@ export default function GroupPicker({
 
     const joining = group ? joiningOf(group) : []
 
-    // Picking the chosen group again lets go of it, where going without one
-    // is allowed: that is the only way back to no group.
     function pick(g: Group) {
         setGroupId(g.id === groupId && allowNone ? '' : g.id)
     }
 
-    // Where a group is required, the first one is chosen as soon as the
-    // list arrives.
     useEffect(() => {
         if (!allowNone && !groupId && groups.length > 0) setGroupId(groups[0].id)
     }, [allowNone, groupId, groups])
 
-    // Reported whenever the choice changes, not whenever the caller hands
-    // down a new callback: the latest one is read from here.
     const onChangeRef = useRef(onChange)
     onChangeRef.current = onChange
 
@@ -114,8 +106,6 @@ export default function GroupPicker({
             <p id="group-picker-label" className="text-xs font-medium text-slate-600 mb-1.5">
                 Quel groupe ?
             </p>
-            {/* Cards rather than a select: a group is recognised by its
-                faces, and how many it brings is the thing being decided. */}
             <ul
                 role="radiogroup"
                 aria-labelledby="group-picker-label"
@@ -176,8 +166,6 @@ export default function GroupPicker({
 
             {group && (
                 <>
-                    {/* Read only: who comes is decided by the group, not
-                        ticked here. */}
                     {!countOnly && (
                         <ul className="bg-surface-muted border border-border rounded-xl divide-y divide-border max-h-64 overflow-y-auto">
                             {group.members.map((person) => {

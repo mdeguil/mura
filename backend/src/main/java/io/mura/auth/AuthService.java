@@ -48,9 +48,6 @@ public class AuthService {
      */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // Already trimmed, and the email already lowercased, by
-        // RegisterRequest's constructor -- so that the validation constraints
-        // judged the same strings that get stored.
         String email = request.email();
         String username = request.username();
         String password = request.password();
@@ -77,10 +74,6 @@ public class AuthService {
         try {
             userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException ex) {
-            // Two people registering the same address at the same moment both
-            // pass the checks above; the unique indexes on lower(email) and
-            // lower(username) refuse the second, and this turns that refusal
-            // into the same message the checks would have given.
             throw new ApiException(
                     HttpStatus.CONFLICT,
                     "Cet email ou ce nom d'utilisateur vient d'être pris. Réessaie.",
@@ -88,9 +81,6 @@ public class AuthService {
             );
         }
 
-        // Signed in straight away, but the address is still only a claim:
-        // every other endpoint refuses this token until the code comes
-        // back, so there is nothing to do but the code screen.
         var issued = emailTokenService.issueCode(user);
         mailService.sendVerificationCode(user.getEmail(), user.getUsername(), issued.secret());
 
@@ -183,8 +173,6 @@ public class AuthService {
         refusePasswordThatGivesItselfAway(request.password(), user);
 
         user.setPassword(passwordEncoder.encode(request.password()));
-        // Reaching the link proves the address works, which is the whole
-        // point of the code. Asking for both would be asking twice.
         if (!user.isEmailVerified()) {
             user.setEmailVerifiedAt(Instant.now());
         }
@@ -205,8 +193,6 @@ public class AuthService {
      *         with the same message for both; 403 for a suspended account
      */
     public AuthResponse login(LoginRequest request) {
-        // Case-insensitive, like registration and like every other lookup by
-        // email: capitals from a phone keyboard are not a wrong password.
         User user = userRepository.findByEmailIgnoreCase(request.email())
                 .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect."));
 
@@ -214,9 +200,6 @@ public class AuthService {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect.");
         }
 
-        // Said plainly rather than hidden behind the generic message: a
-        // suspended account is not a typo, and hunting for one would be a
-        // waste of the reader's evening.
         if (user.isSuspended()) {
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
@@ -228,8 +211,6 @@ public class AuthService {
         return new AuthResponse(token, AccountResponse.from(user));
     }
 
-    // No rule about shape catches this one: anyone who knows the account
-    // already knows both of these strings.
     private void refusePasswordThatGivesItselfAway(String password, User user) {
         if (password.equalsIgnoreCase(user.getEmail())
                 || password.equalsIgnoreCase(user.getUsername())) {

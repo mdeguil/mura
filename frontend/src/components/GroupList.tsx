@@ -30,8 +30,6 @@ export default function GroupList() {
                 administrateur.
             </p>
 
-            {/* A failed load is not an empty list: saying "Aucun groupe"
-                would tell the reader something untrue. */}
             {error ? (
                 <ErrorMessage onRetry={reload}>{error}</ErrorMessage>
             ) : groups.length === 0 ? (
@@ -74,8 +72,6 @@ export default function GroupList() {
                                         <span className="text-xs text-slate-400 shrink-0">Ouvrir →</span>
                                     </div>
 
-                                    {/* Les visages d'abord : reconnaître un groupe,
-                                        c'est reconnaître qui est dedans. */}
                                     <ul className="flex flex-wrap gap-2 mt-3">
                                         {group.members.map((member) => (
                                             <li

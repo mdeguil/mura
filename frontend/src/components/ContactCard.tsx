@@ -114,9 +114,6 @@ export default function ContactCard({
                     title="Retirer de mon carnet"
                     aria-label={`Retirer ${person.username} de mon carnet`}
                 >
-                    {/* A person with a minus, not a bin: nothing is destroyed
-                        here — they keep their account, their projects, and
-                        their own carnet. Only this list loses them. */}
                     <svg
                         viewBox="0 0 24 24"
                         className="w-[18px] h-[18px]"

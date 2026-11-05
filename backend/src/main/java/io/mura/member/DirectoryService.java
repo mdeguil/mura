@@ -60,8 +60,6 @@ public class DirectoryService {
                             project.getId(), project.getName(), project.getColor()));
         }
 
-        // Invitation counterparts are known too, even with nothing in common
-        // yet — which is exactly who you would reach for next.
         for (User person : directoryRepository.findInvitedByMe(userId)) {
             people.putIfAbsent(person.getId(), person);
         }
@@ -79,15 +77,11 @@ public class DirectoryService {
                 hidden.add(person.getId());
                 continue;
             }
-            // Still waiting on an answer: shown, so the request does not
-            // look like it went nowhere, but not yet a carnet entry.
             if (contact.getStatus() == ContactStatus.PENDING) {
                 people.putIfAbsent(person.getId(), person);
                 pending.add(person.getId());
                 continue;
             }
-            // Turned down. Nothing to show -- unless a shared project puts
-            // them in the carnet anyway, which is not this row's doing.
             if (contact.getStatus() == ContactStatus.DECLINED) {
                 continue;
             }
@@ -99,8 +93,6 @@ public class DirectoryService {
         }
 
         return people.values().stream()
-                // Taken out of the carnet on purpose, whatever else would
-                // otherwise put them back in it.
                 .filter(person -> !hidden.contains(person.getId()))
                 .map(person -> new KnownUserResponse(
                         person.getId(),
@@ -113,8 +105,6 @@ public class DirectoryService {
                         person.isSuspended(),
                         pending.contains(person.getId())
                 ))
-                // Favourites first, then alphabetically — the order the carnet
-                // opens on, which the client can then flip.
                 .sorted(Comparator
                         .comparing((KnownUserResponse u) -> !u.favourite())
                         .thenComparing(KnownUserResponse::username, String.CASE_INSENSITIVE_ORDER))
@@ -167,8 +157,6 @@ public class DirectoryService {
             );
         }
 
-        // Already asked you? Then saying yes is the answer, not a second
-        // request crossing the first in the post.
         Contact theirs = contactRepository.findByOwnerIdAndPersonId(person.getId(), ownerId)
                 .filter(c -> c.getStatus() == ContactStatus.PENDING)
                 .orElse(null);
@@ -176,8 +164,6 @@ public class DirectoryService {
             return accept(ownerId, person.getId());
         }
 
-        // Re-adding someone you had taken out, or asking again after a
-        // refusal, reuses the row rather than failing on it.
         Contact contact = contactRepository.findByOwnerIdAndPersonId(ownerId, person.getId())
                 .orElseGet(() -> new Contact(owner, person));
         contact.setHidden(false);
@@ -186,8 +172,6 @@ public class DirectoryService {
 
         notificationService.notifyAboutPerson(person, NotificationType.CONTACT_REQUESTED, owner);
 
-        // The answer carries what the list would show rather than a bare
-        // row: saved is false until they agree.
         return new KnownUserResponse(
                 person.getId(),
                 person.getUsername(),

@@ -42,10 +42,6 @@ export default function ForgotPasswordPage() {
                             <h1 className="text-xl font-semibold text-slate-800 mb-1">
                                 Regarde tes mails 📬
                             </h1>
-                            {/* Deliberately says "if": whether an address has an
-                                account is not something this page will tell a
-                                stranger, and the server answers the same either
-                                way. */}
                             <p className="text-sm text-slate-500">
                                 Si un compte Mura utilise{' '}
                                 <span className="font-medium text-slate-700">{email.trim()}</span>, un

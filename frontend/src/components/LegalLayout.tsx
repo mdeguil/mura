@@ -32,10 +32,6 @@ export default function LegalLayout({
                     <h1 className="text-2xl font-semibold text-slate-800 mb-1">{title}</h1>
                     <p className="text-xs text-slate-500 mb-6">Mise à jour le {LEGAL_INFO.lastUpdated}</p>
 
-                    {/* Said out loud rather than left blank: an instance
-                        nobody has declared must not pass for one that has.
-                        Mura is installed by the people who use it, so this
-                        speaks to whoever installed this one. */}
                     {!legalInfoDeclared() && (
                         <p
                             role="note"

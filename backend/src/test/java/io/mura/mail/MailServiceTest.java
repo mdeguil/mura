@@ -37,12 +37,9 @@ class MailServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Delivered on the calling thread, so each test reads what was sent
-        // as soon as it asks.
         service = new MailService(sender, Runnable::run);
         ReflectionTestUtils.setField(service, "from", "Mura <bonjour@mura.test>");
         ReflectionTestUtils.setField(service, "appUrl", "https://mura.example");
-        // Not every test gets as far as building a message.
         lenient().when(sender.createMimeMessage()).thenReturn(new MimeMessage(Session.getInstance(new Properties())));
     }
 
@@ -122,7 +119,6 @@ class MailServiceTest {
 
             TransactionSynchronizationManager.getSynchronizations()
                     .forEach(sync -> sync.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
-            // Not sent, and not even put together.
             verifyNoInteractions(sender);
         } finally {
             TransactionSynchronizationManager.clearSynchronization();

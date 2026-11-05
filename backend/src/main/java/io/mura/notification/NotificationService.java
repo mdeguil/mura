@@ -112,19 +112,13 @@ public class NotificationService {
         record(new Notification(), recipient, type, subject.getUsername());
     }
 
-    // The one place a notification comes into being, so a type added later
-    // cannot quietly arrive without its mail.
     private void record(Notification notification, User recipient, NotificationType type, String actorName) {
         notification.setUser(recipient);
         notification.setType(type);
         notification.setActorName(actorName);
-        // Set here rather than in @PrePersist: callers read the row back
-        // before the flush.
         notification.setCreatedAt(Instant.now());
         notificationRepository.save(notification);
 
-        // Nothing to act on and no way in: a suspended account cannot sign
-        // in, so the mail would only be a reminder of that.
         if (recipient.isSuspended()) {
             return;
         }

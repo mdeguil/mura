@@ -31,8 +31,6 @@ public class InvitationService {
     private final UserRepository userRepository;
     private final MailService mailService;
 
-    // Injected rather than hard-coded so the window can be changed without
-    // touching the rule that applies it.
     private final Duration lifetime;
 
     /**
@@ -80,8 +78,6 @@ public class InvitationService {
     public InvitationResponse invite(UUID actorId, UUID projectId, CreateInvitationRequest request) {
         ProjectMember manager = access.requireManager(actorId, projectId);
         Project project = manager.getProject();
-        // Whoever sent it, owner or project admin: the carnet links the two
-        // of them, and the mail says who is asking.
         User inviter = manager.getUser();
 
         String email = request.email().trim();
@@ -95,8 +91,6 @@ public class InvitationService {
             throw new ApiException(HttpStatus.CONFLICT, user.getUsername() + " fait déjà partie du projet.");
         }
 
-        // An invitation that lapsed is no obstacle to sending a new one, so
-        // it is expired here before the "already pending" check sees it.
         expireStale(invitationRepository.findAllByProjectIdAndInvitedUserIdAndStatus(
                 projectId, user.getId(), InvitationStatus.PENDING));
 
@@ -108,8 +102,6 @@ public class InvitationService {
             );
         }
 
-        // Someone can be asked again after refusing or letting one lapse, and
-        // the new invitation replaces the old rather than sitting next to it.
         invitationRepository.deleteAll(invitationRepository.findAllByProjectIdAndInvitedUserIdAndStatus(
                 projectId, user.getId(), InvitationStatus.DECLINED));
         invitationRepository.deleteAll(invitationRepository.findAllByProjectIdAndInvitedUserIdAndStatus(
@@ -120,13 +112,9 @@ public class InvitationService {
         invitation.setInvitedUser(user);
         invitation.setInvitedBy(inviter);
         invitation.setStatus(InvitationStatus.PENDING);
-        // Set eagerly rather than leaving it to @PrePersist: the response is
-        // built before Hibernate flushes the insert.
         invitation.setCreatedAt(Instant.now());
 
         invitationRepository.save(invitation);
-        // The bell only reaches somebody who is already looking at Mura.
-        // An invitation is exactly the thing they are not yet.
         mailService.sendProjectInvitation(
                 user.getEmail(), user.getUsername(),
                 inviter.getUsername(), project.getName());
@@ -154,9 +142,6 @@ public class InvitationService {
             return List.of();
         }
 
-        // Every address is resolved before the first invitation is written,
-        // so an unknown one at the end of the list stops everything at once.
-        // The mails wait for the commit: a cancelled creation tells nobody.
         List<User> invitees = emails.stream()
                 .map(String::trim)
                 .filter(email -> !email.isEmpty())
@@ -188,9 +173,6 @@ public class InvitationService {
                     invitation.setCreatedAt(Instant.now());
                     invitationRepository.save(invitation);
 
-                    // The same mail as an invitation sent from the project
-                    // page: being listed at creation is no reason to learn
-                    // about it only by happening to open Mura.
                     mailService.sendProjectInvitation(
                             user.getEmail(), user.getUsername(),
                             owner.getUsername(), project.getName());
@@ -230,8 +212,6 @@ public class InvitationService {
      */
     @Transactional
     public List<InvitationResponse> listPendingForUser(UUID userId) {
-        // Anything that expired drops out of this list in the same breath as
-        // being marked expired, so nobody is offered a dead invitation.
         return expireStale(invitationRepository.findAllForUser(userId, InvitationStatus.PENDING)).stream()
                 .filter(i -> i.getStatus() == InvitationStatus.PENDING)
                 .map(this::toResponse)
@@ -274,9 +254,6 @@ public class InvitationService {
         ProjectInvitation invitation = requireOwnInvitation(userId, invitationId);
         Project project = invitation.getProject();
 
-        // Accepting is what creates membership. The only other way in is a
-        // manager bringing people over from a group (ProjectService.addFromGroup);
-        // nothing here hands out access on its own.
         if (!projectMemberRepository.existsByProjectIdAndUserId(project.getId(), userId)) {
             projectMemberRepository.save(
                     new ProjectMember(project, invitation.getInvitedUser(), ProjectRole.MEMBER)
@@ -323,8 +300,6 @@ public class InvitationService {
     public InvitationResponse markRead(UUID userId, UUID invitationId) {
         ProjectInvitation invitation = requireAddressedTo(userId, invitationId);
 
-        // Clicking the same notification twice is normal, so re-reading is a
-        // no-op rather than an error.
         if (invitation.getReadAt() == null) {
             invitation.setReadAt(Instant.now());
         }
@@ -350,17 +325,12 @@ public class InvitationService {
         if (invitation.getDismissedAt() == null) {
             invitation.setDismissedAt(Instant.now());
         }
-        // Clearing it counts as having seen it.
         if (invitation.getReadAt() == null) {
             invitation.setReadAt(Instant.now());
         }
 
         return toResponse(invitation);
     }
-
-    // Read and dismiss both act on a notification rather than on the
-    // invitation's outcome, so they accept it whatever its status: only the
-    // person it was sent to may touch it.
 
     private InvitationResponse toResponse(ProjectInvitation invitation) {
         return InvitationResponse.from(invitation, expiryOf(invitation));
@@ -370,11 +340,6 @@ public class InvitationService {
         return invitation.getCreatedAt().plus(lifetime);
     }
 
-    // Expiry is applied when something reads the invitation rather than by a
-    // scheduled sweep: an invitation left unanswered while the application
-    // was down is just as expired, and the row is corrected the moment
-    // anyone looks at it. That also frees the partial unique index on
-    // PENDING, so the person can be invited again.
     private List<ProjectInvitation> expireStale(List<ProjectInvitation> invitations) {
         Instant now = Instant.now();
         List<ProjectInvitation> lapsed = invitations.stream()
@@ -387,9 +352,6 @@ public class InvitationService {
             i.setRespondedAt(now);
         });
 
-        // Flushed on the spot: a fresh invitation inserted later in the same
-        // transaction would otherwise meet the old row still marked pending,
-        // and the partial unique index on PENDING would reject it.
         if (!lapsed.isEmpty()) {
             invitationRepository.flush();
         }
@@ -415,8 +377,6 @@ public class InvitationService {
     private ProjectInvitation requireOwnInvitation(UUID userId, UUID invitationId) {
         ProjectInvitation invitation = requirePendingInvitation(invitationId);
 
-        // Answering is the invitee's call alone: not the owner's, not another
-        // member's.
         if (!invitation.getInvitedUser().getId().equals(userId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "Cette invitation ne t'est pas adressée.");
         }

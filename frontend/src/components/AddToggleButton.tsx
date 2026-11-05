@@ -26,9 +26,6 @@ export default function AddToggleButton({
             aria-label={open ? 'Annuler' : label}
             aria-expanded={open}
         >
-            {/* Drawn rather than typed: the + glyph sits off the optical
-                centre of a round button, and this one also has to rotate
-                cleanly into a ✕. */}
             <svg
                 viewBox="0 0 16 16"
                 className="w-3.5 h-3.5"

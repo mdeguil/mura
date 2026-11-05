@@ -52,7 +52,6 @@ export default function MemberList({
     onMembersChanged: (members: Member[]) => void
 }) {
     const [inviting, setInviting] = useState(false)
-    // One person is asked and answers; a group is brought straight in.
     const [mode, setMode] = useState<'person' | 'group'>('person')
     const [error, setError] = useState('')
     const [sending, setSending] = useState(false)
@@ -68,8 +67,6 @@ export default function MemberList({
         setError('')
     }
 
-    // Runs a change to the team, saying so here if it fails. Answers
-    // whether it went through.
     async function attempt(action: () => Promise<void>, fallback: string): Promise<boolean> {
         setError('')
         try {
@@ -81,8 +78,6 @@ export default function MemberList({
         }
     }
 
-    // Whatever invitation the newcomers still had is gone on the server,
-    // so it goes from the list here too.
     function handleGroupAdded(updated: Member[], joinedIds: string[]) {
         onMembersChanged(updated)
         invitations.filter((i) => joinedIds.includes(i.invitedUser.id)).forEach((i) => onInvitationCancelled(i.id))
@@ -173,8 +168,6 @@ export default function MemberList({
                     submitLabel="Inviter"
                     busyLabel="Envoi…"
                     busy={sending}
-                    // Already on the team, or already asked: offering either
-                    // would be offering a click that fails.
                     excludeIds={[...members.map((m) => m.id), ...pendingIds]}
                     onSubmit={invite}
                     onEscape={closeInvite}
@@ -207,8 +200,6 @@ export default function MemberList({
 
             {isOwner && others.length > 0 && <TransferOwnership candidates={others} onTransfer={transfer} />}
 
-            {/* Showing yourself out deserves a button of its own: a cross on
-                your own row read as "remove me" without saying so. */}
             {me && me.role !== 'OWNER' && (
                 <div className="mt-5 pt-4 border-t border-border">
                     <button

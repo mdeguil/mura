@@ -28,9 +28,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    // What an account may still reach before its address is confirmed:
-    // reading itself, sending the code back, and asking for another one.
-    // Everything else waits.
     private static final Set<String> ALLOWED_WHILE_UNVERIFIED = Set.of(
             "/api/auth/me",
             "/api/auth/verify",
@@ -64,11 +61,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(7);
             if (jwtService.isValid(token)) {
                 UUID userId = jwtService.extractUserId(token);
-                // Checked against the database on every request rather than
-                // read from a claim in the token. A suspension has to bite
-                // now: a role or a status carried inside the token would
-                // stay true until it expires, which is a day of access
-                // somebody already decided to take away.
                 User user = userRepository.findById(userId).orElse(null);
 
                 if (user != null && !user.isSuspended() && mayReach(user, request)) {
@@ -81,9 +73,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    // Leaving the request unauthenticated rather than letting it through:
-    // the endpoint then answers 401, which the client already knows means
-    // "this token cannot do that" -- and it reads /auth/me to find out why.
     private boolean mayReach(User user, HttpServletRequest request) {
         return user.isEmailVerified() || ALLOWED_WHILE_UNVERIFIED.contains(request.getRequestURI());
     }

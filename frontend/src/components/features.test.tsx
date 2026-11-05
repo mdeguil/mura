@@ -40,10 +40,8 @@ describe('GroupPicker', () => {
 
         const designCard = await screen.findByRole('radio', { name: /Design/ })
         expect(designCard).toHaveAttribute('aria-checked', 'true')
-        // bob and carol: alice is left out by the caller, dave is suspended, eve set aside.
         expect(designCard).toHaveTextContent('👥 2')
         expect(screen.getByText('2 personnes rejoindront le projet.')).toBeInTheDocument()
-        // Reported from an effect, once the first group has been chosen.
         await waitFor(() =>
             expect(onChange).toHaveBeenLastCalledWith({ groupId: expect.any(String), groupName: 'Design', joiningCount: 2 })
         )
@@ -67,7 +65,6 @@ describe('GroupPicker', () => {
 
         await userEvent.click(designCard)
         expect(designCard).toHaveAttribute('aria-checked', 'true')
-        // Count only: nobody is listed by name.
         expect(screen.queryByText('bob')).toBeNull()
 
         await userEvent.click(designCard)
@@ -351,7 +348,6 @@ describe('CarnetCombobox', () => {
         render(<Field onPick={onPick} />)
         const field = screen.getByRole('combobox')
 
-        // "ro": robert first (his name starts with it), then carol.
         await userEvent.type(field, 'ro')
         await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(2))
         await userEvent.keyboard('{ArrowDown}{Enter}')

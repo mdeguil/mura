@@ -65,8 +65,6 @@ public class ProjectTypeService {
 
         ProjectType type = new ProjectType();
         apply(type, request);
-        // Appended rather than inserted: an administrator who wants a
-        // different order can say so, and until then a new type lands last.
         type.setPosition(typeRepository.findAllByOrderByPositionAscLabelAsc().stream()
                 .mapToInt(ProjectType::getPosition)
                 .max()
@@ -112,16 +110,10 @@ public class ProjectTypeService {
                         "Aucun type de repli n'est défini."
                 ));
 
-        // Moved before the row goes, not left to a cascade: the foreign key
-        // would have refused, and a cascade would have taken the projects.
         projectRepository.reassignType(id, fallback.getId());
         typeRepository.delete(type);
     }
 
-    // The fallback is where every other deletion sends its projects, so it
-    // has to still be there and still mean what the message said it means.
-    // Locked rather than merely undeletable: renaming "Autre" to something
-    // else would make every deletion dialog quietly wrong.
     private void refuseTouchingTheFallback(ProjectType type, String verb) {
         if (type.isFallback()) {
             throw new ApiException(

@@ -26,8 +26,6 @@ export default function PasswordStrength({
                 />
             </div>
 
-            {/* Two columns: six rules in a single stack pushes the submit
-                button off a short screen. */}
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 mt-2">
                 {rules.map((rule) => (
                     <li

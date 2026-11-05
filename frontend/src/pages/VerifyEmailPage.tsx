@@ -32,8 +32,6 @@ export default function VerifyEmailPage() {
     const code = digits.join('')
 
     function put(index: number, value: string) {
-        // Pasting the whole code into any box should fill them all, which is
-        // what people actually do with a code they just copied.
         const typed = value.replace(/\D/g, '')
         if (typed.length === 0) {
             setDigits((prev) => prev.map((d, i) => (i === index ? '' : d)))
@@ -52,8 +50,6 @@ export default function VerifyEmailPage() {
     }
 
     function onKeyDown(index: number, event: React.KeyboardEvent<HTMLInputElement>) {
-        // Backspace on an empty box steps back, rather than doing nothing and
-        // leaving the caret stranded.
         if (event.key === 'Backspace' && digits[index] === '' && index > 0) {
             event.preventDefault()
             boxes.current[index - 1]?.focus()
@@ -75,7 +71,6 @@ export default function VerifyEmailPage() {
         setLoading(true)
         try {
             const { data } = await api.post<Account>('/auth/verify', { code })
-            // The rest of the app appears the moment this lands.
             setUser(data)
         } catch (err) {
             setError(apiErrorMessage(err, "Ce code n'a pas été accepté."))

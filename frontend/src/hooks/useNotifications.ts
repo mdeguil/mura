@@ -30,8 +30,6 @@ export function useNotifications() {
     const setNotifications = notificationsQuery.setData
 
     const items: BellItem[] = [
-        // Dismissed ones are gone from the bell for good; they are still
-        // reachable from the projects list until answered.
         ...invitationsQuery.data
             .filter((invitation) => !invitation.dismissed)
             .map(
@@ -72,13 +70,10 @@ export function useNotifications() {
             const base = item.kind === 'invitation' ? 'invitations' : 'notifications'
             await api.post(`/${base}/${item.id}/read`)
         } catch {
-            // Put the dot back rather than claiming it was read.
             setRead(item, false)
         }
     }
 
-    // An invitation is only cleared from the bell — it still waits under
-    // « À rejoindre ». A notification has nowhere else to live, so it goes.
     async function clear(item: BellItem) {
         if (item.kind === 'invitation') {
             setInvitations((prev) => prev.map((i) => (i.id === item.id ? { ...i, dismissed: true } : i)))
@@ -117,8 +112,6 @@ export function destinationOf(item: BellItem): { href: string; label: string } |
     if (type === 'CONTACT_REQUESTED' || type === 'CONTACT_ACCEPTED') {
         return { href: '/carnet', label: 'le carnet' }
     }
-    // A group still yours to open leads to its page; one you have left or
-    // that is gone leads to the carnet, which is what is left of it.
     if (groupId) return { href: `/groupe/${groupId}`, label: 'le groupe' }
     if (groupName) return { href: '/carnet', label: 'le carnet' }
     return projectId ? { href: `/project/${projectId}`, label: 'le projet' } : null

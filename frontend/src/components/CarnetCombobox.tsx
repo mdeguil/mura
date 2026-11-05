@@ -3,9 +3,6 @@ import { useApiQuery } from '../hooks/useApiQuery'
 import UserAvatar from './UserAvatar'
 import type { KnownUser } from '../types'
 
-// Eight is what fits without the list becoming a page of its own. A carnet
-// of a hundred people is the case this exists for, and scrolling a hundred
-// faces is the thing it is meant to replace.
 const MAX_SUGGESTIONS = 8
 
 /**
@@ -50,8 +47,6 @@ export default function CarnetCombobox({
     /** For a `<label htmlFor>` outside the field. */
     id?: string
 }) {
-    // Suggestions only: if the carnet cannot be read, the field still takes
-    // a typed address, so a failure here is not worth interrupting anyone.
     const { data: people } = useApiQuery<KnownUser[]>('/directory', [], '')
     const [open, setOpen] = useState(false)
     const [highlighted, setHighlighted] = useState(0)
@@ -70,9 +65,6 @@ export default function CarnetCombobox({
     const reachable = useMemo(
         () =>
             people
-                // A request still waiting for an answer is not somebody you
-                // can reach yet, and an entry seen through an invitation
-                // hides its address until the person joins.
                 .filter((person) => !person.pending && person.email)
                 .filter((person) => !excludeIds.includes(person.id))
                 .filter((person) => !excludeEmails.includes(person.email!.toLowerCase())),
@@ -82,8 +74,6 @@ export default function CarnetCombobox({
     const query = value.trim().toLowerCase()
     const matches = useMemo(() => {
         if (query === '') {
-            // Nothing typed: a short carnet is worth showing outright, a long
-            // one would just be the wall of names this replaced.
             return reachable.length <= MAX_SUGGESTIONS ? reachable : []
         }
         return reachable
@@ -92,7 +82,6 @@ export default function CarnetCombobox({
                     person.username.toLowerCase().includes(query) ||
                     person.email!.toLowerCase().includes(query)
             )
-            // A name that starts with what you typed is the one you meant.
             .sort((a, b) => {
                 const aStarts = a.username.toLowerCase().startsWith(query) ? 0 : 1
                 const bStarts = b.username.toLowerCase().startsWith(query) ? 0 : 1
@@ -101,7 +90,6 @@ export default function CarnetCombobox({
             .slice(0, MAX_SUGGESTIONS)
     }, [reachable, query])
 
-    // The highlight has to stay on a row that still exists as you type.
     useEffect(() => {
         setHighlighted(0)
     }, [query])
@@ -132,8 +120,6 @@ export default function CarnetCombobox({
             event.preventDefault()
             setHighlighted((i) => (i - 1 + matches.length) % matches.length)
         } else if (event.key === 'Enter') {
-            // Picking the highlighted row rather than submitting whatever
-            // half-typed text is in the field.
             event.preventDefault()
             choose(matches[highlighted])
         }
@@ -173,9 +159,6 @@ export default function CarnetCombobox({
                                 type="button"
                                 role="option"
                                 aria-selected={index === highlighted}
-                                // Mouse down rather than click: the input
-                                // blurring first would close the list out from
-                                // under the pointer.
                                 onMouseDown={(e) => {
                                     e.preventDefault()
                                     choose(person)

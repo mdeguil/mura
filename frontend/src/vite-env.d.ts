@@ -1,7 +1,5 @@
 /// <reference types="vite/client" />
 
-// Read at build time. The VITE_LEGAL_* ones describe whoever runs this
-// instance; see frontend/src/legal/legalInfo.ts.
 interface ImportMetaEnv {
     readonly VITE_API_URL?: string
     readonly VITE_LEGAL_PUBLISHER_NAME?: string

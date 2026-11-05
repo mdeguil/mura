@@ -29,8 +29,6 @@ export default function ProjectInvitationList({
     onReinvite: (email: string) => void
 }) {
     const pending = invitations.filter((i) => i.status === 'PENDING')
-    // Refused or lapsed: either way nobody is coming, and either way the
-    // answer is to ask again.
     const closed = invitations.filter((i) => i.status === 'DECLINED' || i.status === 'EXPIRED')
 
     return (

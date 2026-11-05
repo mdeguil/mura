@@ -30,14 +30,11 @@ export function useProject(id: string | undefined) {
         [],
         'Impossible de charger les tâches archivées.'
     )
-    // A plain member still sees who else has been invited, and only loses
-    // the ability to cancel one.
     const invitationsQuery = useApiQuery<Invitation[]>(
         isMember ? `/projects/${id}/invitations` : null,
         [],
         'Impossible de charger les invitations du projet.'
     )
-    // The invitation this page is asking the reader to answer.
     const ownInvitationsQuery = useApiQuery<Invitation[]>(
         isInvited ? '/invitations' : null,
         [],
@@ -45,8 +42,6 @@ export function useProject(id: string | undefined) {
     )
 
     const { setData: setProject } = projectQuery
-    // The team travels with the project, so there is one copy of it to keep
-    // up to date rather than two that can disagree.
     const setMembers = useCallback(
         (next: SetStateAction<Member[]>) =>
             setProject((current) =>
@@ -58,7 +53,6 @@ export function useProject(id: string | undefined) {
         [setProject]
     )
 
-    // Each one that failed, with what asks it again.
     const loadErrors = [tasksQuery, archivedQuery, invitationsQuery, ownInvitationsQuery]
         .filter((query) => query.error)
         .map((query) => ({ message: query.error, retry: query.reload }))
@@ -66,8 +60,6 @@ export function useProject(id: string | undefined) {
     return {
         project,
         setProject,
-        // Shown in place of the page only before the project first arrives:
-        // reading it again after accepting an invitation keeps the page up.
         loading: projectQuery.loading && !project,
         error: projectQuery.error,
         reloadProject: projectQuery.reload,

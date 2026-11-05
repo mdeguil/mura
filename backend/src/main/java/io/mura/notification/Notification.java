@@ -50,29 +50,19 @@ public class Notification {
     @JoinColumn(name = "project_id")
     private Project project;
 
-    // Kept as text rather than read through the association: someone removed
-    // from a project can no longer load it, and the line still has to name it.
-    // Null when the notification is about a group instead.
     @Column(name = "project_name")
     private String projectName;
 
-    // The other possible subject. At most one of the two is set -- neither,
-    // for news about a person -- which the database enforces.
     @Column(name = "group_name")
     private String groupName;
 
-    // The way back to it, carried only while the reader still has a group to
-    // open: null once they are out of it, or once it is gone.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
     private UserGroup group;
 
-    // Who the line is about: the person who acted for a project, or the
-    // person whose account changed for a group.
     @Column(name = "actor_name", nullable = false)
     private String actorName;
 
-    // The word of explanation left by whoever acted. Optional.
     @Column
     private String message;
 

@@ -26,7 +26,6 @@ export default function DeleteProjectDialog({
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
-    // Typing the name back is the whole safeguard: nothing here can be undone.
     const matches = typed.trim() === project.name
 
     async function confirm() {

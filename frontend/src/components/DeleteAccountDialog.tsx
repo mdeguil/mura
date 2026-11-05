@@ -23,8 +23,6 @@ export default function DeleteAccountDialog({
     /** Called once the server has deleted it. */
     onDeleted: () => void
 }) {
-    // Worked out by the server before anything happens, so the list below is
-    // what will actually occur rather than a warning in the abstract.
     const { data: preview, error: previewError } = useApiQuery<AccountDeletionPreview | null>(
         `/admin/accounts/${account.id}/deletion-preview`,
         null,
@@ -34,7 +32,6 @@ export default function DeleteAccountDialog({
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
-    // Typing the name back is the whole safeguard: nothing here can be undone.
     const matches = typed.trim() === account.username
 
     async function confirm() {

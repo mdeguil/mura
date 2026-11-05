@@ -39,8 +39,6 @@ public class ProjectType {
     @Column(nullable = false)
     private int position;
 
-    // The one that cannot be deleted: deleting any other sends its projects
-    // here, so there has to be somewhere to send them.
     @Column(nullable = false)
     private boolean fallback;
 

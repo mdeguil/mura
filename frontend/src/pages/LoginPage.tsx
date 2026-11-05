@@ -39,7 +39,6 @@ export default function LoginPage() {
             <div className="w-full max-w-sm">
                 <div className="bg-surface border border-border rounded-2xl p-8 shadow-sm">
 
-                    {/* Logo */}
                     <div className="flex items-center gap-2.5 mb-7">
                         <Logo className="w-10 h-10" />
                         <span className="text-xl font-semibold text-slate-800">Mura</span>

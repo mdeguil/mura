@@ -7,8 +7,6 @@ const SIZES = {
     xl: 'max-w-2xl',
 } as const
 
-// The dialogs open, newest last. Échap belongs to the one on top: a
-// confirmation opened from a dialog closes alone.
 const openDialogs: symbol[] = []
 
 /**
@@ -39,11 +37,7 @@ export default function Modal({
     children: React.ReactNode
 }) {
     const panel = useRef<HTMLDivElement>(null)
-    // Read while rendering, before a field marked autoFocus takes the focus
-    // away from whatever opened the dialog.
     const [opener] = useState(() => document.activeElement as HTMLElement | null)
-    // Read through a ref so a parent handing down a new callback on each
-    // render does not reopen the dialog's bookkeeping.
     const onCloseRef = useRef(onClose)
     onCloseRef.current = onClose
 
@@ -51,8 +45,6 @@ export default function Modal({
         const self = Symbol('dialog')
         openDialogs.push(self)
 
-        // A field marked autoFocus has already taken the focus; otherwise
-        // the panel takes it, so Tab starts inside the dialog.
         if (!panel.current?.contains(document.activeElement)) panel.current?.focus()
 
         function onKeyDown(event: KeyboardEvent) {

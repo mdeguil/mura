@@ -46,8 +46,6 @@ public class Project {
     @Column(nullable = false)
     private String color;
 
-    // A row rather than an enum constant, so an administrator can add a
-    // type without a release.
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "type_id", nullable = false)
     private ProjectType type;
@@ -55,13 +53,9 @@ public class Project {
     @Column(name = "start_date")
     private LocalDate startDate;
 
-    // In the bin: hidden from everyone's project list, and the only state
-    // from which it can be deleted for good.
     @Column(nullable = false)
     private boolean archived;
 
-    // When the project reached ACHEVE. Null at any other status, including
-    // after being reopened.
     @Column(name = "completed_at")
     private Instant completedAt;
 

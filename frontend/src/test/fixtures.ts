@@ -93,8 +93,6 @@ export function invitation(invitedUser: User, invitedBy: User, extra: Partial<In
     }
 }
 
-// What axios rejects with when the server answers an error: apiErrorMessage
-// recognises it by isAxiosError and reads the message the server wrote.
 export function apiError(status: number, message?: string, field?: string) {
     return Object.assign(new Error(message ?? `HTTP ${status}`), {
         isAxiosError: true,
@@ -102,7 +100,6 @@ export function apiError(status: number, message?: string, field?: string) {
     })
 }
 
-// The same, for a request that never reached the server.
 export function networkError() {
     return Object.assign(new Error('Network Error'), { isAxiosError: true, response: undefined })
 }

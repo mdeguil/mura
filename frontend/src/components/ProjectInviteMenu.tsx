@@ -34,9 +34,6 @@ export default function ProjectInviteMenu({
     const close = useCallback(() => setOpen(false), [])
     const { wrapper, trigger, position } = useAnchoredMenu({ open, onClose: close, minWidth: 248 })
 
-    // Only projects you manage, and only live ones: inviting somebody onto
-    // an archived project would be asking them to join something nobody is
-    // working on.
     const invitable = projects.filter((project) => {
         if (project.archived) return false
         const mine = project.members.find((m) => m.id === currentUserId)
@@ -58,8 +55,6 @@ export default function ProjectInviteMenu({
         }
     }
 
-    // Nothing to offer, and no email to invite with: an entry seen through a
-    // pending invitation hides its address until the person joins.
     if (invitable.length === 0 || !person.email) return null
 
     return (

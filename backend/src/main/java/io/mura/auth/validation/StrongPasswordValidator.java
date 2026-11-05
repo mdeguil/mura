@@ -27,7 +27,6 @@ public class StrongPasswordValidator implements ConstraintValidator<StrongPasswo
      */
     @Override
     public boolean isValid(String password, ConstraintValidatorContext context) {
-        // Absence is @NotBlank's business; this one only judges what is there.
         if (password == null || password.isEmpty()) {
             return true;
         }
@@ -37,8 +36,6 @@ public class StrongPasswordValidator implements ConstraintValidator<StrongPasswo
             return true;
         }
 
-        // One message naming the one thing that is missing, rather than
-        // reciting the whole rule and leaving the reader to spot their case.
         context.disableDefaultConstraintViolation();
         context.buildConstraintViolationWithTemplate(problem).addConstraintViolation();
         return false;
@@ -60,8 +57,6 @@ public class StrongPasswordValidator implements ConstraintValidator<StrongPasswo
         if (password.chars().noneMatch(Character::isDigit)) {
             return "Le mot de passe doit contenir au moins un chiffre.";
         }
-        // Anything that is not a letter, a digit or a space. Spelling out a
-        // list would refuse perfectly good characters nobody thought of.
         if (password.chars().noneMatch(c -> !Character.isLetterOrDigit(c) && !Character.isWhitespace(c))) {
             return "Le mot de passe doit contenir au moins un caractère spécial.";
         }

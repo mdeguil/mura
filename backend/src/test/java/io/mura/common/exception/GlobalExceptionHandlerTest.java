@@ -53,8 +53,6 @@ class GlobalExceptionHandlerTest extends ControllerTestSupport {
         @GetMapping("/items/{id}")
         void item(@PathVariable UUID id) {}
 
-        // What the dispatcher throws for an address no controller answers;
-        // a standalone MockMvc answers 404 on its own without it.
         @GetMapping("/gone")
         void gone() throws NoResourceFoundException {
             throw new NoResourceFoundException(HttpMethod.GET, "gone");
@@ -83,8 +81,6 @@ class GlobalExceptionHandlerTest extends ControllerTestSupport {
 
     @Test
     void aValidationFailureNamesTheFieldHighestUpTheForm() throws Exception {
-        // Both fields are wrong; the answer must not depend on the order the
-        // validator happened to find them in.
         for (int i = 0; i < 5; i++) {
             mvc.perform(withJson(post("/form"), "{\"name\":\"\",\"code\":\"ABCD\"}"))
                     .andExpect(status().isBadRequest())

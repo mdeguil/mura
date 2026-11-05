@@ -55,18 +55,12 @@ public class ProjectInvitation {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    // Stays null while the invitation is pending.
     @Column(name = "responded_at")
     private Instant respondedAt;
 
-    // Null until the invitee opens their notifications: it drives the
-    // unread count on the bell, not whether the invitation is still live.
     @Column(name = "read_at")
     private Instant readAt;
 
-    // Set when the invitee clears the notification. The invitation stays
-    // pending and keeps showing in their projects list; only the bell
-    // forgets about it.
     @Column(name = "dismissed_at")
     private Instant dismissedAt;
 

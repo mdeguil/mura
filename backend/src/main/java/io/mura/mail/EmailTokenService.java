@@ -24,13 +24,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EmailTokenService {
 
-    // Long enough that somebody has to go and read their mail, short enough
-    // that a code left on a screen stops working.
     private static final Duration CODE_LIFETIME = Duration.ofMinutes(15);
     private static final Duration LINK_LIFETIME = Duration.ofHours(1);
 
-    // Six digits can be tried a million times by a machine and perhaps five
-    // by a person. This is where the difference is enforced.
     private static final int MAX_ATTEMPTS = 5;
 
     private final EmailTokenRepository tokenRepository;
@@ -55,8 +51,6 @@ public class EmailTokenService {
      */
     @Transactional
     public Issued issueCode(User user) {
-        // Six digits with the leading zeros kept: 004271 is as good a code as
-        // 904271, and dropping them would quietly shrink the range.
         String code = String.format("%06d", random.nextInt(1_000_000));
         return issue(user, EmailTokenPurpose.EMAIL_VERIFICATION, code, CODE_LIFETIME);
     }
@@ -75,14 +69,10 @@ public class EmailTokenService {
         random.nextBytes(bytes);
         String secret = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
         Issued issued = issue(user, EmailTokenPurpose.PASSWORD_RESET, secret, LINK_LIFETIME);
-        // The row id travels with the secret so checking a link is one lookup
-        // and one comparison, rather than one bcrypt per live token.
         return new Issued(issued.token(), issued.token().getId() + "." + secret);
     }
 
     private Issued issue(User user, EmailTokenPurpose purpose, String secret, Duration lifetime) {
-        // Only the newest one works. An older code still lying in an inbox
-        // should not open anything.
         supersede(user.getId(), purpose);
 
         EmailToken token = new EmailToken();
@@ -166,7 +156,6 @@ public class EmailTokenService {
      */
     @Transactional
     public User consumeResetLink(String value) {
-        // "<row id>.<secret>" — anything else was not issued here.
         int dot = value == null ? -1 : value.indexOf('.');
         if (dot <= 0) {
             throw invalidLink();
@@ -192,8 +181,6 @@ public class EmailTokenService {
         return token.getUser();
     }
 
-    // One message for every way a link can fail, so a wrong one tells a
-    // stranger nothing about which part they got wrong.
     private ApiException invalidLink() {
         return new ApiException(
                 HttpStatus.GONE,

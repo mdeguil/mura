@@ -1,5 +1,3 @@
-// Derives gradient/glass looks from a single project color, so we can keep
-// storing one hex value per project while still getting richer visuals in the UI.
 function blend(hex: string, amount: number, towards: 'white' | 'black'): string {
     const num = parseInt(hex.replace('#', ''), 16)
     const r = (num >> 16) & 0xff

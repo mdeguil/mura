@@ -169,10 +169,6 @@ export default function TaskBoard({
                                             </div>
                                         </div>
 
-                                        {/* The state, readable from across the
-                                            board: the same glazed band a project
-                                            card wears, in the colour of the
-                                            column it is sitting in. */}
                                         <span
                                             className="absolute inset-x-0 bottom-0 h-3 border-t border-white/40"
                                             style={{ background: projectGlassBackground(TASK_STATUS_HEX[task.status]) }}

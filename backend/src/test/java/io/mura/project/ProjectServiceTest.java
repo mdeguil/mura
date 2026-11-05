@@ -228,7 +228,6 @@ class ProjectServiceTest {
             group = Fixtures.group("Design", alice);
             when(groupRepository.existsById(group.getId())).thenReturn(true);
             when(groupMemberRepository.existsByGroupIdAndUserId(group.getId(), alice.getId())).thenReturn(true);
-            // A new project has nobody on it but its owner.
             when(projectMemberRepository.findUserIdsByProjectId(any())).thenReturn(Set.of(alice.getId()));
         }
 
@@ -392,7 +391,6 @@ class ProjectServiceTest {
             verify(projectMemberRepository).saveAll(joined.capture());
             assertThat(joined.getValue()).extracting(m -> m.getUser().getUsername()).containsExactly("carol");
             verify(notificationService).notify(carol, NotificationType.ADDED_TO_PROJECT, project, alice, null);
-            // One statement for everyone joining, whatever they still had pending.
             verify(invitationRepository).deleteOutstandingFor(project.getId(), List.of(carol.getId()));
         }
 

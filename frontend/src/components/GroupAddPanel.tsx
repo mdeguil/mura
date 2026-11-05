@@ -40,8 +40,6 @@ export default function GroupAddPanel({
             const { data } = await api.post<Member[]>(`/projects/${projectId}/members/from-group`, {
                 groupId: selection.groupId,
             })
-            // Who joined is read from the answer: the server decides who in
-            // the group could come, not this page.
             const joinedIds = data.filter((m) => !members.some((old) => old.id === m.id)).map((m) => m.id)
             onAdded(data, joinedIds)
         } catch (err) {
@@ -68,8 +66,6 @@ export default function GroupAddPanel({
                 </p>
             )}
 
-            {/* Above the buttons rather than beside them: the panel sits in
-                a narrow column, and this is the line that has to be read. */}
             <p className="text-[11px] text-slate-400 mb-2">
                 Sans invitation : ils rejoignent l'équipe tout de suite, et en sont prévenus.
             </p>

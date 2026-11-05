@@ -30,15 +30,10 @@ final class NotificationWording {
         String name = notification.getProjectName() != null
                 ? notification.getProjectName()
                 : notification.getGroupName();
-        // The same news reaches a group owner and a project owner, so the
-        // line has to say which of theirs it is about.
         String where = notification.getGroupName() != null
                 ? "dans ton groupe " + notification.getGroupName()
                 : "sur ton projet " + notification.getProjectName();
 
-        // Where the mail should take them. News about a group belongs to
-        // the carnet; a project they were removed from is no longer theirs
-        // to open, so that one lands on the list.
         boolean aboutGroup = notification.getGroupName() != null;
         String destination = aboutGroup
                 ? notification.getGroup() == null
@@ -145,8 +140,6 @@ final class NotificationWording {
                     who + " a quitté le groupe " + name + ", que tu gères.",
                     destination, open
             );
-            // "En retrait", never "suspendu": the account is untouched and
-            // the line must not let anyone think otherwise.
             case HELD_IN_GROUP -> new Lines(
                     "Tu es en retrait du groupe " + name,
                     "Mis en retrait du groupe " + name,

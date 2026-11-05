@@ -56,8 +56,6 @@ export default function PasswordInput({
             <button
                 type="button"
                 onClick={() => setShown((v) => !v)}
-                // tabIndex -1: tabbing from the password field should reach the
-                // next field, not this toggle.
                 tabIndex={-1}
                 aria-label={shown ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
                 className={`absolute right-0 top-0 ${height} w-10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition`}

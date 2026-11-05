@@ -9,8 +9,6 @@ import { passwordRules } from '../utils/passwordRules'
 import LegalLinks from '../components/LegalLinks'
 import Logo from '../components/Logo'
 
-// Mirrors the @Pattern on RegisterRequest: letters (accented ones included),
-// digits, dot, hyphen, underscore, starting on a letter or a digit.
 const USERNAME_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N}._-]*$/u
 
 type Field = 'username' | 'email' | 'password' | 'confirmPassword'
@@ -28,8 +26,6 @@ export default function RegisterPage() {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [error, setError] = useState('')
-    // Which input the error belongs to, so it is shown under that input and
-    // the input itself turns red.
     const [errorField, setErrorField] = useState<Field | null>(null)
     const [loading, setLoading] = useState(false)
 
@@ -43,7 +39,6 @@ export default function RegisterPage() {
         setErrorField(field)
     }
 
-    // Any edit clears the server's verdict: it was about the old value.
     function edit(setter: (v: string) => void) {
         return (value: string) => {
             setter(value)
@@ -105,8 +100,6 @@ export default function RegisterPage() {
         } ${extra}`
     }
 
-    // Under the field it belongs to; otherwise at the foot of the form, where
-    // a message with no field of its own still has to appear.
     function fieldError(field: Field) {
         if (errorField !== field) return null
         return <p className="text-xs text-red-500 mt-1.5">{error}</p>
@@ -117,7 +110,6 @@ export default function RegisterPage() {
             <div className="w-full max-w-md">
                 <div className="bg-surface border border-border rounded-2xl p-8 shadow-sm">
 
-                    {/* Logo */}
                     <div className="flex items-center gap-2.5 mb-7">
                         <Logo className="w-10 h-10" />
                         <span className="text-xl font-semibold text-slate-800">Mura</span>
@@ -200,8 +192,6 @@ export default function RegisterPage() {
                                 invalid={errorField === 'confirmPassword'}
                             />
                             {fieldError('confirmPassword') ??
-                                // Said while typing rather than on submit, but only
-                                // once the two can actually be compared.
                                 (confirmPassword.length > 0 && password.length > 0 && (
                                     <p
                                         className={`text-xs mt-1.5 ${
@@ -223,9 +213,6 @@ export default function RegisterPage() {
 
                         <button
                             type="submit"
-                            // Not disabled on an incomplete form on purpose: a
-                            // greyed-out button says no without saying why,
-                            // whereas submitting names the field to fix.
                             disabled={loading}
                             className="mt-1 h-10 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                         >
@@ -233,8 +220,6 @@ export default function RegisterPage() {
                         </button>
                     </form>
 
-                    {/* Told at the moment the data is collected, as the
-                        RGPD asks (art. 13), not left for someone to find. */}
                     <p className="text-xs text-slate-500 mt-4">
                         Mura conserve ton nom d'utilisateur, ton adresse e-mail et ton mot de passe haché pour
                         faire fonctionner ton compte. Le détail, et tes droits, sont dans la{' '}

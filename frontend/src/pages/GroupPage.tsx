@@ -32,7 +32,6 @@ export default function GroupPage() {
         error: loadError,
         reload,
     } = useApiQuery<Group | null>(`/groups/${id}`, null, 'Impossible de charger ce groupe.')
-    // What went wrong with a change, apart from loading the group.
     const [error, setError] = useState('')
 
     const [adding, setAdding] = useState(false)
@@ -41,8 +40,6 @@ export default function GroupPage() {
     const [deleting, setDeleting] = useState(false)
     const [leaving, setLeaving] = useState(false)
 
-    // Runs a change to the group, saying so on the page if it fails.
-    // Answers whether it went through.
     async function attempt(action: () => Promise<void>, fallback: string): Promise<boolean> {
         setError('')
         try {

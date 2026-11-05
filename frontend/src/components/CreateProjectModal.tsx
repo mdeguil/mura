@@ -35,13 +35,8 @@ export default function CreateProjectModal({
         typeId: '',
         startDate: '',
     })
-    // The address is what the server needs; the name is what the chip
-    // should say when the person came from the carnet rather than a
-    // keyboard.
     const [invited, setInvited] = useState<{ email: string; username?: string; id?: string }[]>([])
     const [emailDraft, setEmailDraft] = useState('')
-    // People typed in are invited; people ticked in a group are added. Both
-    // can be used for the same project.
     const [mode, setMode] = useState<'person' | 'group'>('person')
     const [fromGroup, setFromGroup] = useState<GroupSelection | null>(null)
     const currentUserId = useAuthStore((s) => s.user?.id) ?? ''
@@ -50,8 +45,6 @@ export default function CreateProjectModal({
 
     const patch = (p: Partial<ProjectFormValues>) => setValues((prev) => ({ ...prev, ...p }))
 
-    // The draft field is not a form field of its own — Entrée adds it to the
-    // list rather than submitting the project half-filled.
     function addEmail() {
         const email = emailDraft.trim().toLowerCase()
         if (!email) return
@@ -92,8 +85,6 @@ export default function CreateProjectModal({
 
     return (
         <Modal labelledBy="create-project-title" onClose={onClose} size="xl" className="max-h-[90vh] flex flex-col overflow-hidden">
-            {/* The chosen colour sits across the top, so the swatch row
-                below has something to answer to. */}
             <span
                 className="h-1.5 shrink-0"
                 style={{ background: projectGlassBackground(values.color) }}
@@ -108,8 +99,6 @@ export default function CreateProjectModal({
 
             <form onSubmit={handleSubmit} className="flex flex-col min-h-0">
                 <div className="px-6 py-5 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
-                    {/* Left: what the project is. Right: how it looks and
-                        who is on it. */}
                     <div className="flex flex-col gap-5">
                         <ProjectFormFields values={values} onChange={patch} autoFocus />
                     </div>
@@ -142,10 +131,6 @@ export default function CreateProjectModal({
                                 ))}
                             </div>
 
-                            {/* Hidden rather than unmounted: switching back
-                                to a person must not lose the group chosen.
-                                It starts on no group, so nothing comes
-                                along unless somebody picks one. */}
                             <div className={mode === 'group' ? '' : 'hidden'}>
                                 <GroupPicker
                                     leftOut={(person) => (person.id === currentUserId ? 'Toi' : null)}
@@ -161,8 +146,6 @@ export default function CreateProjectModal({
 
                             <div className={mode === 'person' ? '' : 'hidden'}>
                                 <div className="flex gap-2">
-                                    {/* Typing a name searches the carnet; typing
-                                        an address invites somebody not in it. */}
                                     <CarnetCombobox
                                         className="flex-1 min-w-0"
                                         value={emailDraft}
@@ -236,8 +219,6 @@ export default function CreateProjectModal({
                                 )}
                             </div>
 
-                            {/* The other half of the team, so neither mode
-                                hides what the other one holds. */}
                             {mode === 'person' && fromGroup && (
                                 <p className="text-xs text-slate-500 mt-2">
                                     + le groupe {fromGroup.groupName}, ajouté directement.

@@ -67,7 +67,6 @@ public class Task {
     @Column(nullable = false)
     private boolean archived;
 
-    // Optional: a task can sit in the backlog with nobody in charge yet.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id")
     private User assignee;

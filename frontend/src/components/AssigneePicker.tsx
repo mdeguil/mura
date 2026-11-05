@@ -105,9 +105,6 @@ export default function AssigneePicker({
                             <span className="flex items-center gap-2 min-w-0">
                                 <UserAvatar user={member} />
                                 <span className="text-xs text-slate-700 truncate">{member.username}</span>
-                                {/* Still assignable: a suspension is often brief,
-                                    and the task may well be waiting for them. But
-                                    whoever picks should know. */}
                                 {member.suspended && (
                                     <span className="text-[10px] text-red-500 shrink-0">suspendu</span>
                                 )}

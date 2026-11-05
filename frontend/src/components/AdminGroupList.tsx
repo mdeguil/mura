@@ -14,8 +14,6 @@ import type { Account, AdminGroup } from '../types'
  */
 export default function AdminGroupList() {
     const groupsQuery = useApiQuery<AdminGroup[]>('/admin/groups', [], 'Impossible de charger les groupes.')
-    // The gérant is picked from the accounts, so both lists are needed
-    // before the form can be opened.
     const accountsQuery = useApiQuery<Account[]>('/admin/accounts', [], 'Impossible de charger les comptes.')
     const { data: groups, setData: setGroups } = groupsQuery
     const accounts = accountsQuery.data
@@ -34,8 +32,6 @@ export default function AdminGroupList() {
     const [managerId, setManagerId] = useState('')
     const [saving, setSaving] = useState(false)
     const [removing, setRemoving] = useState<AdminGroup | null>(null)
-    // Groups whose members are unfolded. Several can be open at once, to
-    // compare two lists side by side.
     const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
     function toggleMembers(groupId: string) {
@@ -167,8 +163,6 @@ export default function AdminGroupList() {
                                 onChange={(e) => setManagerId(e.target.value)}
                                 className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 outline-none focus:border-brand-500 transition"
                             >
-                                {/* Suspended accounts are left out: somebody who
-                                    cannot sign in cannot manage anything. */}
                                 {reachable.map((a) => (
                                     <option key={a.id} value={a.id}>
                                         {a.username}
@@ -263,8 +257,6 @@ export default function AdminGroupList() {
                                     </div>
                                 </div>
 
-                                {/* Read only on purpose: nothing here adds, removes or
-                                    sets anyone aside. That is the gérant's list. */}
                                 {open && (
                                     <ul className="mx-5 mb-4 -mt-1 bg-surface-muted border border-border rounded-xl divide-y divide-border">
                                         {group.members.map((member) => (

@@ -43,8 +43,6 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
-    // What this account may do to the application. Not to be confused with
-    // ProjectRole, which says what it may do inside one project.
     @Enumerated(EnumType.STRING)
     @Column(name = "account_role", nullable = false)
     private AccountRole accountRole = AccountRole.USER;
@@ -63,8 +61,6 @@ public class User {
         return suspendedAt != null;
     }
 
-    // Accounts made before Mura asked for a code were stamped verified by
-    // the migration.
     @Column(name = "email_verified_at")
     private Instant emailVerifiedAt;
 

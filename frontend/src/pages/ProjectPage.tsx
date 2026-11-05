@@ -59,9 +59,6 @@ export default function ProjectPage() {
         loadErrors,
     } = useProject(id)
 
-    // What went wrong with the last change made from this page. Said on the
-    // page rather than in a browser alert, which cannot be read back later
-    // and blocks everything until it is dismissed.
     const [actionError, setActionError] = useState('')
     const [showCreateTask, setShowCreateTask] = useState(false)
     const [editingProject, setEditingProject] = useState(false)
@@ -71,17 +68,11 @@ export default function ProjectPage() {
     const [planningView, setPlanningView] = useState<PlanningView>('calendar')
     const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
     const currentUserId = useAuthStore((s) => s.user?.id) ?? ''
-    // Rights come from the membership row, not from owning the project: an
-    // admin manages the team too.
     const myRole = members.find((m) => m.id === currentUserId)?.role
     const isOwner = myRole === 'OWNER'
     const canManage = myRole === 'OWNER' || myRole === 'ADMIN'
-    // Holding an invitation buys a look at the project, not a seat on it:
-    // the other tabs stay shut until it is accepted.
     const invitedOnly = project?.access === 'INVITED'
 
-    // The active tab lives in the URL (?tab=…) so a refresh — or a shared
-    // link — lands back on the same view instead of resetting to Infos.
     const tabParam = searchParams.get('tab')
     const activeTab: ProjectTab = invitedOnly
         ? 'info'
@@ -93,7 +84,6 @@ export default function ProjectPage() {
         setSearchParams(tab === DEFAULT_TAB ? {} : { tab }, { replace: true })
     }
 
-    // Runs a change made from this page, saying so on the page if it fails.
     async function attempt(action: () => Promise<void>, fallback: string) {
         setActionError('')
         try {
@@ -112,15 +102,10 @@ export default function ProjectPage() {
                 navigate('/projets')
                 return
             }
-            // Accepting changes what the server will hand back, so the
-            // project is read again — this time as a member, with the team
-            // and the tasks.
             reloadProject()
         }, accepted ? "Impossible d'accepter cette invitation." : 'Impossible de refuser cette invitation.')
     }
 
-    // Same endpoint the edit dialog uses: it replaces the whole project, so
-    // the untouched fields are resent alongside the new status.
     function handleProjectStatusChange(status: ProjectStatus) {
         if (!project) return
 
@@ -147,17 +132,10 @@ export default function ProjectPage() {
         if (problem) setActionError(problem)
     }
 
-    // One save for the whole task: the detail panel stages every edit and
-    // sends them together, so a responsable and a date changed in the same
-    // visit are one decision rather than two. What went wrong goes back to
-    // the panel, which is what the reader is looking at.
     function handleTaskSave(taskId: string, changes: { startDate: string; endDate: string; assigneeId: string | null }) {
         return saveTask(taskId, changes, "Impossible d'enregistrer cette tâche.")
     }
 
-    // Both edits go through the same PUT, which replaces the whole task:
-    // taskPayload resends the fields this change does not touch. Answers
-    // with what went wrong, or null.
     async function saveTask(
         taskId: string,
         changes: { status?: TaskStatus; assigneeId?: string | null; startDate?: string; endDate?: string },
@@ -288,8 +266,6 @@ export default function ProjectPage() {
                                     onMembersChanged={setMembers}
                                     onInvited={(invitation) =>
                                         setInvitations((prev) => [
-                                            // A new invitation replaces this person's refused or
-                                            // lapsed one server-side, so the old row goes too.
                                             ...prev.filter((i) => i.invitedUser.id !== invitation.invitedUser.id),
                                             invitation,
                                         ])
@@ -299,8 +275,6 @@ export default function ProjectPage() {
                                     }
                                     onMemberRemoved={(memberId) => {
                                         setMembers((prev) => prev.filter((m) => m.id !== memberId))
-                                        // Their tasks stay, but the server has just cleared
-                                        // the assignee on them.
                                         setTasks((prev) =>
                                             prev.map((t) => (t.assignee?.id === memberId ? { ...t, assignee: null } : t))
                                         )
@@ -352,7 +326,6 @@ export default function ProjectPage() {
                     onClose={() => setArchiving(false)}
                     onArchived={() => {
                         setArchiving(false)
-                        // It just left everyone's list, this page included.
                         navigate('/projets')
                     }}
                 />

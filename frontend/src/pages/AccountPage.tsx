@@ -26,8 +26,6 @@ export default function AccountPage() {
         setExporting(true)
         try {
             const { data } = await api.get<Blob>('/auth/me/export', { responseType: 'blob' })
-            // Handed to the browser as a file rather than shown: it is
-            // meant to be kept, and reused elsewhere.
             const url = URL.createObjectURL(data)
             const link = document.createElement('a')
             link.href = url
