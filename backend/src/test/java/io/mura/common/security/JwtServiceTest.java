@@ -5,6 +5,7 @@ import io.mura.support.Fixtures;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JwtServiceTest {
 
@@ -43,5 +44,30 @@ class JwtServiceTest {
         assertThat(service.isValid(tampered)).isFalse();
         assertThat(service.isValid("pas-un-jeton")).isFalse();
         assertThat(service.isValid("")).isFalse();
+    }
+
+    @Test
+    void theBackendWillNotStartWithoutASecret() {
+        assertThatThrownBy(() -> new JwtService("", 60_000))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not set");
+        assertThatThrownBy(() -> new JwtService(null, 60_000))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void theBackendWillNotStartOnASecretTheRepositoryPublished() {
+        for (String published : JwtService.PUBLISHED_SECRETS) {
+            assertThatThrownBy(() -> new JwtService(published, 60_000))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("example value");
+        }
+    }
+
+    @Test
+    void theBackendWillNotStartOnAShortSecret() {
+        assertThatThrownBy(() -> new JwtService("too-short-for-hs256", 60_000))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shorter than 32 bytes");
     }
 }
