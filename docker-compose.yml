@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,14 +23,14 @@ services:
     image: axllent/mailpit:latest
     restart: unless-stopped
     ports:
-      - "${MAILPIT_UI_PORT:-8025}:8025"
-      - "${SMTP_PORT:-1025}:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+      - "127.0.0.1:${SMTP_PORT:-1025}:1025"
 
   backend:
     build: ./backend
     restart: unless-stopped
     ports:
-      - "${BACKEND_PORT:-8080}:8080"
+      - "127.0.0.1:${BACKEND_PORT:-8080}:8080"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
@@ -57,6 +57,7 @@ services:
       # arguments rather than environment: who runs this instance, for its
       # Mentions légales and privacy policy. All optional; see .env.example.
       args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
         VITE_LEGAL_PUBLISHER_NAME: ${VITE_LEGAL_PUBLISHER_NAME:-}
         VITE_LEGAL_PUBLISHER_ADDRESS: ${VITE_LEGAL_PUBLISHER_ADDRESS:-}
         VITE_LEGAL_CONTACT_EMAIL: ${VITE_LEGAL_CONTACT_EMAIL:-}
@@ -68,8 +69,6 @@ services:
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-5173}:80"
-    environment:
-      VITE_API_URL: ${VITE_API_URL}
     depends_on:
       - backend
 
