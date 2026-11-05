@@ -34,10 +34,10 @@ cd mura
 cp .env.example .env
 ```
 
-Then fill in `.env` — each setting is explained there:
+Then fill in `.env` **before the first start** — each setting is explained there:
 
 - `JWT_SECRET`: a random value, for example from `openssl rand -base64 48`. The backend refuses to start without one.
-- `POSTGRES_PASSWORD` and `SPRING_DATASOURCE_PASSWORD`: the same new password, in place of `changeme`.
+- `POSTGRES_PASSWORD` and `SPRING_DATASOURCE_PASSWORD`: the same new password, in place of `changeme`. The database keeps the password it was created with, at the first start.
 - `MURA_URL`: the address people will type, for example `https://mura.example.org`.
 - `MURA_ADMIN_EMAIL`: your own address. The account you create with it becomes the administrator.
 - `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_STARTTLS` and `MURA_MAIL_FROM`: your mail provider's SMTP settings.
@@ -50,6 +50,8 @@ docker compose logs backend
 ```
 
 The log should say `Mail server … answered`. Open `MURA_URL` (http://localhost:5173 if left empty), create your account with `MURA_ADMIN_EMAIL` and enter the code you receive: you are the administrator.
+
+If the log says `password authentication failed for user "mura"`, the database was created at an earlier start, with another password. On a new install that holds nothing yet, start it over with `docker compose down -v` then `docker compose up -d` — `-v` erases the database. On an instance in use, change the password instead, as [docs/setup.md](docs/setup.md#useful-commands) shows.
 
 Then:
 

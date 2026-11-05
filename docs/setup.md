@@ -24,7 +24,7 @@ cp .env.example .env
 
 ### 2. Fill in `.env`
 
-Every setting is described in `.env.example`; these are the ones an instance needs.
+Do this before the first `docker compose up`: the database is created at the first start, with the password `.env` holds at that moment. Every setting is described in `.env.example`; these are the ones an instance needs.
 
 | Setting | What to put |
 |---|---|
@@ -50,7 +50,14 @@ The first build takes a few minutes. Then check the backend's log:
 docker compose logs backend
 ```
 
-It should show `Started MuraApplication` and `Mail server … answered; Mura can send its mails.` A line saying `Mura cannot reach the mail server` names the setting to check.
+It should show `Started MuraApplication` and `Mail server … answered; Mura can send its mails.` Otherwise:
+
+| The log says | What it means |
+|---|---|
+| `JWT_SECRET is not set`, `is still the example value` or `is shorter than 32 bytes` | Set `JWT_SECRET` as in step 2, then `docker compose up -d`. |
+| `password authentication failed for user "mura"` | The database was created at an earlier start, with another password than the one now in `.env`. On a new install that holds nothing yet: `docker compose down -v` then `docker compose up -d` (`-v` erases the database). On an instance in use: change the password as in [Useful commands](#useful-commands). |
+| `Mura cannot reach the mail server` | The line names the server and the reason; check the `MAIL_` settings, then `docker compose up -d`. |
+| `This instance has no administrator` | Set `MURA_ADMIN_EMAIL`, then `docker compose up -d`, and go on with step 4. |
 
 ### 4. Create the administrator
 

@@ -1,6 +1,9 @@
 # ─── Environment ────────────────────────────────────────
 .env
 
+# ─── Database backups (docs/sauvegarde.md) ──────────────
+sauvegardes/
+
 # ─── Java / Spring Boot ─────────────────────────────────
 target/
 *.class
