@@ -18,28 +18,44 @@
 
 ## 🚀 Getting Started
 
+Mura is installed by the people who use it, on their own machine or server, with Docker.
+
 ### Prerequisites
 
-- [Docker](https://www.docker.com/) & Docker Compose
-- Or manually: Java 21+, Node.js 20+, PostgreSQL 15+
+- [Docker](https://www.docker.com/) with Docker Compose 2.24 or later
+- A mail account that can send through SMTP: sign-up confirms every address with a code sent by e-mail
+- For an instance other people use: a domain name pointing at the server, for HTTPS
 
-### Run with Docker (recommended)
+### Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/mura.git
+git clone https://github.com/mdeguil/mura.git
 cd mura
 cp .env.example .env
-docker compose up
 ```
 
-The app will be available at:
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:8080
-- **API Docs (Swagger)**: http://localhost:8080/swagger-ui.html
+Then fill in `.env` — each setting is explained there:
 
-### Run manually
+- `JWT_SECRET`: a random value, for example from `openssl rand -base64 48`. The backend refuses to start without one.
+- `POSTGRES_PASSWORD` and `SPRING_DATASOURCE_PASSWORD`: the same new password, in place of `changeme`.
+- `MURA_URL`: the address people will type, for example `https://mura.example.org`.
+- `MURA_ADMIN_EMAIL`: your own address. The account you create with it becomes the administrator.
+- `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_STARTTLS` and `MURA_MAIL_FROM`: your mail provider's SMTP settings.
 
-See [docs/setup.md](docs/setup.md) for manual setup instructions.
+Start Mura:
+
+```bash
+docker compose up -d --build
+docker compose logs backend
+```
+
+The log should say `Mail server … answered`. Open `MURA_URL` (http://localhost:5173 if left empty), create your account with `MURA_ADMIN_EMAIL` and enter the code you receive: you are the administrator.
+
+Then:
+
+- **HTTPS**, needed as soon as other people use the instance: [docs/https.md](docs/https.md)
+- **Backups and updates**: [docs/sauvegarde.md](docs/sauvegarde.md)
+- **Every setting, and working on Mura itself**: [docs/setup.md](docs/setup.md)
 
 ## 🏗️ Architecture
 
