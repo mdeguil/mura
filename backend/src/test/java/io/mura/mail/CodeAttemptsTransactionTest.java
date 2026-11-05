@@ -1,5 +1,6 @@
 package io.mura.mail;
 
+import io.mura.admin.FirstAdministrator;
 import io.mura.auth.AuthService;
 import io.mura.auth.dto.VerifyEmailRequest;
 import io.mura.common.exception.ApiException;
@@ -107,7 +108,8 @@ class CodeAttemptsTransactionTest {
         when(emailTokenService.consumeCode(any(), anyString()))
                 .thenThrow(new ApiException(HttpStatus.BAD_REQUEST, "Code incorrect."));
         AuthService service = probe.wrap(
-                new AuthService(userRepository, passwordEncoder, jwtService, emailTokenService, mailService, new MailThrottle()));
+                new AuthService(userRepository, passwordEncoder, jwtService, emailTokenService, mailService,
+                        new MailThrottle(), new FirstAdministrator(userRepository, "")));
 
         assertThatThrownBy(() -> service.verifyEmail(alice.getId(), new VerifyEmailRequest("000000")))
                 .isInstanceOf(ApiException.class);

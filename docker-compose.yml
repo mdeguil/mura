@@ -47,6 +47,7 @@ services:
       MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
       MAIL_SSL: ${MAIL_SSL:-false}
       MURA_MAIL_FROM: ${MURA_MAIL_FROM:-Mura <bonjour@mura.dev>}
+      MURA_ADMIN_EMAIL: ${MURA_ADMIN_EMAIL:-}
       # Where a link in an email has to land: the browser, not the API.
       MURA_APP_URL: ${MURA_URL:-http://localhost:${FRONTEND_PORT:-5173}}
     depends_on:

@@ -45,6 +45,7 @@ server:
   forward-headers-strategy: native
 
 mura:
+  admin-email: ${MURA_ADMIN_EMAIL:}
   invitations:
     # How long an invitation stays answerable. Past this it expires and the
     # project can invite the person again.

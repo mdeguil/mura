@@ -49,6 +49,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     long countByAccountRoleAndSuspendedAtIsNullAndIdNot(AccountRole accountRole, UUID id);
 
     /**
+     * Whether any active account holds a role.
+     *
+     * @param accountRole the role to look for, in practice ADMIN
+     * @return true if at least one unsuspended account holds it
+     */
+    boolean existsByAccountRoleAndSuspendedAtIsNull(AccountRole accountRole);
+
+    /**
      * Deletes an account by statement rather than delete(entity), which
      * proved unreliable in the one transaction that matters: after handing a
      * project over to its new owner, the entity-level delete emitted no SQL

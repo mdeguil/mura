@@ -1,5 +1,6 @@
 package io.mura.auth;
 
+import io.mura.admin.FirstAdministrator;
 import io.mura.auth.dto.AuthResponse;
 import io.mura.auth.dto.LoginRequest;
 import io.mura.auth.dto.RegisterRequest;
@@ -38,6 +39,7 @@ public class AuthService {
     private final EmailTokenService emailTokenService;
     private final MailService mailService;
     private final MailThrottle mailThrottle;
+    private final FirstAdministrator firstAdministrator;
 
     /**
      * Creates the account, signs it in and mails a six-digit code. Until the
@@ -100,6 +102,9 @@ public class AuthService {
      * counted, or the limit of five would never be reached. Nothing else is
      * written before the code is accepted.
      *
+     * <p>Once confirmed, the address may make the account the instance's
+     * first administrator (see {@link FirstAdministrator}).
+     *
      * @param userId the signed-in account
      * @param request the code
      * @return the account, now confirmed
@@ -116,6 +121,7 @@ public class AuthService {
 
         emailTokenService.consumeCode(userId, request.code());
         user.setEmailVerifiedAt(Instant.now());
+        firstAdministrator.promoteIfDesignated(user);
         return AccountResponse.from(user);
     }
 
@@ -195,7 +201,9 @@ public class AuthService {
 
     /**
      * Signs in. An account whose address is not confirmed signs in too; the
-     * token then reaches only the verification routes.
+     * token then reaches only the verification routes. An account that
+     * existed before its address was named in {@code MURA_ADMIN_EMAIL}
+     * becomes the first administrator here (see {@link FirstAdministrator}).
      *
      * @param request the address, in any case, and the password
      * @return a new token and the account
@@ -217,6 +225,7 @@ public class AuthService {
             );
         }
 
+        firstAdministrator.promoteIfDesignated(user);
         String token = jwtService.generateToken(user);
         return new AuthResponse(token, AccountResponse.from(user));
     }

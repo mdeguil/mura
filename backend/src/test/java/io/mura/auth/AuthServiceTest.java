@@ -1,5 +1,6 @@
 package io.mura.auth;
 
+import io.mura.admin.FirstAdministrator;
 import io.mura.auth.dto.AuthResponse;
 import io.mura.auth.dto.ForgotPasswordRequest;
 import io.mura.auth.dto.LoginRequest;
@@ -54,6 +55,8 @@ class AuthServiceTest {
     private MailService mailService;
     @Spy
     private MailThrottle mailThrottle = new MailThrottle();
+    @Mock
+    private FirstAdministrator firstAdministrator;
     @InjectMocks
     private AuthService service;
 
@@ -166,6 +169,30 @@ class AuthServiceTest {
 
         assertThat(service.verifyEmail(alice.getId(), new VerifyEmailRequest("123456")).emailVerified()).isTrue();
         verify(emailTokenService).consumeCode(alice.getId(), "123456");
+    }
+
+    @Test
+    void confirmingTheAddressOrSigningInGivesTheFirstAdministratorAChance() {
+        alice.setEmailVerifiedAt(null);
+        when(userRepository.findById(alice.getId())).thenReturn(Optional.of(alice));
+        service.verifyEmail(alice.getId(), new VerifyEmailRequest("123456"));
+        verify(firstAdministrator).promoteIfDesignated(alice);
+
+        when(userRepository.findByEmailIgnoreCase("alice@mura.test")).thenReturn(Optional.of(alice));
+        when(passwordEncoder.matches("Secret-123!", alice.getPassword())).thenReturn(true);
+        when(jwtService.generateToken(alice)).thenReturn("jwt");
+        service.login(new LoginRequest("alice@mura.test", "Secret-123!"));
+        verify(firstAdministrator, times(2)).promoteIfDesignated(alice);
+    }
+
+    @Test
+    void aWrongPasswordNeverReachesTheFirstAdministrator() {
+        when(userRepository.findByEmailIgnoreCase("alice@mura.test")).thenReturn(Optional.of(alice));
+        when(passwordEncoder.matches("faux", alice.getPassword())).thenReturn(false);
+
+        assertThatThrownBy(() -> service.login(new LoginRequest("alice@mura.test", "faux")))
+                .isInstanceOf(ApiException.class);
+        verifyNoInteractions(firstAdministrator);
     }
 
     @Test
