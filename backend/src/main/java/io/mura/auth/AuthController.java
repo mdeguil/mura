@@ -10,7 +10,9 @@ import io.mura.auth.dto.LoginRequest;
 import io.mura.auth.dto.RegisterRequest;
 import io.mura.auth.dto.ResetPasswordRequest;
 import io.mura.auth.dto.VerifyEmailRequest;
+import io.mura.common.exception.ApiException;
 import io.mura.member.dto.AccountResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -40,6 +42,7 @@ public class AuthController {
     private final AuthService authService;
     private final DataExportService dataExportService;
     private final AccountService accountService;
+    private final LoginThrottle loginThrottle;
 
     /**
      * {@code POST /api/auth/register}: creates an account and signs it in.
@@ -54,15 +57,32 @@ public class AuthController {
     }
 
     /**
-     * {@code POST /api/auth/login}: signs in.
+     * {@code POST /api/auth/login}: signs in. The {@link LoginThrottle}
+     * answers first: an address that has failed too often is refused before
+     * the password is looked at. Only a 401 counts as a failure; a suspended
+     * account (403) has given the right password.
      *
      * @param request the address and password
+     * @param http the request, for the client's IP address (the real one
+     *        behind the frontend's proxy, through {@code X-Forwarded-For})
      * @return 200 with the token and the account
+     * @throws ApiException 429 while the address is held back
      * @see AuthService#login(LoginRequest)
      */
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest http) {
+        String address = http.getRemoteAddr();
+        loginThrottle.check(address, request.email());
+        try {
+            AuthResponse response = authService.login(request);
+            loginThrottle.recordSuccess(address, request.email());
+            return ResponseEntity.ok(response);
+        } catch (ApiException e) {
+            if (e.getStatus() == HttpStatus.UNAUTHORIZED) {
+                loginThrottle.recordFailure(address, request.email());
+            }
+            throw e;
+        }
     }
 
     /**

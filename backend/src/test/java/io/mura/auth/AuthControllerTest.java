@@ -25,6 +25,7 @@ import java.util.Map;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -49,7 +50,7 @@ class AuthControllerTest extends ControllerTestSupport {
 
     @BeforeEach
     void setUp() {
-        mount(new AuthController(authService, dataExportService, accountService));
+        mount(new AuthController(authService, dataExportService, accountService, new LoginThrottle()));
         account = AccountResponse.from(Fixtures.user("alice"));
     }
 
@@ -85,6 +86,33 @@ class AuthControllerTest extends ControllerTestSupport {
         mvc.perform(withJson(post("/api/auth/login"), Map.of("email", "alice@mura.test", "password", "faux")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Email ou mot de passe incorrect."));
+    }
+
+    @Test
+    void theSixthWrongPasswordIsRefusedWithoutReachingTheService() throws Exception {
+        when(authService.login(any(LoginRequest.class)))
+                .thenThrow(new ApiException(HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect."));
+        Map<String, String> wrong = Map.of("email", "alice@mura.test", "password", "faux");
+
+        for (int i = 0; i < LoginThrottle.MAX_PER_ACCOUNT; i++) {
+            mvc.perform(withJson(post("/api/auth/login"), wrong)).andExpect(status().isUnauthorized());
+        }
+        mvc.perform(withJson(post("/api/auth/login"), wrong))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.message").value(containsString("Trop de tentatives")));
+
+        verify(authService, times(LoginThrottle.MAX_PER_ACCOUNT)).login(any(LoginRequest.class));
+    }
+
+    @Test
+    void aSuspendedAccountDoesNotCountAsAFailedAttempt() throws Exception {
+        when(authService.login(any(LoginRequest.class)))
+                .thenThrow(new ApiException(HttpStatus.FORBIDDEN, "Ce compte a été suspendu."));
+        Map<String, String> right = Map.of("email", "alice@mura.test", "password", "Secret-123!");
+
+        for (int i = 0; i <= LoginThrottle.MAX_PER_ACCOUNT; i++) {
+            mvc.perform(withJson(post("/api/auth/login"), right)).andExpect(status().isForbidden());
+        }
     }
 
     @Test
