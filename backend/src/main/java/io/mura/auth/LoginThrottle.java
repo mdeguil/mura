@@ -1,6 +1,7 @@
 package io.mura.auth;
 
 import io.mura.common.exception.ApiException;
+import io.mura.common.security.WindowCounter;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -8,8 +9,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Slows down password guessing on sign-in. Failed attempts are counted over
@@ -27,10 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * cannot lock someone out of their own account by failing on purpose.
  * Unknown addresses count like known ones, so the limit says nothing about
  * which accounts exist.
- *
- * <p>The counts live in memory: they reset when the backend restarts, and
- * an instance running several backends counts on each. Both are acceptable
- * for a self-hosted install, which runs one.
  */
 @Component
 public class LoginThrottle {
@@ -44,11 +39,7 @@ public class LoginThrottle {
     /** How long failures are remembered, counted from the first one. */
     static final Duration WINDOW = Duration.ofMinutes(15);
 
-    /** Past this many tracked keys, expired ones are swept on the next failure. */
-    private static final int SWEEP_ABOVE = 10_000;
-
-    private final Clock clock;
-    private final Map<String, Failures> failures = new ConcurrentHashMap<>();
+    private final WindowCounter failures;
 
     /** The throttle Spring builds, on the system clock. */
     public LoginThrottle() {
@@ -61,7 +52,7 @@ public class LoginThrottle {
      * @param clock where "now" comes from
      */
     LoginThrottle(Clock clock) {
-        this.clock = clock;
+        this.failures = new WindowCounter(clock, WINDOW);
     }
 
     /**
@@ -74,17 +65,14 @@ public class LoginThrottle {
      *         many minutes it can try again
      */
     public void check(String address, String email) {
-        Instant now = clock.instant();
         Instant until = later(
-                blockedUntil(accountKey(address, email), MAX_PER_ACCOUNT, now),
-                blockedUntil(addressKey(address), MAX_PER_ADDRESS, now)
+                failures.heldUntil(accountKey(address, email), MAX_PER_ACCOUNT),
+                failures.heldUntil(addressKey(address), MAX_PER_ADDRESS)
         );
         if (until != null) {
-            long minutes = Math.max(1, (Duration.between(now, until).toSeconds() + 59) / 60);
             throw new ApiException(
                     HttpStatus.TOO_MANY_REQUESTS,
-                    "Trop de tentatives de connexion. Réessaie dans " + minutes
-                            + (minutes == 1 ? " minute." : " minutes.")
+                    "Trop de tentatives de connexion. " + failures.retryIn(until)
             );
         }
     }
@@ -97,12 +85,8 @@ public class LoginThrottle {
      * @param email the address typed in the sign-in form
      */
     public void recordFailure(String address, String email) {
-        Instant now = clock.instant();
-        if (failures.size() > SWEEP_ABOVE) {
-            failures.values().removeIf(f -> f.expired(now));
-        }
-        failures.merge(accountKey(address, email), Failures.first(now), (old, one) -> old.plusOne(now));
-        failures.merge(addressKey(address), Failures.first(now), (old, one) -> old.plusOne(now));
+        failures.hit(accountKey(address, email));
+        failures.hit(addressKey(address));
     }
 
     /**
@@ -114,15 +98,7 @@ public class LoginThrottle {
      * @param email the address typed in the sign-in form
      */
     public void recordSuccess(String address, String email) {
-        failures.remove(accountKey(address, email));
-    }
-
-    private Instant blockedUntil(String key, int max, Instant now) {
-        Failures f = failures.get(key);
-        if (f == null || f.expired(now) || f.count() < max) {
-            return null;
-        }
-        return f.start().plus(WINDOW);
+        failures.forget(accountKey(address, email));
     }
 
     private static Instant later(Instant a, Instant b) {
@@ -142,26 +118,5 @@ public class LoginThrottle {
 
     private static String addressKey(String address) {
         return "address|" + address;
-    }
-
-    /**
-     * The failures in one window.
-     *
-     * @param start when the first failure of the window happened
-     * @param count how many failures since then
-     */
-    private record Failures(Instant start, int count) {
-
-        static Failures first(Instant now) {
-            return new Failures(now, 1);
-        }
-
-        boolean expired(Instant now) {
-            return !now.isBefore(start.plus(WINDOW));
-        }
-
-        Failures plusOne(Instant now) {
-            return expired(now) ? first(now) : new Failures(start, count + 1);
-        }
     }
 }
