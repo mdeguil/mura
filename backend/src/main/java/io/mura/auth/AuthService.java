@@ -102,6 +102,10 @@ public class AuthService {
      * Confirms the address with the code that was mailed. Does nothing for
      * an address already confirmed.
      *
+     * <p>A refused code still commits: the attempt it cost has to stay
+     * counted, or the limit of five would never be reached. Nothing else is
+     * written before the code is accepted.
+     *
      * @param userId the signed-in account
      * @param request the code
      * @return the account, now confirmed
@@ -109,7 +113,7 @@ public class AuthService {
      *         tried, 410 if the code has expired or been replaced; 401 if
      *         the account no longer exists
      */
-    @Transactional
+    @Transactional(noRollbackFor = ApiException.class)
     public AccountResponse verifyEmail(UUID userId, VerifyEmailRequest request) {
         User user = requireUser(userId);
         if (user.isEmailVerified()) {

@@ -109,13 +109,19 @@ public class EmailTokenService {
      * code counts as an attempt; after five, the code is spent and a new
      * one has to be asked for.
      *
+     * <p>The refusals are thrown after the attempt has been counted, so the
+     * transaction must not roll back on them: otherwise the counter goes
+     * back with it and the five tries never run out. A caller that holds the
+     * transaction has to keep it on the same terms, as
+     * {@link io.mura.auth.AuthService#verifyEmail} does.
+     *
      * @param userId the account the code was mailed to
      * @param code the six digits as typed
      * @return the account the code belongs to
      * @throws ApiException 410 if there is no live code, 429 once five
      *         attempts have been made, 400 for a wrong code
      */
-    @Transactional
+    @Transactional(noRollbackFor = ApiException.class)
     public User consumeCode(UUID userId, String code) {
         EmailToken token = tokenRepository
                 .findLiveForUser(userId, EmailTokenPurpose.EMAIL_VERIFICATION).stream()
