@@ -1,0 +1,27 @@
+# Puts Caddy in front of Mura: it obtains and renews a certificate for the
+# domain in MURA_URL and serves the app over HTTPS on ports 80 and 443.
+# Used on top of docker-compose.yml; see docs/https.md.
+services:
+  caddy:
+    image: caddy:2.10
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      MURA_URL: ${MURA_URL:?Set MURA_URL in .env to https://your-domain, see docs/https.md}
+    command: ["sh", "-c", "export MURA_URL=\"$${MURA_URL%/}\" && exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile"]
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+
+  frontend:
+    ports: !reset []
+
+volumes:
+  caddy_data:
+  caddy_config:
