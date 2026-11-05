@@ -39,7 +39,7 @@ describe('GroupPicker', () => {
         render(<GroupPicker leftOut={(p) => (p.id === alice.id ? 'Déjà dans le projet' : null)} onChange={onChange} />)
 
         const designCard = await screen.findByRole('radio', { name: /Design/ })
-        expect(designCard).toHaveAttribute('aria-checked', 'true')
+        await waitFor(() => expect(designCard).toHaveAttribute('aria-checked', 'true'))
         expect(designCard).toHaveTextContent('👥 2')
         expect(screen.getByText('2 personnes rejoindront le projet.')).toBeInTheDocument()
         await waitFor(() =>
