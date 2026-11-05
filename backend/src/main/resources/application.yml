@@ -20,6 +20,8 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    placeholders:
+      demo: false
 
   mail:
     host: ${SPRING_MAIL_HOST:localhost}
@@ -54,10 +56,12 @@ mura:
 
 springdoc:
   swagger-ui:
+    enabled: false
     path: /swagger-ui.html
   api-docs:
+    enabled: false
     path: /api-docs
 
 logging:
   level:
-    io.mura: DEBUG
+    io.mura: INFO

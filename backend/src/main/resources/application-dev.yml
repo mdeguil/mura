@@ -1,0 +1,14 @@
+spring:
+  flyway:
+    placeholders:
+      demo: true
+
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
+
+logging:
+  level:
+    io.mura: DEBUG
