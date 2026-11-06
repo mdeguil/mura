@@ -1,24 +1,48 @@
-# 🟦 Mura
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="frontend/src/assets/logo-on-dark.png">
+    <img src="frontend/src/assets/logo-on-light.png" alt="Mura" width="96">
+  </picture>
+</p>
 
-> A modern, self-hosted project management tool — inspired by Trello.
+<h1 align="center">Mura</h1>
 
-![License](https://img.shields.io/badge/license-Mura%201.0-blue.svg)
-![Backend](https://img.shields.io/badge/backend-Spring%20Boot-green.svg)
-![Frontend](https://img.shields.io/badge/frontend-React-61DAFB.svg)
-![Database](https://img.shields.io/badge/database-PostgreSQL-336791.svg)
+<p align="center">
+  Project management for teams, installed on your own server.<br>
+  Projects, tasks, planning and the people who work on them — your data stays with you.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/license-Mura%201.0-blue.svg" alt="License: Mura 1.0">
+  <img src="https://img.shields.io/badge/backend-Spring%20Boot-green.svg" alt="Backend: Spring Boot">
+  <img src="https://img.shields.io/badge/frontend-React-61DAFB.svg" alt="Frontend: React">
+  <img src="https://img.shields.io/badge/database-PostgreSQL-336791.svg" alt="Database: PostgreSQL">
+</p>
+
+![The tasks of a project, by status, in the dark theme](docs/screenshots/tasks.png)
 
 ## ✨ Features
 
-- 📋 **Boards** — Organize your projects into boards
-- 📝 **Lists & Cards** — Break down tasks into lists and cards
-- 🏷️ **Labels** — Categorize cards with color-coded labels
-- 👥 **Members** — Invite members to boards and assign cards
-- 📅 **Due Dates** — Set deadlines on cards
-- 🔒 **Authentication** — Secure login with JWT
+The interface is in French.
+
+- 📁 **Projects** — a type, a colour, a start date and a status (*à venir*, *en cours*, *achevé*). Finished work is archived, then goes to a bin before it is deleted.
+- ✅ **Tasks** — sorted by status, each with its dates, a person in charge, subtasks and the history of its status changes.
+- 📅 **Planning** — every task on a month calendar or on a Gantt chart.
+- 👥 **Teams** — people join a project by invitation, which expires after 14 days. Each member is owner, administrator or member; ownership can be handed over.
+- 🧑‍🤝‍🧑 **Groups** — teams of people run by a *gérant*, brought into a project in one go.
+- 📇 **Carnet** — an address book of the people you work with: favourites, contact requests, and suggestions as you type when inviting.
+- 🔔 **Notifications** — in the bell and by e-mail: someone joins or leaves your projects and groups, asks to be in your carnet, or has their account suspended or deleted. Invitations arrive by e-mail too.
+- 🛠️ **Administration** — accounts (roles, suspension, deletion), the project types on offer, and every group.
+- 🔒 **Your data** — each person can export everything Mura holds about them, or delete their account. Legal notice and privacy policy pages are filled in by whoever runs the instance.
+- 🌗 **Dark and light themes**, remembered on each device.
+
+![The planning of a project as a Gantt chart, in the light theme](docs/screenshots/planning-gantt.png)
+
+Mura is made to be installed by the people who use it: there is no hosted version, and nobody else sees what you put in it. Sign-up confirms every address by e-mail, sign-ins are rate-limited, and HTTPS takes one line of configuration.
 
 ## 🚀 Getting Started
 
-Mura is installed by the people who use it, on their own machine or server, with Docker.
+Mura runs with Docker, on your own machine or on a server.
 
 ### Prerequisites
 
@@ -61,14 +85,14 @@ Then:
 
 ## 🏗️ Architecture
 
-```
-mura/
-├── backend/    # Spring Boot REST API
-├── frontend/   # React + TypeScript SPA
-└── docs/       # Documentation
-```
+| Part | Technologies | Folder |
+| :--- | :--- | :--- |
+| API | Spring Boot 3, Java 21, Spring Security with JWT, JPA, Flyway | `backend/` |
+| Database | PostgreSQL 15, its schema built by the Flyway migrations | `backend/src/main/resources/db/migration/` |
+| Interface | React 18, strict TypeScript, Vite, Tailwind CSS, Zustand, served by nginx | `frontend/` |
+| HTTPS | Caddy, optional, in front of the frontend | `caddy/`, `docker-compose.https.yml` |
 
-See [docs/architecture.md](docs/architecture.md) for a detailed overview.
+The browser only ever talks to the frontend: nginx forwards `/api` to the backend, which is not exposed on its own. [docs/guide-du-code.md](docs/guide-du-code.md) (in French) explains how the code is organised and the conventions it follows.
 
 ## 🤝 Contributing
 
