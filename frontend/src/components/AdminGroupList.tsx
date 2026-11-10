@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import React, { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
@@ -13,8 +14,9 @@ import type { Account, AdminGroup } from '../types'
  * members are shown, not edited: that stays the gérant's business.
  */
 export default function AdminGroupList() {
-    const groupsQuery = useApiQuery<AdminGroup[]>('/admin/groups', [], 'Impossible de charger les groupes.')
-    const accountsQuery = useApiQuery<Account[]>('/admin/accounts', [], 'Impossible de charger les comptes.')
+    const { t } = useTranslation()
+    const groupsQuery = useApiQuery<AdminGroup[]>('/admin/groups', [], t('admin.groups.loadFailed'))
+    const accountsQuery = useApiQuery<Account[]>('/admin/accounts', [], t('admin.accounts.loadFailed'))
     const { data: groups, setData: setGroups } = groupsQuery
     const accounts = accountsQuery.data
     const loading = groupsQuery.loading || accountsQuery.loading
@@ -89,7 +91,7 @@ export default function AdminGroupList() {
             }
             close()
         } catch (err) {
-            setError(apiErrorMessage(err, "Ce groupe n'a pas pu être enregistré."))
+            setError(apiErrorMessage(err, t('admin.groups.saveFailed')))
         } finally {
             setSaving(false)
         }
@@ -102,25 +104,24 @@ export default function AdminGroupList() {
             setGroups((prev) => prev.filter((g) => g.id !== group.id))
             setRemoving(null)
         } catch (err) {
-            setError(apiErrorMessage(err, "Ce groupe n'a pas pu être supprimé."))
+            setError(apiErrorMessage(err, t('admin.groups.deleteFailed')))
             setRemoving(null)
         }
     }
 
-    if (loading) return <p className="text-sm text-slate-500">Chargement…</p>
+    if (loading) return <p className="text-sm text-slate-500">{t('common.loading')}</p>
 
     return (
         <div>
             <div className="flex items-center justify-between gap-4 mb-4">
                 <p className="text-sm text-slate-500">
-                    Monte un groupe et désigne qui le gère. Tu vois qui en fait partie, mais les
-                    membres restent l'affaire du gérant, depuis la page du groupe.
+                    {t('admin.groups.intro')}
                 </p>
                 <button
                     onClick={creating ? close : openCreate}
                     className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition shrink-0"
                 >
-                    {creating ? 'Annuler' : '+ Nouveau groupe'}
+                    {creating ? t('common.cancel') : t('admin.groups.new')}
                 </button>
             </div>
 
@@ -141,13 +142,13 @@ export default function AdminGroupList() {
                     <div className="flex flex-wrap items-end gap-3">
                         <div className="flex-1 min-w-[12rem]">
                             <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                                Nom du groupe
+                                {t('admin.groups.name')}
                             </label>
                             <input
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="Ex : Pôle design"
+                                placeholder={t('admin.groups.namePlaceholder')}
                                 maxLength={100}
                                 required
                                 autoFocus
@@ -156,7 +157,7 @@ export default function AdminGroupList() {
                         </div>
                         <div className="min-w-[12rem]">
                             <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                                Gérant
+                                {t('admin.groups.manager')}
                             </label>
                             <select
                                 value={managerId}
@@ -175,21 +176,23 @@ export default function AdminGroupList() {
                             disabled={saving || !name.trim() || !managerId}
                             className="h-9 px-4 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink text-xs font-medium transition disabled:opacity-40"
                         >
-                            {saving ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Créer'}
+                            {saving ? t('common.saving') : editing ? t('common.save') : t('admin.groups.create')}
                         </button>
                         <button
                             type="button"
                             onClick={close}
                             className="h-9 px-3 rounded-lg text-xs font-medium text-slate-500 hover:bg-surface-muted transition"
                         >
-                            Annuler
+                            {t('common.cancel')}
                         </button>
                     </div>
 
                     {editing && editing.manager.id !== managerId && (
                         <p className="text-xs text-slate-500 mt-3">
-                            {accounts.find((a) => a.id === managerId)?.username} prendra la main sur ce
-                            groupe. {editing.manager.username} en reste membre.
+                            {t('admin.groups.handover', {
+                                next: accounts.find((a) => a.id === managerId)?.username,
+                                previous: editing.manager.username,
+                            })}
                         </p>
                     )}
                 </form>
@@ -200,9 +203,9 @@ export default function AdminGroupList() {
                     <div className="w-14 h-14 rounded-2xl bg-brand-gradient-diagonal flex items-center justify-center mb-4">
                         <span className="text-white text-2xl">👥</span>
                     </div>
-                    <h2 className="text-base font-semibold text-slate-800 mb-1">Aucun groupe</h2>
+                    <h2 className="text-base font-semibold text-slate-800 mb-1">{t('admin.groups.empty')}</h2>
                     <p className="text-sm text-slate-500 max-w-sm">
-                        Les groupes créés ici apparaissent dans le carnet de leur gérant.
+                        {t('admin.groups.emptyHint')}
                     </p>
                 </div>
             ) : (
@@ -226,8 +229,8 @@ export default function AdminGroupList() {
                                             >
                                                 ›
                                             </span>
-                                            {group.memberCount} membre{group.memberCount > 1 ? 's' : ''}
-                                            {onHoldCount > 0 && <> · {onHoldCount} en retrait</>}
+                                            {t('admin.groups.members', { count: group.memberCount })}
+                                            {onHoldCount > 0 && <> · {t('groups.onHoldCount', { count: onHoldCount })}</>}
                                         </button>
                                     </div>
 
@@ -237,7 +240,7 @@ export default function AdminGroupList() {
                                             <span className="block text-xs text-slate-700 truncate">
                                                 {group.manager.username}
                                             </span>
-                                            <span className="block text-[10px] text-slate-400">gérant</span>
+                                            <span className="block text-[10px] text-slate-400">{t('admin.groups.managerLabel')}</span>
                                         </span>
                                     </div>
 
@@ -246,13 +249,13 @@ export default function AdminGroupList() {
                                             onClick={() => openEdit(group)}
                                             className="h-8 px-3 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-medium transition"
                                         >
-                                            Modifier
+                                            {t('admin.groups.edit')}
                                         </button>
                                         <button
                                             onClick={() => setRemoving(group)}
                                             className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition"
                                         >
-                                            Supprimer
+                                            {t('common.delete')}
                                         </button>
                                     </div>
                                 </div>
@@ -281,15 +284,15 @@ export default function AdminGroupList() {
                                                 </div>
                                                 {member.id === group.manager.id ? (
                                                     <span className="text-[10px] font-medium text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full shrink-0">
-                                                        Gérant
+                                                        {t('groups.managerBadge')}
                                                     </span>
                                                 ) : (
                                                     member.onHold && (
                                                         <span
                                                             className="text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full shrink-0"
-                                                            title="Mis de côté par le gérant dans ce groupe. Son compte n'est pas touché."
+                                                            title={t('admin.groups.onHoldHint')}
                                                         >
-                                                            En retrait
+                                                            {t('groups.onHold')}
                                                         </span>
                                                     )
                                                 )}
@@ -305,16 +308,12 @@ export default function AdminGroupList() {
 
             {removing && (
                 <ConfirmDialog
-                    title={`Supprimer « ${removing.name} » ?`}
+                    title={t('admin.groups.deleteTitle', { name: removing.name })}
                     icon="🗑️"
                     body={
-                        <>
-                            Le groupe disparaît pour ses {removing.memberCount} membre
-                            {removing.memberCount > 1 ? 's' : ''}, {removing.manager.username} compris.
-                            Personne ne perd son compte ni ses projets : un groupe ne donne aucun accès.
-                        </>
+                        t('admin.groups.deleteBody', { count: removing.memberCount, manager: removing.manager.username })
                     }
-                    confirmLabel="Supprimer"
+                    confirmLabel={t('common.delete')}
                     onCancel={() => setRemoving(null)}
                     onConfirm={() => remove(removing)}
                 />

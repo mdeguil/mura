@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import AddToggleButton from './AddToggleButton'
@@ -51,6 +52,7 @@ export default function MemberList({
     /** Called with the whole team after a change of role, a handover or a group joining. */
     onMembersChanged: (members: Member[]) => void
 }) {
+    const { t } = useTranslation()
     const [inviting, setInviting] = useState(false)
     const [mode, setMode] = useState<'person' | 'group'>('person')
     const [error, setError] = useState('')
@@ -89,7 +91,7 @@ export default function MemberList({
         const sent = await attempt(async () => {
             const { data } = await api.post<Invitation>(`/projects/${projectId}/invitations`, { email: address })
             onInvited(data)
-        }, "Impossible d'inviter cette personne.")
+        }, t('team.inviteFailed'))
         setSending(false)
         if (sent) closeInvite()
     }
@@ -98,14 +100,14 @@ export default function MemberList({
         void attempt(async () => {
             await api.delete(`/projects/${projectId}/invitations/${invitation.id}`)
             onInvitationCancelled(invitation.id)
-        }, "Impossible d'annuler cette invitation.")
+        }, t('team.cancelFailed'))
     }
 
     function changeRole(member: Member, role: ProjectRole) {
         void attempt(async () => {
             const { data } = await api.patch<Member>(`/projects/${projectId}/members/${member.id}/role`, { role })
             onMembersChanged(members.map((m) => (m.id === data.id ? data : m)))
-        }, 'Impossible de changer ce rôle.')
+        }, t('team.roleFailed'))
     }
 
     function transfer(successor: Member) {
@@ -114,19 +116,19 @@ export default function MemberList({
                 `/projects/${projectId}/members/${successor.id}/transfer-ownership`
             )
             onMembersChanged(data)
-        }, 'Impossible de céder le projet.')
+        }, t('team.transferFailed'))
     }
 
     return (
         <section className="bg-surface border border-border rounded-xl p-5">
             <div className="flex items-center justify-between gap-3 mb-4">
                 <h2 className="text-sm font-semibold text-slate-800">
-                    Équipe <span className="text-slate-400 font-normal">{members.length}</span>
+                    {t('team.title')} <span className="text-slate-400 font-normal">{members.length}</span>
                 </h2>
                 {canManage && (
                     <AddToggleButton
                         open={inviting}
-                        label="Inviter une personne ou ajouter un groupe"
+                        label={t('team.add')}
                         onClick={() => (inviting ? closeInvite() : setInviting(true))}
                     />
                 )}
@@ -136,8 +138,8 @@ export default function MemberList({
                 <div className="flex items-center gap-1 mb-3 w-fit bg-surface-muted border border-border rounded-lg p-0.5">
                     {(
                         [
-                            ['person', 'Une personne'],
-                            ['group', 'Un groupe'],
+                            ['person', t('team.person')],
+                            ['group', t('team.group')],
                         ] as const
                     ).map(([key, label]) => (
                         <button
@@ -164,9 +166,9 @@ export default function MemberList({
 
             {inviting && mode === 'person' && (
                 <CarnetAddForm
-                    label="Qui veux-tu inviter ?"
-                    submitLabel="Inviter"
-                    busyLabel="Envoi…"
+                    label={t('team.who')}
+                    submitLabel={t('team.invite')}
+                    busyLabel={t('common.sending')}
                     busy={sending}
                     excludeIds={[...members.map((m) => m.id), ...pendingIds]}
                     onSubmit={invite}
@@ -206,7 +208,7 @@ export default function MemberList({
                         onClick={() => setDeparture({ member: me, leaving: true })}
                         className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-red-400 hover:text-red-600 transition"
                     >
-                        Quitter le projet
+                        {t('team.leave')}
                     </button>
                 </div>
             )}

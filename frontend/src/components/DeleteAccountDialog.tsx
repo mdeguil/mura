@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
@@ -23,10 +24,11 @@ export default function DeleteAccountDialog({
     /** Called once the server has deleted it. */
     onDeleted: () => void
 }) {
+    const { t } = useTranslation()
     const { data: preview, error: previewError } = useApiQuery<AccountDeletionPreview | null>(
         `/admin/accounts/${account.id}/deletion-preview`,
         null,
-        'Impossible de préparer la suppression.'
+        t('admin.deleteAccount.previewFailed')
     )
     const [typed, setTyped] = useState('')
     const [error, setError] = useState('')
@@ -43,7 +45,7 @@ export default function DeleteAccountDialog({
             await api.delete(`/admin/accounts/${account.id}`)
             onDeleted()
         } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible de supprimer ce compte.'))
+            setError(apiErrorMessage(err, t('admin.deleteAccount.failed')))
             setLoading(false)
         }
     }
@@ -55,13 +57,13 @@ export default function DeleteAccountDialog({
             <div className="px-6 pt-5 pb-4 border-b border-border">
                 <h2 id="delete-account-title" className="text-base font-semibold text-slate-800 flex items-center gap-2">
                     <span aria-hidden="true">🗑️</span>
-                    Supprimer le compte de {account.username} ?
+                    {t('admin.deleteAccount.title', { name: account.username })}
                 </h2>
-                <p className="text-sm text-slate-500 mt-0.5">Cette action est irréversible.</p>
+                <p className="text-sm text-slate-500 mt-0.5">{t('admin.deleteAccount.subtitle')}</p>
             </div>
 
             <div className="px-6 py-5 max-h-[50vh] overflow-y-auto">
-                {!preview && !previewError && <p className="text-sm text-slate-500">Vérification en cours…</p>}
+                {!preview && !previewError && <p className="text-sm text-slate-500">{t('admin.deleteAccount.checking')}</p>}
 
                 {preview && (
                     <>
@@ -75,7 +77,7 @@ export default function DeleteAccountDialog({
                             className="mt-5"
                         >
                             <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                                Tape « {account.username} » pour confirmer
+                                {t('admin.deleteAccount.typeName', { name: account.username })}
                             </label>
                             <input
                                 type="text"
@@ -100,14 +102,14 @@ export default function DeleteAccountDialog({
                     onClick={onClose}
                     className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface transition"
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </button>
                 <button
                     onClick={confirm}
                     disabled={!matches || loading || !preview}
                     className="h-9 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition disabled:opacity-40 disabled:hover:bg-red-500"
                 >
-                    {loading ? 'Suppression…' : 'Supprimer définitivement'}
+                    {loading ? t('admin.deleteAccount.submitting') : t('admin.deleteAccount.submit')}
                 </button>
             </div>
         </Modal>
@@ -127,37 +129,44 @@ export function DeletionConsequences({
 }: {
     /** The consequences the server worked out. */
     preview: AccountDeletionPreview
-    /** True when the reader is closing their own account: the sentences say « tu ». */
+    /** True when the reader is closing their own account: the sentences speak to them. */
     own: boolean
 }) {
+    const { t } = useTranslation()
     const n = preview.tasksUnassigned
-    const plural = n > 1
 
     return (
         <>
             {preview.projectsTransferred.length > 0 && (
-                <Section tone="keep" title="Ces projets continuent, avec un nouveau propriétaire">
+                <Section tone="keep" title={t('admin.consequences.transferred')}>
                     {preview.projectsTransferred.map((p) => (
                         <Row key={p.projectName} tone="keep">
-                            <strong className="font-medium">{p.projectName}</strong> revient à{' '}
-                            {p.successorUsername}
+                            <Trans
+                                i18nKey="admin.consequences.transferredTo"
+                                values={{ project: p.projectName, successor: p.successorUsername }}
+                                components={{ strong: <strong className="font-medium" /> }}
+                            />
                         </Row>
                     ))}
                 </Section>
             )}
 
             {preview.projectsDeleted.length > 0 && (
-                <Section tone="lose" title="Ces projets disparaissent, personne d’autre n’y est">
+                <Section tone="lose" title={t('admin.consequences.deleted')}>
                     {preview.projectsDeleted.map((name) => (
                         <Row key={name} tone="lose">
-                            <strong className="font-medium">{name}</strong> et toutes ses tâches
+                            <Trans
+                                i18nKey="admin.consequences.deletedProject"
+                                values={{ project: name }}
+                                components={{ strong: <strong className="font-medium" /> }}
+                            />
                         </Row>
                     ))}
                 </Section>
             )}
 
             {preview.groupsDeleted.length > 0 && (
-                <Section tone="lose" title="Ces groupes disparaissent">
+                <Section tone="lose" title={t('admin.consequences.groupsDeleted')}>
                     {preview.groupsDeleted.map((name) => (
                         <Row key={name} tone="lose">
                             {name}
@@ -167,11 +176,9 @@ export function DeletionConsequences({
             )}
 
             {n > 0 && (
-                <Section tone="keep" title="Ce qui reste en place">
+                <Section tone="keep" title={t('admin.consequences.kept')}>
                     <Row tone="keep">
-                        {n} tâche{plural ? 's' : ''} qui {own ? 't’' : 'lui '}
-                        {plural ? 'étaient' : 'était'} attribuée{plural ? 's' : ''} — elle
-                        {plural ? 's' : ''} rest{plural ? 'ent' : 'e'}, sans responsable
+                        {own ? t('admin.consequences.tasksOwn', { count: n }) : t('admin.consequences.tasksOther', { count: n })}
                     </Row>
                 </Section>
             )}

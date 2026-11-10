@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { PasswordRule } from '../utils/passwordRules'
 
 /**
@@ -12,6 +13,7 @@ export default function PasswordStrength({
     /** The rules, each marked met or not. */
     rules: PasswordRule[]
 }) {
+    const { t } = useTranslation()
     const met = rules.filter((r) => r.met).length
     const ratio = met / rules.length
 
@@ -29,7 +31,7 @@ export default function PasswordStrength({
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 mt-2">
                 {rules.map((rule) => (
                     <li
-                        key={rule.label}
+                        key={rule.key}
                         className={`flex items-center gap-1.5 text-xs transition-colors ${
                             rule.met ? 'text-emerald-600' : 'text-slate-400'
                         }`}
@@ -46,7 +48,7 @@ export default function PasswordStrength({
                         >
                             {rule.met ? <path d="M20 6 9 17l-5-5" /> : <circle cx="12" cy="12" r="8" />}
                         </svg>
-                        {rule.label}
+                        {t(`auth.rules.${rule.key}`)}
                     </li>
                 ))}
             </ul>

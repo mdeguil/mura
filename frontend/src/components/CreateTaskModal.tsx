@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
@@ -25,6 +26,7 @@ export default function CreateTaskModal({
     /** Called with the task once the server has created it. */
     onCreated: (task: Task) => void
 }) {
+    const { t } = useTranslation()
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
     const [startDate, setStartDate] = useState('')
@@ -38,7 +40,7 @@ export default function CreateTaskModal({
         setError('')
 
         if (endDate < startDate) {
-            setError('La date de fin doit être après la date de début.')
+            setError(t('createTask.endBeforeStart'))
             return
         }
 
@@ -54,7 +56,7 @@ export default function CreateTaskModal({
             onCreated(data)
             onClose()
         } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible de créer la tâche. Réessaie.'))
+            setError(apiErrorMessage(err, t('createTask.failed')))
         } finally {
             setLoading(false)
         }
@@ -62,16 +64,16 @@ export default function CreateTaskModal({
 
     return (
         <Modal labelledBy="create-task-title" onClose={onClose} size="sm" className="p-6">
-            <h2 id="create-task-title" className="text-base font-semibold text-slate-800 mb-4">Nouvelle tâche</h2>
+            <h2 id="create-task-title" className="text-base font-semibold text-slate-800 mb-4">{t('createTask.title')}</h2>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Nom</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">{t('createTask.name')}</label>
                     <input
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Ex: Maquettes desktop"
+                        placeholder={t('createTask.namePlaceholder')}
                         required
                         maxLength={255}
                         autoFocus
@@ -81,7 +83,7 @@ export default function CreateTaskModal({
 
                 <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Début</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">{t('createTask.start')}</label>
                         <input
                             type="date"
                             value={startDate}
@@ -91,7 +93,7 @@ export default function CreateTaskModal({
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Fin</label>
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">{t('createTask.end')}</label>
                         <input
                             type="date"
                             value={endDate}
@@ -103,16 +105,16 @@ export default function CreateTaskModal({
                 </div>
 
                 <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Responsable (optionnel)</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">{t('createTask.assignee')}</label>
                     <AssigneePicker members={members} value={assigneeId} onChange={setAssigneeId} fullWidth />
                 </div>
 
                 <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Description (optionnel)</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5">{t('createTask.description')}</label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Détails de la tâche"
+                        placeholder={t('createTask.descriptionPlaceholder')}
                         rows={2}
                         maxLength={2000}
                         className="w-full rounded-lg border border-border-strong bg-surface-muted px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition resize-none"
@@ -129,14 +131,14 @@ export default function CreateTaskModal({
                         onClick={onClose}
                         className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface-muted transition"
                     >
-                        Annuler
+                        {t('common.cancel')}
                     </button>
                     <button
                         type="submit"
                         disabled={loading}
                         className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                     >
-                        {loading ? 'Création…' : 'Créer'}
+                        {loading ? t('createTask.submitting') : t('createTask.submit')}
                     </button>
                 </div>
             </form>

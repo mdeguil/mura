@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import { useApiQuery } from './useApiQuery'
 import api from '../services/api'
 import type { AppNotification, Invitation } from '../types'
@@ -105,14 +106,14 @@ export function useNotifications() {
  */
 export function destinationOf(item: BellItem): { href: string; label: string } | null {
     if (item.kind === 'invitation') {
-        return item.invitation.projectId ? { href: `/project/${item.invitation.projectId}`, label: 'le projet' } : null
+        return item.invitation.projectId ? { href: `/project/${item.invitation.projectId}`, label: i18n.t('notifications.target.project') } : null
     }
 
     const { type, projectId, groupId, groupName } = item.notification
     if (type === 'CONTACT_REQUESTED' || type === 'CONTACT_ACCEPTED') {
-        return { href: '/carnet', label: 'le carnet' }
+        return { href: '/carnet', label: i18n.t('notifications.target.carnet') }
     }
-    if (groupId) return { href: `/groupe/${groupId}`, label: 'le groupe' }
-    if (groupName) return { href: '/carnet', label: 'le carnet' }
-    return projectId ? { href: `/project/${projectId}`, label: 'le projet' } : null
+    if (groupId) return { href: `/groupe/${groupId}`, label: i18n.t('notifications.target.group') }
+    if (groupName) return { href: '/carnet', label: i18n.t('notifications.target.carnet') }
+    return projectId ? { href: `/project/${projectId}`, label: i18n.t('notifications.target.project') } : null
 }

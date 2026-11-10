@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
@@ -21,11 +22,7 @@ import { taskPayload } from '../utils/taskPayload'
 
 type ProjectTab = 'info' | 'planning' | 'tasks'
 
-const TABS: { key: ProjectTab; label: string }[] = [
-    { key: 'info', label: 'Infos' },
-    { key: 'planning', label: 'Planning' },
-    { key: 'tasks', label: 'Tâches' },
-]
+const TABS: { key: ProjectTab }[] = [{ key: 'info' }, { key: 'planning' }, { key: 'tasks' }]
 
 const DEFAULT_TAB: ProjectTab = 'info'
 
@@ -38,6 +35,7 @@ const byStartDate = (a: Task, b: Task) => a.startDate.localeCompare(b.startDate)
  * locked.
  */
 export default function ProjectPage() {
+    const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const [searchParams, setSearchParams] = useSearchParams()
@@ -103,7 +101,7 @@ export default function ProjectPage() {
                 return
             }
             reloadProject()
-        }, accepted ? "Impossible d'accepter cette invitation." : 'Impossible de refuser cette invitation.')
+        }, accepted ? t('projectPage.errors.accept') : t('projectPage.errors.decline'))
     }
 
     function handleProjectStatusChange(status: ProjectStatus) {
@@ -119,7 +117,7 @@ export default function ProjectPage() {
                 status,
             })
             setProject(data)
-        }, 'Impossible de changer le statut du projet.')
+        }, t('projectPage.errors.projectStatus'))
     }
 
     function handleTaskCreated(task: Task) {
@@ -128,12 +126,12 @@ export default function ProjectPage() {
 
     async function handleStatusChange(taskId: string, status: TaskStatus) {
         setActionError('')
-        const problem = await saveTask(taskId, { status }, 'Impossible de changer le statut de cette tâche.')
+        const problem = await saveTask(taskId, { status }, t('projectPage.errors.taskStatus'))
         if (problem) setActionError(problem)
     }
 
     function handleTaskSave(taskId: string, changes: { startDate: string; endDate: string; assigneeId: string | null }) {
-        return saveTask(taskId, changes, "Impossible d'enregistrer cette tâche.")
+        return saveTask(taskId, changes, t('projectPage.errors.saveTask'))
     }
 
     async function saveTask(
@@ -174,7 +172,7 @@ export default function ProjectPage() {
             const { data } = await api.patch<Task>(`/projects/${id}/tasks/${taskId}/archive`)
             setTasks((prev) => prev.filter((t) => t.id !== taskId))
             setArchivedTasks((prev) => [...prev, data])
-        }, "Impossible d'archiver cette tâche.")
+        }, t('projectPage.errors.archiveTask'))
     }
 
     function handleRestoreTask(taskId: string) {
@@ -182,7 +180,7 @@ export default function ProjectPage() {
             const { data } = await api.patch<Task>(`/projects/${id}/tasks/${taskId}/restore`)
             setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId))
             setTasks((prev) => [...prev, data].sort(byStartDate))
-        }, 'Impossible de restaurer cette tâche.')
+        }, t('projectPage.errors.restoreTask'))
     }
 
     function handleDeleteTaskPermanently(taskId: string) {
@@ -193,7 +191,7 @@ export default function ProjectPage() {
         await attempt(async () => {
             await api.delete(`/projects/${id}/tasks/${task.id}`)
             setArchivedTasks((prev) => prev.filter((t) => t.id !== task.id))
-        }, 'Impossible de supprimer cette tâche.')
+        }, t('projectPage.errors.deleteTask'))
         setDeletingTask(null)
     }
 
@@ -203,14 +201,14 @@ export default function ProjectPage() {
 
             <main className="flex-1 flex flex-col px-8 py-8 w-full">
                 <Link to="/projets" className="text-sm text-slate-500 hover:text-slate-700 transition">
-                    ← Mes projets
+                    {t('projectPage.back')}
                 </Link>
 
                 {loading ? (
-                    <div className="text-sm text-slate-500 mt-6">Chargement…</div>
+                    <div className="text-sm text-slate-500 mt-6">{t('common.loading')}</div>
                 ) : !project ? (
                     <ErrorMessage onRetry={error ? reloadProject : undefined} className="mt-6">
-                        {error || 'Projet introuvable.'}
+                        {error || t('projectPage.notFound')}
                     </ErrorMessage>
                 ) : (
                     <>
@@ -234,7 +232,7 @@ export default function ProjectPage() {
                                         key={tab.key}
                                         onClick={() => !locked && selectTab(tab.key)}
                                         disabled={locked}
-                                        title={locked ? "Accepte l'invitation pour accéder à cette vue" : undefined}
+                                        title={locked ? t('projectPage.lockedTab') : undefined}
                                         className={`pb-3 -mb-px text-sm font-medium border-b-2 transition ${
                                             locked
                                                 ? 'text-slate-300 border-transparent cursor-not-allowed'
@@ -243,7 +241,7 @@ export default function ProjectPage() {
                                                   : 'text-slate-500 border-transparent hover:text-slate-700'
                                         }`}
                                     >
-                                        {tab.label}
+                                        {t(`projectPage.tabs.${tab.key}`)}
                                         {locked && ' 🔒'}
                                     </button>
                                 )
@@ -294,13 +292,13 @@ export default function ProjectPage() {
                                     <>
                                         <div className="flex items-center justify-between mb-4">
                                             <h2 className="text-sm font-semibold text-slate-800">
-                                                Tâches ({tasks.length})
+                                                {t('projectPage.tasksCount', { count: tasks.length })}
                                             </h2>
                                             <button
                                                 onClick={() => setShowCreateTask(true)}
                                                 className="h-8 px-3 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-xs font-medium transition"
                                             >
-                                                + Nouvelle tâche
+                                                {t('projectPage.newTask')}
                                             </button>
                                         </div>
                                         <TaskBoard
@@ -347,9 +345,9 @@ export default function ProjectPage() {
             )}
             {deletingTask && (
                 <ConfirmDialog
-                    title={`Supprimer définitivement « ${deletingTask.name} » ?`}
-                    body="Elle ne pourra pas être récupérée. Cette action est irréversible."
-                    confirmLabel="Supprimer définitivement"
+                    title={t('projectPage.deleteTask.title', { name: deletingTask.name })}
+                    body={t('projectPage.deleteTask.body')}
+                    confirmLabel={t('projectPage.deleteTask.confirm')}
                     icon="🗑️"
                     onCancel={() => setDeletingTask(null)}
                     onConfirm={() => deleteTask(deletingTask)}

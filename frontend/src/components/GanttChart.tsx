@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import {
     addDays,
@@ -13,7 +14,7 @@ import {
     startOfDay,
     startOfMonth,
 } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 import MonthNav from './MonthNav'
 import type { Task } from '../types'
 import { TASK_STATUS_BAR_CLASSES, TASK_STATUS_LABELS, TASK_STATUSES } from '../utils/taskMeta'
@@ -38,6 +39,7 @@ export default function GanttChart({
     /** Called with the task whose bar or name was clicked. */
     onOpenTask: (task: Task) => void
 }) {
+    const { t } = useTranslation()
     const [month, setMonth] = useState(() => initialPlanningMonth(tasks))
 
     const secondMonth = addMonths(month, 1)
@@ -79,8 +81,8 @@ export default function GanttChart({
     const todayOffset = differenceInCalendarDays(today, windowStart)
 
     const rangeLabel = isSameYear(month, secondMonth)
-        ? `${format(month, 'MMMM', { locale: fr })} – ${format(secondMonth, 'MMMM yyyy', { locale: fr })}`
-        : `${format(month, 'MMM yyyy', { locale: fr })} – ${format(secondMonth, 'MMM yyyy', { locale: fr })}`
+        ? `${format(month, 'MMMM', { locale: dateLocale() })} – ${format(secondMonth, 'MMMM yyyy', { locale: dateLocale() })}`
+        : `${format(month, 'MMM yyyy', { locale: dateLocale() })} – ${format(secondMonth, 'MMM yyyy', { locale: dateLocale() })}`
 
     return (
         <div>
@@ -98,7 +100,7 @@ export default function GanttChart({
             </div>
 
             {visibleTasks.length === 0 ? (
-                <p className="text-sm text-slate-500">Aucune tâche sur cette période.</p>
+                <p className="text-sm text-slate-500">{t('planning.ganttEmpty')}</p>
             ) : (
                 <div className="border border-border rounded-xl overflow-hidden">
                     <div className="flex bg-surface-muted">
@@ -113,7 +115,7 @@ export default function GanttChart({
                                         }`}
                                         style={{ left: `${percent(segment.offset)}%` }}
                                     >
-                                        {format(segment.date, 'MMMM yyyy', { locale: fr })}
+                                        {format(segment.date, 'MMMM yyyy', { locale: dateLocale() })}
                                     </span>
                                 ))}
                             </div>

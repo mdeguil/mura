@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import GroupPicker, { type GroupSelection } from './GroupPicker'
@@ -25,6 +26,7 @@ export default function GroupAddPanel({
     /** Closes the panel without adding anyone. */
     onCancel: () => void
 }) {
+    const { t } = useTranslation()
     const [selection, setSelection] = useState<GroupSelection | null>(null)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
@@ -43,7 +45,7 @@ export default function GroupAddPanel({
             const joinedIds = data.filter((m) => !members.some((old) => old.id === m.id)).map((m) => m.id)
             onAdded(data, joinedIds)
         } catch (err) {
-            setError(apiErrorMessage(err, "Ces personnes n'ont pas pu être ajoutées."))
+            setError(apiErrorMessage(err, t('projects.groupAdd.failed')))
         } finally {
             setSaving(false)
         }
@@ -54,7 +56,7 @@ export default function GroupAddPanel({
             <div className="mb-3">
                 <GroupPicker
                     leftOut={(person) =>
-                        members.some((m) => m.id === person.id) ? 'Déjà dans le projet' : null
+                        members.some((m) => m.id === person.id) ? t('projects.groupAdd.alreadyIn') : null
                     }
                     onChange={setSelection}
                 />
@@ -67,7 +69,7 @@ export default function GroupAddPanel({
             )}
 
             <p className="text-[11px] text-slate-400 mb-2">
-                Sans invitation : ils rejoignent l'équipe tout de suite, et en sont prévenus.
+                {t('projects.groupAdd.hint')}
             </p>
             <div className="flex items-center justify-end gap-2">
                 <button
@@ -75,7 +77,7 @@ export default function GroupAddPanel({
                     onClick={onCancel}
                     className="h-9 px-3 rounded-lg text-xs font-medium text-slate-500 hover:bg-surface-muted transition"
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </button>
                 <button
                     type="button"
@@ -83,7 +85,7 @@ export default function GroupAddPanel({
                     disabled={saving || count === 0}
                     className="h-9 px-3 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-xs font-medium transition disabled:opacity-60"
                 >
-                    {saving ? 'Ajout…' : 'Ajouter le groupe'}
+                    {saving ? t('projects.groupAdd.submitting') : t('projects.groupAdd.submit')}
                 </button>
             </div>
         </div>

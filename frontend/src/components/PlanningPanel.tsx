@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import GanttChart from './GanttChart'
 import MonthCalendar from './MonthCalendar'
 import type { Task } from '../types'
@@ -5,9 +6,9 @@ import type { Task } from '../types'
 /** The two ways of laying tasks out over time. */
 export type PlanningView = 'calendar' | 'gantt'
 
-const PLANNING_VIEWS: { key: PlanningView; label: string }[] = [
-    { key: 'calendar', label: '📅 Calendrier' },
-    { key: 'gantt', label: '📊 Gantt' },
+const PLANNING_VIEWS: { key: PlanningView; label: 'planning.calendar' | 'planning.gantt' }[] = [
+    { key: 'calendar', label: 'planning.calendar' },
+    { key: 'gantt', label: 'planning.gantt' },
 ]
 
 /**
@@ -31,6 +32,7 @@ export default function PlanningPanel({
     /** Called with the task the reader opens. */
     onOpenTask: (task: Task) => void
 }) {
+    const { t } = useTranslation()
     return (
         <>
             <div className="flex items-center gap-1 mb-4 self-start bg-surface-muted border border-border rounded-lg p-0.5">
@@ -45,7 +47,7 @@ export default function PlanningPanel({
                                 : 'text-slate-500 hover:text-slate-700'
                         }`}
                     >
-                        {entry.label}
+                        {t(entry.label)}
                     </button>
                 ))}
             </div>

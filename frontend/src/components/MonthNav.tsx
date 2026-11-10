@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next'
 import { addMonths, format, startOfMonth, subMonths } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 
 /**
  * The previous and next arrows of a planning view, around the month shown.
@@ -25,22 +26,23 @@ export default function MonthNav({
      */
     label?: string
 }) {
+    const { t } = useTranslation()
     return (
         <div className="flex items-center gap-1">
             <button
                 onClick={() => onChange((current) => subMonths(current, 1))}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-surface-muted transition"
-                aria-label="Mois précédent"
+                aria-label={t('planning.previousMonth')}
             >
                 ‹
             </button>
             <span className="text-sm font-semibold text-slate-800 capitalize min-w-[9rem] text-center">
-                {label ?? format(month, 'MMMM yyyy', { locale: fr })}
+                {label ?? format(month, 'MMMM yyyy', { locale: dateLocale() })}
             </span>
             <button
                 onClick={() => onChange((current) => addMonths(current, 1))}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-500 hover:bg-surface-muted transition"
-                aria-label="Mois suivant"
+                aria-label={t('planning.nextMonth')}
             >
                 ›
             </button>
@@ -48,7 +50,7 @@ export default function MonthNav({
                 onClick={() => onChange(() => startOfMonth(new Date()))}
                 className="ml-2 h-7 px-2.5 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-brand-500 transition"
             >
-                Aujourd'hui
+                {t('planning.today')}
             </button>
         </div>
     )

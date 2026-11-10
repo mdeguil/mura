@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import './i18n'
 import App from './App.tsx'
 import '@fontsource-variable/inter'
 import './index.css'

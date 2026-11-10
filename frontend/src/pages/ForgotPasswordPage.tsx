@@ -1,3 +1,5 @@
+import LegalLinks from '../components/LegalLinks'
+import { Trans, useTranslation } from 'react-i18next'
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../services/api'
@@ -9,6 +11,7 @@ import Logo from '../components/Logo'
  * and has a reset link mailed to it.
  */
 export default function ForgotPasswordPage() {
+    const { t } = useTranslation()
     const [email, setEmail] = useState('')
     const [sent, setSent] = useState(false)
     const [error, setError] = useState('')
@@ -22,7 +25,7 @@ export default function ForgotPasswordPage() {
             await api.post('/auth/password/forgot', { email: email.trim() })
             setSent(true)
         } catch (err) {
-            setError(apiErrorMessage(err, "L'email n'a pas pu être envoyé."))
+            setError(apiErrorMessage(err, t('auth.forgot.failed')))
         } finally {
             setLoading(false)
         }
@@ -40,27 +43,29 @@ export default function ForgotPasswordPage() {
                     {sent ? (
                         <>
                             <h1 className="text-xl font-semibold text-slate-800 mb-1">
-                                Regarde tes mails 📬
+                                {t('auth.forgot.sentTitle')}
                             </h1>
                             <p className="text-sm text-slate-500">
-                                Si un compte Mura utilise{' '}
-                                <span className="font-medium text-slate-700">{email.trim()}</span>, un
-                                lien vient de partir. Il est valable 1 heure et ne sert qu'une fois.
+                                <Trans
+                                    i18nKey="auth.forgot.sent"
+                                    values={{ email: email.trim() }}
+                                    components={{ strong: <span className="font-medium text-slate-700" /> }}
+                                />
                             </p>
                             <button
                                 onClick={() => setSent(false)}
                                 className="text-sm text-brand-600 font-medium hover:text-brand-700 mt-5"
                             >
-                                Essayer une autre adresse
+                                {t('auth.forgot.otherAddress')}
                             </button>
                         </>
                     ) : (
                         <>
                             <h1 className="text-xl font-semibold text-slate-800 mb-1">
-                                Mot de passe oublié ?
+                                {t('auth.forgot.title')}
                             </h1>
                             <p className="text-sm text-slate-500 mb-6">
-                                Donne ton adresse, on t'envoie un lien pour en choisir un nouveau.
+                                {t('auth.forgot.subtitle')}
                             </p>
 
                             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -69,14 +74,14 @@ export default function ForgotPasswordPage() {
                                         htmlFor="email"
                                         className="block text-xs font-medium text-slate-600 mb-1.5"
                                     >
-                                        Adresse email
+                                        {t('auth.email')}
                                     </label>
                                     <input
                                         id="email"
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="toi@exemple.com"
+                                        placeholder={t('common.emailPlaceholder')}
                                         autoComplete="email"
                                         required
                                         autoFocus
@@ -95,7 +100,7 @@ export default function ForgotPasswordPage() {
                                     disabled={loading || !email.trim()}
                                     className="mt-1 h-10 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                                 >
-                                    {loading ? 'Envoi…' : 'Envoyer le lien'}
+                                    {loading ? t('common.sending') : t('auth.forgot.submit')}
                                 </button>
                             </form>
                         </>
@@ -103,10 +108,12 @@ export default function ForgotPasswordPage() {
 
                     <p className="text-center text-sm text-slate-500 mt-5">
                         <Link to="/login" className="text-brand-600 font-medium hover:text-brand-700">
-                            Revenir à la connexion
+                            {t('auth.forgot.back')}
                         </Link>
                     </p>
                 </div>
+
+                <LegalLinks className="mt-6" />
             </div>
         </div>
     )

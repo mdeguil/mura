@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import LegalLayout, { LegalSection } from '../components/LegalLayout'
 import { LEGAL_INFO } from '../legal/legalInfo'
+
+const STRONG = { strong: <strong className="text-slate-800" /> }
 
 /**
  * The mentions légales, at /mentions-legales (LCEN, art. 6-III). Mura is
@@ -10,66 +13,72 @@ import { LEGAL_INFO } from '../legal/legalInfo'
  * standing in for a name.
  */
 export default function LegalNoticePage() {
+    const { t } = useTranslation()
     const { publisher, host } = LEGAL_INFO
 
     return (
-        <LegalLayout title="Mentions légales">
-            <LegalSection title="Éditeur">
+        <LegalLayout title={t('legal.notice.title')}>
+            <LegalSection title={t('legal.notice.publisher')}>
                 {publisher.name ? (
                     <>
                         <p>
-                            Cette instance de Mura est éditée par{' '}
-                            <strong className="text-slate-800">{publisher.name}</strong>
-                            {publisher.address && <>, {publisher.address}</>}.
+                            <Trans
+                                i18nKey="legal.notice.publishedBy"
+                                values={{ name: publisher.name, address: publisher.address ? `, ${publisher.address}` : '' }}
+                                components={STRONG}
+                            />
                         </p>
                         {publisher.email && (
                             <p>
-                                Contact : <span className="text-slate-800">{publisher.email}</span>
+                                <Trans i18nKey="legal.notice.contact" values={{ email: publisher.email }} components={STRONG} />
                             </p>
                         )}
                         {publisher.publicationDirector && (
                             <p>
-                                Directeur ou directrice de la publication :{' '}
-                                <span className="text-slate-800">{publisher.publicationDirector}</span>
+                                <Trans
+                                    i18nKey="legal.notice.director"
+                                    values={{ name: publisher.publicationDirector }}
+                                    components={STRONG}
+                                />
                             </p>
                         )}
                     </>
                 ) : (
-                    <p>
-                        Mura s'installe chez ceux qui l'utilisent : chaque instance est éditée par la personne
-                        ou l'organisation qui l'a installée. Celle-ci ne s'est pas déclarée.
-                    </p>
+                    <p>{t('legal.notice.undeclaredPublisher')}</p>
                 )}
             </LegalSection>
 
-            <LegalSection title="Hébergement">
+            <LegalSection title={t('legal.notice.hosting')}>
                 {host.name ? (
                     <p>
-                        Cette instance est hébergée par <strong className="text-slate-800">{host.name}</strong>
-                        {host.address && <>, {host.address}</>}
-                        {host.phone && <>, joignable au {host.phone}</>}.
+                        <Trans
+                            i18nKey="legal.notice.hostedBy"
+                            values={{
+                                name: host.name,
+                                details:
+                                    (host.address ? `, ${host.address}` : '') +
+                                    (host.phone ? t('legal.notice.reachableAt', { phone: host.phone }) : ''),
+                            }}
+                            components={STRONG}
+                        />
                     </p>
                 ) : (
-                    <p>L'hébergeur de cette instance n'a pas été déclaré.</p>
+                    <p>{t('legal.notice.undeclaredHost')}</p>
                 )}
             </LegalSection>
 
-            <LegalSection title="Logiciel">
-                <p>
-                    Mura est un logiciel fait pour être installé par ceux qui l'utilisent. Il est libre
-                    d'installation et d'utilisation, mais son code ne peut être ni modifié ni redistribué sans
-                    l'accord de son auteur (licence Mura). Son auteur n'héberge aucune instance et n'a pas accès
-                    à tes données. Les projets, tâches et autres contenus que tu y crées restent les tiens.
-                </p>
+            <LegalSection title={t('legal.notice.software')}>
+                <p>{t('legal.notice.softwareBody')}</p>
             </LegalSection>
 
-            <LegalSection title="Données personnelles">
+            <LegalSection title={t('legal.notice.personalData')}>
                 <p>
-                    Ce que Mura fait de tes données, et comment exercer tes droits, est décrit dans la{' '}
-                    <Link to="/confidentialite" className="text-brand-700 underline underline-offset-2">
-                        politique de confidentialité
-                    </Link>
-                    .
+                    <Trans
+                        i18nKey="legal.notice.personalDataBody"
+                        components={{
+                            anchor: <Link to="/confidentialite" className="text-brand-700 underline underline-offset-2" />,
+                        }}
+                    />
                 </p>
             </LegalSection>
         </LegalLayout>

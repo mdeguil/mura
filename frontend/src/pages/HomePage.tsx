@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 import { useMemo, useState } from 'react'
 import Navbar from '../components/Navbar'
 import ProjectCard from '../components/ProjectCard'
@@ -12,14 +14,21 @@ import { useProjectTypes } from '../hooks/useProjectTypes'
 
 type ProjectTab = 'ALL' | ProjectStatus | 'ARCHIVED'
 
-const TABS: { key: ProjectTab; label: string }[] = [
-    { key: 'ALL', label: 'Tous' },
-    ...(Object.keys(PROJECT_STATUS_LABELS) as ProjectStatus[]).map((status) => ({
-        key: status as ProjectTab,
-        label: PROJECT_STATUS_LABELS[status],
-    })),
-    { key: 'ARCHIVED', label: 'Archivés' },
-]
+/**
+ * The tabs of the list, named in the language on screen.
+ *
+ * @returns every tab with its label
+ */
+function projectTabs(): { key: ProjectTab; label: string }[] {
+    return [
+        { key: 'ALL', label: i18n.t('home.tabAll') },
+        ...(Object.keys(PROJECT_STATUS_LABELS) as ProjectStatus[]).map((status) => ({
+            key: status as ProjectTab,
+            label: PROJECT_STATUS_LABELS[status],
+        })),
+        { key: 'ARCHIVED', label: i18n.t('home.tabArchived') },
+    ]
+}
 
 /**
  * The project list, at /projets: the reader's projects in tabs by status,
@@ -27,6 +36,7 @@ const TABS: { key: ProjectTab; label: string }[] = [
  * new project.
  */
 export default function HomePage() {
+    const { t } = useTranslation()
     const { types } = useProjectTypes()
     const {
         data: projects,
@@ -34,9 +44,9 @@ export default function HomePage() {
         loading,
         error,
         reload,
-    } = useApiQuery<Project[]>('/projects', [], 'Impossible de charger tes projets.')
-    const invitationsQuery = useApiQuery<Invitation[]>('/invitations', [], 'Impossible de charger tes invitations.')
-    const archivedQuery = useApiQuery<Project[]>('/projects/archived', [], 'Impossible de charger tes projets archivés.')
+    } = useApiQuery<Project[]>('/projects', [], t('home.loadProjects'))
+    const invitationsQuery = useApiQuery<Invitation[]>('/invitations', [], t('home.loadInvitations'))
+    const archivedQuery = useApiQuery<Project[]>('/projects/archived', [], t('home.loadArchived'))
     const invitations = invitationsQuery.data
     const { data: archived, setData: setArchived } = archivedQuery
     const [query, setQuery] = useState('')
@@ -70,14 +80,14 @@ export default function HomePage() {
             <main className="max-w-5xl mx-auto px-6 py-10">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h1 className="text-2xl font-semibold text-slate-800">Mes projets</h1>
-                        <p className="text-sm text-slate-500 mt-1">Retrouve tous tes projets ici</p>
+                        <h1 className="text-2xl font-semibold text-slate-800">{t('home.title')}</h1>
+                        <p className="text-sm text-slate-500 mt-1">{t('home.subtitle')}</p>
                     </div>
                     <button
                         onClick={() => setShowCreateModal(true)}
                         className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition"
                     >
-                        + Créer un projet
+                        {t('home.create')}
                     </button>
                 </div>
 
@@ -90,10 +100,10 @@ export default function HomePage() {
                 {invitations.length > 0 && (
                     <section className="mb-8">
                         <h2 className="text-sm font-semibold text-slate-800 mb-1">
-                            À rejoindre <span className="text-slate-400 font-normal">{invitations.length}</span>
+                            {t('home.toJoin')} <span className="text-slate-400 font-normal">{invitations.length}</span>
                         </h2>
                         <p className="text-xs text-slate-500 mb-3">
-                            Des projets t'attendent. Ouvre-les pour voir qui en fait partie, puis accepte ou refuse.
+                            {t('home.toJoinHint')}
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {invitations.map((invitation) => (
@@ -104,7 +114,7 @@ export default function HomePage() {
                 )}
 
                 <div className="flex items-center gap-6 border-b border-border mb-5 overflow-x-auto overflow-y-hidden">
-                    {TABS.map((entry) => {
+                    {projectTabs().map((entry) => {
                         const count = countFor(entry.key)
                         return (
                             <button
@@ -129,13 +139,13 @@ export default function HomePage() {
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Rechercher un projet…"
+                        placeholder={t('home.search')}
                         className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
                     />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 mb-6">
-                    <span className="text-xs text-slate-400 mr-1">Type</span>
+                    <span className="text-xs text-slate-400 mr-1">{t('home.type')}</span>
                     <button
                         onClick={() => setTypeFilter('ALL')}
                         className={`text-xs font-medium px-3 py-1.5 rounded-full border transition ${
@@ -144,7 +154,7 @@ export default function HomePage() {
                                 : 'bg-surface text-slate-600 border-border-strong hover:border-brand-500'
                         }`}
                     >
-                        Tous
+                        {t('home.allTypes')}
                     </button>
                     {types.map((t) => (
                         <button
@@ -162,7 +172,7 @@ export default function HomePage() {
                 </div>
 
                 {loading ? (
-                    <div className="text-sm text-slate-500">Chargement…</div>
+                    <div className="text-sm text-slate-500">{t('common.loading')}</div>
                 ) : tab === 'ARCHIVED' && archivedQuery.error ? (
                     <ErrorMessage onRetry={archivedQuery.reload}>{archivedQuery.error}</ErrorMessage>
                 ) : tab !== 'ARCHIVED' && error ? (
@@ -183,17 +193,17 @@ export default function HomePage() {
                         <div className="w-14 h-14 rounded-2xl bg-brand-gradient-diagonal flex items-center justify-center mb-4">
                             <span className="text-white text-2xl">📋</span>
                         </div>
-                        <h2 className="text-base font-semibold text-slate-800 mb-1">Aucun projet pour l'instant</h2>
+                        <h2 className="text-base font-semibold text-slate-800 mb-1">{t('home.noProject')}</h2>
                         <p className="text-sm text-slate-500 max-w-sm">
-                            Crée ton premier projet pour commencer à organiser tes tâches en listes et cartes.
+                            {t('home.noProjectHint')}
                         </p>
                     </div>
                 ) : shown.length === 0 ? (
                     <div className="bg-surface border border-border rounded-2xl py-16 px-6 flex flex-col items-center text-center">
                         <h2 className="text-base font-semibold text-slate-800 mb-1">
-                            {query ? <>Aucun résultat pour « {query} »</> : 'Aucun projet dans cet onglet'}
+                            {query ? t('home.noResult', { query }) : t('home.emptyTab')}
                         </h2>
-                        <p className="text-sm text-slate-500 max-w-sm">Essaie un autre nom, un autre type ou un autre onglet.</p>
+                        <p className="text-sm text-slate-500 max-w-sm">{t('home.emptyHint')}</p>
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4">

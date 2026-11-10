@@ -1,13 +1,15 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import NotificationBell from './NotificationBell'
 import ThemeToggle from './ThemeToggle'
+import LanguageSwitch from './LanguageSwitch'
 import Logo from './Logo'
 
 /**
- * The bar at the top of every signed-in page: the sections, the theme
- * switch, the bell, the account and signing out. Administration shows only
- * to administrators.
+ * The bar at the top of every signed-in page: the sections, the language
+ * and theme switches, the bell, the account and signing out. Administration
+ * shows only to administrators.
  *
  * It never makes the page wider than the screen. On a narrow one the
  * wordmark and the username step aside (the name stays for screen readers),
@@ -15,6 +17,7 @@ import Logo from './Logo'
  * scroll inside the bar while the buttons on the right stay put.
  */
 export default function Navbar() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const user = useAuthStore((s) => s.user)
     const logout = useAuthStore((s) => s.logout)
@@ -32,10 +35,10 @@ export default function Navbar() {
 
                 <nav className="flex items-center gap-1 ml-1 sm:ml-4 min-w-0 overflow-x-auto [scrollbar-width:none]">
                     {[
-                        { to: '/projets', label: 'Projets' },
-                        { to: '/carnet', label: 'Carnet' },
+                        { to: '/projets', label: t('nav.projects') },
+                        { to: '/carnet', label: t('nav.carnet') },
                         ...(user?.accountRole === 'ADMIN'
-                            ? [{ to: '/administration', label: 'Administration' }]
+                            ? [{ to: '/administration', label: t('nav.administration') }]
                             : []),
                     ].map((entry) => (
                         <NavLink
@@ -58,13 +61,14 @@ export default function Navbar() {
 
             <div className="flex items-center gap-1 sm:gap-3 shrink-0">
                 <div className="flex items-center gap-1">
+                    <LanguageSwitch variant="compact" />
                     <ThemeToggle />
                     <NotificationBell />
                 </div>
 
                 <NavLink
                     to="/compte"
-                    title="Mon compte"
+                    title={t('nav.accountTitle')}
                     className={({ isActive }) =>
                         `flex items-center gap-2 h-8 pl-1 pr-1 md:pr-2.5 rounded-lg transition ${
                             isActive ? 'bg-surface-muted' : 'hover:bg-surface-muted'
@@ -78,11 +82,11 @@ export default function Navbar() {
                         {user?.username?.[0]?.toUpperCase() ?? '?'}
                     </div>
                     <span className="sr-only md:not-sr-only text-sm text-slate-600">{user?.username}</span>
-                    <span className="sr-only">, mon compte</span>
+                    <span className="sr-only">, {t('nav.account')}</span>
                 </NavLink>
                 <button
                     onClick={handleLogout}
-                    title="Déconnexion"
+                    title={t('nav.logout')}
                     className="flex items-center text-sm text-slate-500 hover:text-slate-700 border border-border-strong rounded-lg px-2 sm:px-3 py-1.5 transition"
                 >
                     <svg
@@ -97,7 +101,7 @@ export default function Navbar() {
                     >
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
                     </svg>
-                    <span className="sr-only sm:not-sr-only">Déconnexion</span>
+                    <span className="sr-only sm:not-sr-only">{t('nav.logout')}</span>
                 </button>
             </div>
         </header>

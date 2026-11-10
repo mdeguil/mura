@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
@@ -22,6 +23,7 @@ export default function DeleteProjectDialog({
     /** Called once the server has deleted it. */
     onDeleted: () => void
 }) {
+    const { t } = useTranslation()
     const [typed, setTyped] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
@@ -37,7 +39,7 @@ export default function DeleteProjectDialog({
             await api.delete(`/projects/${project.id}`)
             onDeleted()
         } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible de supprimer ce projet.'))
+            setError(apiErrorMessage(err, t('deleteProject.failed')))
             setLoading(false)
         }
     }
@@ -48,23 +50,23 @@ export default function DeleteProjectDialog({
 
             <div className="px-6 pt-5 pb-4 border-b border-border">
                 <h2 id="delete-project-title" className="text-base font-semibold text-slate-800">
-                    Supprimer « {project.name} » ?
+                    {t('deleteProject.title', { name: project.name })}
                 </h2>
                 <p className="text-sm text-slate-500 mt-0.5">
-                    Cette action est irréversible.
+                    {t('deleteProject.subtitle')}
                 </p>
             </div>
 
             <div className="px-6 py-5">
-                <p className="text-sm text-slate-600">Seront effacés avec le projet :</p>
+                <p className="text-sm text-slate-600">{t('deleteProject.erased')}</p>
                 <ul className="flex flex-col gap-1 mt-2 text-sm text-slate-600">
                     <li className="flex gap-2">
                         <span className="text-red-500">✕</span>
-                        Toutes ses tâches, leurs sous-tâches et leur historique
+                        {t('deleteProject.tasks')}
                     </li>
                     <li className="flex gap-2">
                         <span className="text-red-500">✕</span>
-                        Son équipe et les invitations en cours
+                        {t('deleteProject.team')}
                     </li>
                 </ul>
 
@@ -76,7 +78,7 @@ export default function DeleteProjectDialog({
                     className="mt-5"
                 >
                     <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                        Tape « {project.name} » pour confirmer
+                        {t('deleteProject.typeName', { name: project.name })}
                     </label>
                     <input
                         type="text"
@@ -95,14 +97,14 @@ export default function DeleteProjectDialog({
                     onClick={onClose}
                     className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface transition"
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </button>
                 <button
                     onClick={confirm}
                     disabled={!matches || loading}
                     className="h-9 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition disabled:opacity-40 disabled:hover:bg-red-500"
                 >
-                    {loading ? 'Suppression…' : 'Supprimer définitivement'}
+                    {loading ? t('deleteProject.submitting') : t('deleteProject.submit')}
                 </button>
             </div>
         </Modal>

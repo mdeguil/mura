@@ -1,9 +1,10 @@
+import { Trans, useTranslation } from 'react-i18next'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 import { destinationOf, useNotifications, type BellItem } from '../hooks/useNotifications'
-import type { AppNotification } from '../types'
+import type { AppNotification, NotificationType } from '../types'
 
 /**
  * The bell and its panel: invitations and notifications, newest first,
@@ -12,6 +13,7 @@ import type { AppNotification } from '../types'
  * elsewhere or Escape closes the panel.
  */
 export default function NotificationBell() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const { items, unread, markRead, clear } = useNotifications()
     const [open, setOpen] = useState(false)
@@ -47,8 +49,8 @@ export default function NotificationBell() {
             <button
                 onClick={() => setOpen((v) => !v)}
                 className="relative w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-surface-muted transition"
-                title="Notifications"
-                aria-label={unread > 0 ? `Notifications : ${unread} non lue(s)` : 'Notifications'}
+                title={t('notifications.title')}
+                aria-label={unread > 0 ? t('notifications.unread', { count: unread }) : t('notifications.title')}
                 aria-expanded={open}
             >
                 <svg
@@ -78,12 +80,12 @@ export default function NotificationBell() {
             {open && (
                 <div className="absolute right-0 top-11 w-80 bg-surface border border-border rounded-xl shadow-lg overflow-hidden z-50">
                     <div className="px-4 py-3 border-b border-border">
-                        <p className="text-sm font-semibold text-slate-800">Notifications</p>
+                        <p className="text-sm font-semibold text-slate-800">{t('notifications.title')}</p>
                     </div>
 
                     {items.length === 0 ? (
                         <p className="px-4 py-6 text-sm text-slate-400 text-center">
-                            Rien de neuf pour le moment.
+                            {t('notifications.empty')}
                         </p>
                     ) : (
                         <ul className="max-h-96 overflow-y-auto">
@@ -100,8 +102,8 @@ export default function NotificationBell() {
                                         className="flex-1 min-w-0 text-left px-4 py-3 flex gap-3 hover:bg-surface-muted transition"
                                         title={
                                             destinationOf(item)
-                                                ? `Clic pour marquer comme lu, double-clic pour ouvrir ${destinationOf(item)!.label}`
-                                                : 'Clic pour marquer comme lu'
+                                                ? t('notifications.clickToReadOrOpen', { target: destinationOf(item)!.label })
+                                                : t('notifications.clickToRead')
                                         }
                                     >
                                         <span
@@ -112,13 +114,14 @@ export default function NotificationBell() {
                                         <span className="min-w-0">
                                             {item.kind === 'invitation' ? (
                                                 <span className="block text-sm text-slate-700">
-                                                    <span className="font-medium">
-                                                        {item.invitation.invitedBy.username}
-                                                    </span>{' '}
-                                                    t'invite à rejoindre{' '}
-                                                    <span className="font-medium">
-                                                        {item.invitation.projectName}
-                                                    </span>
+                                                    <Trans
+                                                        i18nKey="notifications.invitation"
+                                                        values={{
+                                                            actor: item.invitation.invitedBy.username,
+                                                            name: item.invitation.projectName,
+                                                        }}
+                                                        components={{ b: <span className="font-medium" /> }}
+                                                    />
                                                 </span>
                                             ) : (
                                                 <>
@@ -135,10 +138,10 @@ export default function NotificationBell() {
                                             <span className="block text-xs text-slate-400 mt-1">
                                                 {formatDistanceToNow(new Date(item.createdAt), {
                                                     addSuffix: true,
-                                                    locale: fr,
+                                                    locale: dateLocale(),
                                                 })}
                                                 {destinationOf(item) &&
-                                                    ` · double-clic pour voir ${destinationOf(item)!.label}`}
+                                                    t('notifications.doubleClickToSee', { target: destinationOf(item)!.label })}
                                             </span>
                                         </span>
                                     </button>
@@ -147,10 +150,10 @@ export default function NotificationBell() {
                                         className="px-3 text-slate-300 hover:text-red-500 transition text-xs leading-none shrink-0"
                                         title={
                                             item.kind === 'invitation'
-                                                ? "Retirer de la cloche (l'invitation reste dans tes projets)"
-                                                : 'Supprimer la notification'
+                                                ? t('notifications.removeInvitation')
+                                                : t('notifications.delete')
                                         }
-                                        aria-label="Supprimer la notification"
+                                        aria-label={t('notifications.delete')}
                                     >
                                         ✕
                                     </button>
@@ -164,105 +167,45 @@ export default function NotificationBell() {
     )
 }
 
-function NotificationLine({ notification }: { notification: AppNotification }) {
-    const who = <span className="font-medium">{notification.actorName}</span>
-    const name = (
-        <span className="font-medium">{notification.projectName ?? notification.groupName}</span>
-    )
-    const where = notification.groupName ? (
-        <>dans ton groupe {name}</>
-    ) : (
-        <>sur ton projet {name}</>
-    )
+type LineKey =
+    | Exclude<NotificationType, 'MEMBER_SUSPENDED' | 'MEMBER_RESTORED' | 'MEMBER_DELETED'>
+    | `${'MEMBER_SUSPENDED' | 'MEMBER_RESTORED' | 'MEMBER_DELETED'}_${'project' | 'group'}`
 
-    switch (notification.type) {
-        case 'REMOVED_FROM_PROJECT':
-            return (
-                <>
-                    {who} t'a retiré de {name}
-                </>
-            )
-        case 'ADDED_TO_PROJECT':
-            return (
-                <>
-                    {who} t'a ajouté à {name}
-                </>
-            )
-        case 'MEMBER_SUSPENDED':
-            return (
-                <>
-                    Le compte de {who} a été suspendu — il est {where}
-                </>
-            )
-        case 'MEMBER_RESTORED':
-            return (
-                <>
-                    Le compte de {who} est de nouveau actif — il est {where}
-                </>
-            )
-        case 'CONTACT_REQUESTED':
-            return <>{who} aimerait t’ajouter à son carnet</>
-        case 'CONTACT_ACCEPTED':
-            return <>{who} a accepté ta demande de contact</>
-        case 'MEMBER_DELETED':
-            return (
-                <>
-                    Le compte de {who} a été supprimé — il était {where}
-                </>
-            )
-        case 'GROUP_ENTRUSTED':
-            return (
-                <>
-                    {who} t’a confié la gestion du groupe {name}
-                </>
-            )
-        case 'GROUP_MANAGER_CHANGED':
-            return (
-                <>
-                    Le groupe {name} est désormais géré par {who}
-                </>
-            )
-        case 'GROUP_DELETED':
-            return (
-                <>
-                    {who} a supprimé le groupe {name}
-                </>
-            )
-        case 'ADDED_TO_GROUP':
-            return (
-                <>
-                    {who} t’a ajouté au groupe {name}
-                </>
-            )
-        case 'REMOVED_FROM_GROUP':
-            return (
-                <>
-                    {who} t’a retiré du groupe {name}
-                </>
-            )
-        case 'MEMBER_LEFT_GROUP':
-            return (
-                <>
-                    {who} a quitté ton groupe {name}
-                </>
-            )
-        case 'HELD_IN_GROUP':
-            return (
-                <>
-                    {who} t’a mis en retrait du groupe {name}
-                </>
-            )
-        case 'RESTORED_IN_GROUP':
-            return (
-                <>
-                    {who} a levé ton retrait du groupe {name}
-                </>
-            )
-        default:
-            return (
-                <>
-                    {who} a quitté {name}
-                </>
-            )
+/**
+ * Which sentence tells a notification. Three kinds of line also say where
+ * the person is, a project or a group, which changes the sentence; a type
+ * the bell does not know reads as someone leaving.
+ */
+function lineKey(notification: AppNotification): LineKey {
+    const { type } = notification
+    if (type === 'MEMBER_SUSPENDED' || type === 'MEMBER_RESTORED' || type === 'MEMBER_DELETED') {
+        return `${type}_${notification.groupName ? 'group' : 'project'}`
     }
+    return type in LINE_TYPES ? type : 'MEMBER_LEFT_PROJECT'
+}
+
+const LINE_TYPES: Record<Exclude<LineKey, `${string}_${'project' | 'group'}`>, true> = {
+    REMOVED_FROM_PROJECT: true,
+    MEMBER_LEFT_PROJECT: true,
+    ADDED_TO_PROJECT: true,
+    CONTACT_REQUESTED: true,
+    CONTACT_ACCEPTED: true,
+    GROUP_ENTRUSTED: true,
+    GROUP_MANAGER_CHANGED: true,
+    GROUP_DELETED: true,
+    ADDED_TO_GROUP: true,
+    REMOVED_FROM_GROUP: true,
+    MEMBER_LEFT_GROUP: true,
+    HELD_IN_GROUP: true,
+    RESTORED_IN_GROUP: true,
+}
+
+function NotificationLine({ notification }: { notification: AppNotification }) {
+    return (
+        <Trans
+            i18nKey={`notifications.line.${lineKey(notification)}`}
+            values={{ actor: notification.actorName, name: notification.projectName ?? notification.groupName }}
+            components={{ b: <span className="font-medium" /> }}
+        />
+    )
 }

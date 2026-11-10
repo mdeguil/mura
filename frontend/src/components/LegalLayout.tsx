@@ -1,3 +1,6 @@
+import { Trans, useTranslation } from 'react-i18next'
+import { format } from 'date-fns'
+import { dateLocale } from '../utils/dates'
 import React from 'react'
 import { Link } from 'react-router-dom'
 import Logo from './Logo'
@@ -20,6 +23,7 @@ export default function LegalLayout({
     /** The page's sections. */
     children: React.ReactNode
 }) {
+    const { t } = useTranslation()
     return (
         <div className="min-h-screen bg-app px-4 py-10">
             <div className="max-w-2xl mx-auto">
@@ -30,16 +34,18 @@ export default function LegalLayout({
 
                 <article className="bg-surface border border-border rounded-2xl p-8">
                     <h1 className="text-2xl font-semibold text-slate-800 mb-1">{title}</h1>
-                    <p className="text-xs text-slate-500 mb-6">Mise à jour le {LEGAL_INFO.lastUpdated}</p>
+                    <p className="text-xs text-slate-500 mb-6">
+                        {t('legalLayout.updated', {
+                            date: format(new Date(LEGAL_INFO.lastUpdated), 'd MMMM yyyy', { locale: dateLocale() }),
+                        })}
+                    </p>
 
                     {!legalInfoDeclared() && (
                         <p
                             role="note"
                             className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-6"
                         >
-                            Cette instance de Mura n'a pas déclaré qui l'administre. Si elle sert à d'autres
-                            personnes que celle qui l'a installée, son administrateur doit renseigner ces
-                            informations dans sa configuration (variables <code>VITE_LEGAL_*</code>).
+                            <Trans i18nKey="legalLayout.undeclared" components={{ code: <code /> }} />
                         </p>
                     )}
 

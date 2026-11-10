@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import UserAvatar from './UserAvatar'
@@ -13,10 +14,6 @@ export type Departure = {
     leaving: boolean
 }
 
-const DEFAULT_MESSAGE = {
-    removal: "L'équipe du projet a été réorganisée.",
-    leaving: 'Je ne travaille plus sur ce projet.',
-}
 
 /**
  * Removing someone from a team, or leaving it, with a note for the people
@@ -41,9 +38,10 @@ export default function MemberDepartureDialog({
     /** Called with the member's id once the server has taken them off. */
     onDone: (memberId: string) => void
 }) {
+    const { t } = useTranslation()
     const { member, leaving } = departure
     const [message, setMessage] = useState(
-        leaving ? DEFAULT_MESSAGE.leaving : DEFAULT_MESSAGE.removal
+        leaving ? t('departure.defaultLeaving') : t('departure.defaultRemoval')
     )
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
@@ -58,7 +56,7 @@ export default function MemberDepartureDialog({
             setError(
                 apiErrorMessage(
                     err,
-                    leaving ? 'Impossible de quitter le projet.' : 'Impossible de retirer ce membre.'
+                    leaving ? t('departure.leaveFailed') : t('departure.removeFailed')
                 )
             )
             setLoading(false)
@@ -69,12 +67,12 @@ export default function MemberDepartureDialog({
         <Modal labelledBy="member-departure-title" onClose={onClose} size="md" className="overflow-hidden">
             <div className="px-6 pt-5 pb-4 border-b border-border">
                 <h2 id="member-departure-title" className="text-base font-semibold text-slate-800">
-                    {leaving ? 'Quitter le projet' : `Retirer ${member.username} du projet`}
+                    {leaving ? t('departure.leaveTitle') : t('departure.removeTitle', { name: member.username })}
                 </h2>
                 <p className="text-sm text-slate-500 mt-0.5">
                     {leaving
-                        ? 'Tu perdras l’accès aux tâches et au planning. Les tâches dont tu étais responsable restent au projet, sans personne en charge.'
-                        : 'Cette personne perdra l’accès au projet. Ses tâches restent, sans personne en charge.'}
+                        ? t('departure.leaveBody')
+                        : t('departure.removeBody')}
                 </p>
             </div>
 
@@ -92,7 +90,7 @@ export default function MemberDepartureDialog({
                 )}
 
                 <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                    {leaving ? "Mot pour l'équipe" : 'Mot pour la personne'}
+                    {leaving ? t('departure.leaveNote') : t('departure.removeNote')}
                 </label>
                 <textarea
                     value={message}
@@ -103,8 +101,8 @@ export default function MemberDepartureDialog({
                 />
                 <p className="text-xs text-slate-400 mt-1.5">
                     {leaving
-                        ? 'Les responsables du projet recevront ce message. Tu peux le vider.'
-                        : 'Elle recevra ce message dans ses notifications. Tu peux le vider.'}
+                        ? t('departure.leaveNoteHint')
+                        : t('departure.removeNoteHint')}
                 </p>
 
                 {error && <p className="text-xs text-red-500 mt-3">{error}</p>}
@@ -115,14 +113,14 @@ export default function MemberDepartureDialog({
                     onClick={onClose}
                     className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface transition"
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </button>
                 <button
                     onClick={confirm}
                     disabled={loading}
                     className="h-9 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition disabled:opacity-60"
                 >
-                    {loading ? 'En cours…' : leaving ? 'Quitter le projet' : 'Retirer du projet'}
+                    {loading ? t('common.working') : leaving ? t('departure.leave') : t('departure.remove')}
                 </button>
             </div>
         </Modal>

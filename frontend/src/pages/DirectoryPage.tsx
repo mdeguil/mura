@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useMemo, useState } from 'react'
 import Navbar from '../components/Navbar'
 import UserAvatar, { SuspendedPill } from '../components/UserAvatar'
@@ -17,15 +18,16 @@ import type { KnownUser, Project } from '../types'
  * requests waiting on an answer, and the reader's groups.
  */
 export default function DirectoryPage() {
-    const peopleQuery = useApiQuery<KnownUser[]>('/directory', [], 'Impossible de charger ton carnet.')
+    const { t } = useTranslation()
+    const peopleQuery = useApiQuery<KnownUser[]>('/directory', [], t('directory.errors.load'))
     const { data: people, setData: setPeople, loading } = peopleQuery
     const requestsQuery = useApiQuery<KnownUser[]>(
         '/directory/requests',
         [],
-        'Impossible de charger les demandes reçues.'
+        t('directory.errors.requests')
     )
     const { data: requests, setData: setRequests } = requestsQuery
-    const projectsQuery = useApiQuery<Project[]>('/projects', [], 'Impossible de charger tes projets.')
+    const projectsQuery = useApiQuery<Project[]>('/projects', [], t('directory.errors.projects'))
     const projects = projectsQuery.data
     const loadFailures = [peopleQuery, requestsQuery, projectsQuery]
         .filter((q) => q.error)
@@ -50,7 +52,7 @@ export default function DirectoryPage() {
             setRequests((prev) => prev.filter((r) => r.id !== person.id))
             setPeople((prev) => [data, ...prev.filter((p) => p.id !== data.id)])
         } catch (err) {
-            setError(apiErrorMessage(err, "Impossible d'accepter cette demande."))
+            setError(apiErrorMessage(err, t('directory.errors.accept')))
         }
     }
 
@@ -60,7 +62,7 @@ export default function DirectoryPage() {
             await api.post(`/directory/requests/${person.id}/decline`)
             setRequests((prev) => prev.filter((r) => r.id !== person.id))
         } catch (err) {
-            setError(apiErrorMessage(err, "Impossible de refuser cette demande."))
+            setError(apiErrorMessage(err, t('directory.errors.decline')))
         }
     }
 
@@ -76,7 +78,7 @@ export default function DirectoryPage() {
             setEmail('')
             setAdding(false)
         } catch (err) {
-            setFormError(apiErrorMessage(err, "Impossible d'ajouter cette personne."))
+            setFormError(apiErrorMessage(err, t('directory.errors.add')))
         } finally {
             setSaving(false)
         }
@@ -88,7 +90,7 @@ export default function DirectoryPage() {
             await api.delete(`/directory/${person.id}`)
             setPeople((prev) => prev.filter((p) => p.id !== person.id))
         } catch (err) {
-            setFormError(apiErrorMessage(err, 'Impossible de retirer cette personne.'))
+            setFormError(apiErrorMessage(err, t('directory.errors.remove')))
         }
     }
 
@@ -101,7 +103,7 @@ export default function DirectoryPage() {
             setPeople((prev) =>
                 prev.map((p) => (p.id === person.id ? { ...p, favourite: !next } : p))
             )
-            setFormError(apiErrorMessage(err, 'Impossible de changer ce favori.'))
+            setFormError(apiErrorMessage(err, t('directory.errors.favourite')))
         }
     }
 
@@ -131,9 +133,9 @@ export default function DirectoryPage() {
             <main className="max-w-5xl mx-auto px-6 py-10">
                 <div className="flex items-start justify-between gap-4 mb-5">
                     <div>
-                        <h1 className="text-2xl font-semibold text-slate-800">Carnet</h1>
+                        <h1 className="text-2xl font-semibold text-slate-800">{t('directory.title')}</h1>
                         <p className="text-sm text-slate-500 mt-1">
-                            Les personnes que tu croises sur Mura, et les groupes dont tu fais partie.
+                            {t('directory.subtitle')}
                         </p>
                     </div>
                     {tab === 'people' && (
@@ -141,15 +143,15 @@ export default function DirectoryPage() {
                             onClick={() => setAdding((v) => !v)}
                             className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition shrink-0"
                         >
-                            {adding ? 'Annuler' : '+ Ajouter une personne'}
+                            {adding ? t('common.cancel') : t('directory.addPerson')}
                         </button>
                     )}
                 </div>
 
                 <div className="flex items-center gap-6 border-b border-border mb-5 overflow-x-auto overflow-y-hidden">
                     {[
-                        { key: 'people' as const, label: 'Personnes', count: people.length },
-                        { key: 'groups' as const, label: 'Groupes', count: null },
+                        { key: 'people' as const, label: t('directory.people'), count: people.length },
+                        { key: 'groups' as const, label: t('directory.groups'), count: null },
                     ].map((entry) => (
                         <button
                             key={entry.key}
@@ -176,7 +178,7 @@ export default function DirectoryPage() {
                             className="mb-6 bg-surface border border-border rounded-xl p-4 max-w-md"
                         >
                             <label className="block text-xs font-medium text-slate-600 mb-1.5">
-                                Email de la personne
+                                {t('directory.email')}
                             </label>
                             <div className="flex gap-2">
                                 <input
@@ -184,7 +186,7 @@ export default function DirectoryPage() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Escape' && setAdding(false)}
-                                    placeholder="prenom@exemple.com"
+                                    placeholder={t('directory.emailPlaceholder')}
                                     required
                                     autoFocus
                                     className="flex-1 min-w-0 h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
@@ -194,12 +196,11 @@ export default function DirectoryPage() {
                                     disabled={saving || !email.trim()}
                                     className="h-9 px-3 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink text-xs font-medium transition disabled:opacity-60 shrink-0"
                                 >
-                                    {saving ? 'Ajout…' : 'Ajouter'}
+                                    {saving ? t('directory.adding') : t('directory.add')}
                                 </button>
                             </div>
                             <p className="text-xs text-slate-400 mt-1.5">
-                                Elle rejoint ton carnet, rien de plus : aucun projet partagé, et elle n'en est
-                                pas avertie.
+                                {t('directory.addHint')}
                             </p>
                             {formError && <p className="text-xs text-red-500 mt-2">{formError}</p>}
                         </form>
@@ -215,7 +216,7 @@ export default function DirectoryPage() {
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Rechercher une personne ou un projet…"
+                                placeholder={t('directory.search')}
                                 className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted pl-9 pr-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
                             />
                         </div>
@@ -229,7 +230,7 @@ export default function DirectoryPage() {
                             }`}
                         >
                             <span aria-hidden="true">★</span>
-                            Favoris uniquement
+                            {t('directory.favouritesOnly')}
                             <span className="text-slate-400 font-normal">
                                 {people.filter((p) => p.favourite).length}
                             </span>
@@ -239,8 +240,8 @@ export default function DirectoryPage() {
                             className="h-9 px-3 rounded-lg border border-border-strong bg-surface text-slate-600 hover:border-brand-500 text-xs font-medium transition flex items-center gap-1.5"
                             title={
                                 ascending
-                                    ? 'Trié de A à Z — cliquer pour inverser'
-                                    : 'Trié de Z à A — cliquer pour inverser'
+                                    ? t('directory.sortedAsc')
+                                    : t('directory.sortedDesc')
                             }
                         >
                             <span aria-hidden="true">{ascending ? '↓' : '↑'}</span>
@@ -250,8 +251,7 @@ export default function DirectoryPage() {
                     {requests.length > 0 && (
                         <section className="mb-5">
                             <h2 className="text-xs font-medium text-slate-600 mb-2">
-                                Demande{requests.length > 1 ? 's' : ''} reçue
-                                {requests.length > 1 ? 's' : ''} ({requests.length})
+                                {t('directory.requests', { count: requests.length })}
                             </h2>
                             <ul className="flex flex-col gap-2">
                                 {requests.map((person) => (
@@ -266,9 +266,9 @@ export default function DirectoryPage() {
                                                 {person.suspended && <SuspendedPill />}
                                             </p>
                                             <p className="text-xs text-slate-400">
-                                                aimerait t’ajouter à son carnet
+                                                {t('directory.wantsToAdd')}
                                                 {person.sharedProjects.length > 0 &&
-                                                    ` · ${person.sharedProjects.length} projet${person.sharedProjects.length > 1 ? 's' : ''} en commun`}
+                                                    t('directory.sharedProjects', { count: person.sharedProjects.length })}
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2 shrink-0">
@@ -276,13 +276,13 @@ export default function DirectoryPage() {
                                                 onClick={() => declineRequest(person)}
                                                 className="h-8 px-3 rounded-lg border border-border-strong text-xs font-medium text-slate-600 hover:border-red-400 hover:text-red-600 transition"
                                             >
-                                                Refuser
+                                                {t('directory.decline')}
                                             </button>
                                             <button
                                                 onClick={() => acceptRequest(person)}
                                                 className="h-8 px-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-medium transition"
                                             >
-                                                Accepter
+                                                {t('directory.accept')}
                                             </button>
                                         </div>
                                     </li>
@@ -292,7 +292,7 @@ export default function DirectoryPage() {
                     )}
 
                     {loading ? (
-                        <div className="text-sm text-slate-500">Chargement…</div>
+                        <div className="text-sm text-slate-500">{t('common.loading')}</div>
                     ) : peopleQuery.error ? (
                         null
                     ) : people.length === 0 ? (
@@ -301,18 +301,18 @@ export default function DirectoryPage() {
                                 <span className="text-white text-2xl">📇</span>
                             </div>
                             <h2 className="text-base font-semibold text-slate-800 mb-1">
-                                Ton carnet est vide
+                                {t('directory.empty')}
                             </h2>
                             <p className="text-sm text-slate-500 max-w-sm">
-                                Invite quelqu'un sur un projet, et il apparaîtra ici.
+                                {t('directory.emptyHint')}
                             </p>
                         </div>
                     ) : shown.length === 0 ? (
                         <div className="bg-surface border border-border rounded-2xl py-16 px-6 text-center">
                             <h2 className="text-base font-semibold text-slate-800 mb-1">
-                                Aucun résultat pour « {query} »
+                                {t('directory.noResult', { query })}
                             </h2>
-                            <p className="text-sm text-slate-500">Essaie un autre nom, un email ou un projet.</p>
+                            <p className="text-sm text-slate-500">{t('directory.noResultHint')}</p>
                         </div>
                     ) : (
                         <ul className="flex flex-col gap-2">
@@ -336,19 +336,16 @@ export default function DirectoryPage() {
 
             {removing && (
                 <ConfirmDialog
-                    title={`Retirer ${removing.username} de ton carnet ?`}
-                    confirmLabel="Retirer du carnet"
+                    title={t('directory.removeTitle', { name: removing.username })}
+                    confirmLabel={t('directory.removeConfirm')}
                     body={
                         <>
                             <p>
-                                Cela ne touche que ton carnet : {removing.username} reste sur vos projets
-                                communs, et ton nom ne bouge pas de son côté.
+                                {t('directory.removeBody', { name: removing.username })}
                             </p>
                             {removing.sharedProjects.length > 0 && (
                                 <p className="mt-2 text-slate-400">
-                                    Vous partagez {removing.sharedProjects.length} projet
-                                    {removing.sharedProjects.length > 1 ? 's' : ''} : l’ajouter à nouveau
-                                    par email le fera revenir.
+                                    {t('directory.removeShared', { count: removing.sharedProjects.length })}
                                 </p>
                             )}
                         </>

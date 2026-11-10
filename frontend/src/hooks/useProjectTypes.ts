@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import { useApiQuery } from './useApiQuery'
 import type { ProjectType } from '../types'
 
@@ -14,7 +15,7 @@ export function useProjectTypes() {
     const { data: types, loading, error } = useApiQuery<ProjectType[]>(
         '/project-types',
         [],
-        'Impossible de charger les types de projet.'
+        i18n.t('projects.load.types')
     )
     return { types, loading, error }
 }

@@ -1,13 +1,24 @@
+import i18n from '../i18n'
 import type { TaskStatus } from '../types'
 
 /** The task statuses, in the order a task goes through them. */
 export const TASK_STATUSES: TaskStatus[] = ['A_FAIRE', 'EN_COURS', 'TERMINE']
 
-/** What each task status is called on screen. */
+/**
+ * What each task status is called on screen, in the language shown right
+ * now: each entry is read when the screen draws it, not when this file
+ * loads.
+ */
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
-    A_FAIRE: 'À faire',
-    EN_COURS: 'En cours',
-    TERMINE: 'Terminé',
+    get A_FAIRE() {
+        return i18n.t('tasks.status.A_FAIRE')
+    },
+    get EN_COURS() {
+        return i18n.t('tasks.status.EN_COURS')
+    },
+    get TERMINE() {
+        return i18n.t('tasks.status.TERMINE')
+    },
 }
 
 /** The badge colours of each task status. */

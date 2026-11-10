@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import DeleteProjectDialog from './DeleteProjectDialog'
@@ -7,7 +8,7 @@ import { projectGlassBackground } from '../utils/color'
 import { projectTypeLabel } from '../utils/projectMeta'
 
 /**
- * The owner's bin: archived projects, each with Restaurer and Supprimer.
+ * The owner's bin: archived projects, each with restore and delete.
  * Rows rather than cards: these are projects you are deciding about, not
  * ones you are working in, and the two actions matter more than the look.
  *
@@ -25,6 +26,7 @@ export default function ArchivedProjectList({
     /** Called with the project's id once the server has deleted it. */
     onDeleted: (projectId: string) => void
 }) {
+    const { t } = useTranslation()
     const [error, setError] = useState('')
     const [busy, setBusy] = useState<string | null>(null)
     const [deleting, setDeleting] = useState<Project | null>(null)
@@ -36,7 +38,7 @@ export default function ArchivedProjectList({
             const { data } = await api.patch<Project>(`/projects/${project.id}/restore`)
             onRestored(data)
         } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible de restaurer ce projet.'))
+            setError(apiErrorMessage(err, t('projects.bin.restoreFailed')))
         } finally {
             setBusy(null)
         }
@@ -45,10 +47,9 @@ export default function ArchivedProjectList({
     if (projects.length === 0) {
         return (
             <div className="bg-surface border border-border rounded-xl px-5 py-8 text-center">
-                <p className="text-sm text-slate-500">Aucun projet archivé.</p>
+                <p className="text-sm text-slate-500">{t('projects.bin.empty')}</p>
                 <p className="text-xs text-slate-400 mt-1">
-                    Les projets que tu archives atterrissent ici, et rien n’en est perdu tant que tu ne
-                    les supprimes pas.
+                    {t('projects.bin.emptyHint')}
                 </p>
             </div>
         )
@@ -77,14 +78,14 @@ export default function ArchivedProjectList({
                             disabled={busy === project.id}
                             className="h-8 px-3 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-brand-500 transition disabled:opacity-60 shrink-0"
                         >
-                            Restaurer
+                            {t('projects.bin.restore')}
                         </button>
                         <button
                             onClick={() => setDeleting(project)}
                             disabled={busy === project.id}
                             className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition disabled:opacity-60 shrink-0"
                         >
-                            Supprimer
+                            {t('projects.bin.delete')}
                         </button>
                     </li>
                 ))}

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
@@ -27,6 +28,7 @@ export default function EditProjectModal({
     /** Called with the project as the server saved it. */
     onSaved: (project: Project) => void
 }) {
+    const { t } = useTranslation()
     const [values, setValues] = useState<ProjectFormValues>({
         name: project.name,
         description: project.description ?? '',
@@ -53,7 +55,7 @@ export default function EditProjectModal({
             onSaved(data)
             onClose()
         } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible d’enregistrer ces changements.'))
+            setError(apiErrorMessage(err, t('projects.edit.failed')))
         } finally {
             setLoading(false)
         }
@@ -67,9 +69,9 @@ export default function EditProjectModal({
             />
 
             <div className="px-6 pt-5 pb-4 border-b border-border shrink-0">
-                <h2 id="edit-project-title" className="text-base font-semibold text-slate-800">Modifier le projet</h2>
+                <h2 id="edit-project-title" className="text-base font-semibold text-slate-800">{t('projects.edit.title')}</h2>
                 <p className="text-sm text-slate-500 mt-0.5">
-                    Ces informations sont celles que voit toute l’équipe.
+                    {t('projects.edit.subtitle')}
                 </p>
             </div>
 
@@ -83,7 +85,7 @@ export default function EditProjectModal({
                         <ColorPicker color={values.color} onChange={(color) => patch({ color })} />
 
                         <div>
-                            <label className={LABEL}>Statut</label>
+                            <label className={LABEL}>{t('projects.edit.status')}</label>
                             <select
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value as ProjectStatus)}
@@ -107,14 +109,14 @@ export default function EditProjectModal({
                             onClick={onClose}
                             className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface transition"
                         >
-                            Annuler
+                            {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
                             className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                         >
-                            {loading ? 'Enregistrement…' : 'Enregistrer'}
+                            {loading ? t('common.saving') : t('common.save')}
                         </button>
                     </div>
                 </div>

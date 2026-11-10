@@ -1,6 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 import api from '../services/api'
 import AssigneePicker from './AssigneePicker'
 import Modal from './Modal'
@@ -44,6 +45,7 @@ export default function TaskDetailModal({
     /** Called with the task and the id of the subtask just deleted. */
     onSubtaskDeleted: (taskId: string, subtaskId: string) => void
 }) {
+    const { t } = useTranslation()
     const [name, setName] = useState('')
     const [loading, setLoading] = useState(false)
 
@@ -81,11 +83,11 @@ export default function TaskDetailModal({
         e.preventDefault()
 
         if (!start || !end) {
-            setDateError('Les deux dates sont requises.')
+            setDateError(t('taskDetail.datesRequired'))
             return
         }
         if (end < start) {
-            setDateError('La fin ne peut pas précéder le début.')
+            setDateError(t('taskDetail.endBeforeStart'))
             return
         }
 
@@ -120,7 +122,7 @@ export default function TaskDetailModal({
             const { data } = await api.post<Subtask>(`/projects/${projectId}/tasks/${task.id}/subtasks`, { name })
             onSubtaskAdded(task.id, data)
             setName('')
-        }, "Impossible d'ajouter cette sous-tâche.")
+        }, t('taskDetail.addFailed'))
         setLoading(false)
     }
 
@@ -130,14 +132,14 @@ export default function TaskDetailModal({
                 `/projects/${projectId}/tasks/${task.id}/subtasks/${subtask.id}/toggle`
             )
             onSubtaskToggled(task.id, data)
-        }, 'Impossible de cocher cette sous-tâche.')
+        }, t('taskDetail.toggleFailed'))
     }
 
     function handleDelete(subtaskId: string) {
         void subtaskChange(async () => {
             await api.delete(`/projects/${projectId}/tasks/${task.id}/subtasks/${subtaskId}`)
             onSubtaskDeleted(task.id, subtaskId)
-        }, 'Impossible de supprimer cette sous-tâche.')
+        }, t('taskDetail.deleteFailed'))
     }
 
     return (
@@ -147,7 +149,7 @@ export default function TaskDetailModal({
                 <button
                     onClick={onClose}
                     className="text-slate-400 hover:text-slate-600 transition text-sm leading-none shrink-0"
-                    aria-label="Fermer"
+                    aria-label={t('common.close')}
                 >
                     ✕
                 </button>
@@ -162,7 +164,7 @@ export default function TaskDetailModal({
 
                 <div>
                     <label htmlFor="task-start" className="block text-[11px] font-medium text-slate-500 mb-1">
-                        Début
+                        {t('taskDetail.start')}
                     </label>
                     <input
                         id="task-start"
@@ -178,7 +180,7 @@ export default function TaskDetailModal({
 
                 <div>
                     <label htmlFor="task-end" className="block text-[11px] font-medium text-slate-500 mb-1">
-                        Fin
+                        {t('taskDetail.end')}
                     </label>
                     <input
                         id="task-end"
@@ -198,7 +200,7 @@ export default function TaskDetailModal({
                 </p>
             )}
             <div className="flex items-center gap-2 mt-3">
-                <span className="text-xs font-medium text-slate-500">Responsable</span>
+                <span className="text-xs font-medium text-slate-500">{t('taskDetail.assignee')}</span>
                 <AssigneePicker
                     members={members}
                     value={assigneeId}
@@ -212,7 +214,7 @@ export default function TaskDetailModal({
 
             <div className="mt-6 pt-6 border-t border-border">
                 <h3 className="text-xs font-medium text-slate-500 mb-3">
-                    Sous-tâches ({doneCount}/{task.subtasks.length})
+                    {t('taskDetail.subtasks', { done: doneCount, total: task.subtasks.length })}
                 </h3>
 
                 <div className="flex flex-col gap-1.5">
@@ -232,14 +234,14 @@ export default function TaskDetailModal({
                             <button
                                 onClick={() => handleDelete(subtask.id)}
                                 className="text-slate-300 hover:text-red-500 transition text-xs leading-none opacity-0 group-hover:opacity-100"
-                                aria-label="Supprimer la sous-tâche"
+                                aria-label={t('taskDetail.deleteSubtask')}
                             >
                                 ✕
                             </button>
                         </div>
                     ))}
                     {task.subtasks.length === 0 && (
-                        <p className="text-xs text-slate-400 italic">Aucune sous-tâche</p>
+                        <p className="text-xs text-slate-400 italic">{t('taskDetail.noSubtask')}</p>
                     )}
                 </div>
 
@@ -254,7 +256,7 @@ export default function TaskDetailModal({
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Ajouter une sous-tâche"
+                        placeholder={t('taskDetail.addSubtask')}
                         maxLength={255}
                         className="flex-1 h-8 rounded-lg border border-border-strong bg-surface-muted px-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
                     />
@@ -263,13 +265,13 @@ export default function TaskDetailModal({
                         disabled={loading || !name.trim()}
                         className="h-8 px-3 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-xs font-medium transition disabled:opacity-60"
                     >
-                        + Ajouter
+                        {t('taskDetail.add')}
                     </button>
                 </form>
 
                 {task.subtasks.length > 0 && doneCount < task.subtasks.length && (
                     <p className="text-xs text-slate-400 mt-3">
-                        Toutes les sous-tâches doivent être cochées avant de pouvoir valider cette tâche.
+                        {t('taskDetail.subtasksFirst')}
                     </p>
                 )}
             </div>
@@ -281,7 +283,7 @@ export default function TaskDetailModal({
                     disabled={savingDates || !changed}
                     className="h-9 px-4 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink text-xs font-medium transition disabled:opacity-40"
                 >
-                    {savingDates ? 'Enregistrement…' : 'Enregistrer'}
+                    {savingDates ? t('common.saving') : t('common.save')}
                 </button>
                 <button
                     type="button"
@@ -289,19 +291,19 @@ export default function TaskDetailModal({
                     disabled={savingDates || !changed}
                     className="h-9 px-4 rounded-lg text-xs font-medium text-slate-500 hover:bg-surface-muted transition disabled:opacity-40"
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </button>
                 {changed && !dateError && (
-                    <span className="text-xs text-slate-400">Modifications non enregistrées</span>
+                    <span className="text-xs text-slate-400">{t('taskDetail.unsaved')}</span>
                 )}
             </div>
             <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="text-xs font-medium text-slate-500 mb-3">Historique</h3>
+                <h3 className="text-xs font-medium text-slate-500 mb-3">{t('taskDetail.history')}</h3>
                 <div className="flex flex-col gap-2">
                     {[
-                        { label: 'Créée', date: createdAt, dotClass: TASK_STATUS_BAR_CLASSES.A_FAIRE },
-                        { label: 'En cours', date: startedAt, dotClass: TASK_STATUS_BAR_CLASSES.EN_COURS },
-                        { label: 'Terminé', date: finishedAt, dotClass: TASK_STATUS_BAR_CLASSES.TERMINE },
+                        { label: t('taskDetail.created'), date: createdAt, dotClass: TASK_STATUS_BAR_CLASSES.A_FAIRE },
+                        { label: t('taskDetail.started'), date: startedAt, dotClass: TASK_STATUS_BAR_CLASSES.EN_COURS },
+                        { label: t('taskDetail.finished'), date: finishedAt, dotClass: TASK_STATUS_BAR_CLASSES.TERMINE },
                     ]
                         .filter(({ date }) => date)
                         .map(({ label, date, dotClass }) => (
@@ -309,7 +311,7 @@ export default function TaskDetailModal({
                                 <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass}`} />
                                 <span className="text-slate-600">{label}</span>
                                 <span className="text-slate-400 ml-auto shrink-0">
-                                    {format(new Date(date!), 'dd/MM/yyyy', { locale: fr })}
+                                    {format(new Date(date!), 'dd/MM/yyyy', { locale: dateLocale() })}
                                 </span>
                             </div>
                         ))}

@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next'
 import { formatDistanceToNow } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 import type { Invitation } from '../types'
 
 /**
@@ -21,13 +22,14 @@ export default function ProjectInvitationList({
     invitations: Invitation[]
     /** Whether the viewer may withdraw and resend them. */
     canManage: boolean
-    /** An invitation is on its way: Réinviter waits for it. */
+    /** An invitation is on its way: inviting again waits for it. */
     busy: boolean
     /** Called with the pending invitation to withdraw. */
     onCancel: (invitation: Invitation) => void
     /** Called with the address to invite again. */
     onReinvite: (email: string) => void
 }) {
+    const { t } = useTranslation()
     const pending = invitations.filter((i) => i.status === 'PENDING')
     const closed = invitations.filter((i) => i.status === 'DECLINED' || i.status === 'EXPIRED')
 
@@ -35,7 +37,7 @@ export default function ProjectInvitationList({
         <>
             {pending.length > 0 && (
                 <div className="mt-5 pt-4 border-t border-dashed border-border-strong">
-                    <h3 className="text-xs font-medium text-slate-500 mb-2">En attente de réponse ({pending.length})</h3>
+                    <h3 className="text-xs font-medium text-slate-500 mb-2">{t('team.pending', { count: pending.length })}</h3>
                     <ul className="flex flex-col gap-2">
                         {pending.map((invitation) => (
                             <li key={invitation.id} className="flex items-center gap-3">
@@ -47,16 +49,17 @@ export default function ProjectInvitationList({
                                         {invitation.invitedUser.email ?? invitation.invitedUser.username}
                                     </p>
                                     <p className="text-xs text-slate-400">
-                                        Expire{' '}
-                                        {formatDistanceToNow(new Date(invitation.expiresAt), { addSuffix: true, locale: fr })}
+                                        {t('team.expires', {
+                                            when: formatDistanceToNow(new Date(invitation.expiresAt), { addSuffix: true, locale: dateLocale() }),
+                                        })}
                                     </p>
                                 </div>
                                 {canManage && (
                                     <button
                                         onClick={() => onCancel(invitation)}
                                         className="text-slate-300 hover:text-red-500 transition text-xs leading-none shrink-0"
-                                        title="Annuler l'invitation"
-                                        aria-label="Annuler l'invitation"
+                                        title={t('team.cancelInvitation')}
+                                        aria-label={t('team.cancelInvitation')}
                                     >
                                         ✕
                                     </button>
@@ -69,7 +72,7 @@ export default function ProjectInvitationList({
 
             {closed.length > 0 && canManage && (
                 <div className="mt-5 pt-4 border-t border-dashed border-border-strong">
-                    <h3 className="text-xs font-medium text-slate-500 mb-2">Restées sans suite ({closed.length})</h3>
+                    <h3 className="text-xs font-medium text-slate-500 mb-2">{t('team.closed', { count: closed.length })}</h3>
                     <ul className="flex flex-col gap-2">
                         {closed.map((invitation) => (
                             <li key={invitation.id} className="flex items-center gap-3">
@@ -81,7 +84,7 @@ export default function ProjectInvitationList({
                                         {invitation.invitedUser.email ?? invitation.invitedUser.username}
                                     </p>
                                     <p className="text-xs text-slate-400">
-                                        {invitation.status === 'DECLINED' ? 'A refusé' : 'Invitation expirée'}
+                                        {invitation.status === 'DECLINED' ? t('team.declined') : t('team.expired')}
                                     </p>
                                 </div>
                                 <button
@@ -89,7 +92,7 @@ export default function ProjectInvitationList({
                                     disabled={busy}
                                     className="text-xs text-brand-600 hover:text-brand-700 transition shrink-0 disabled:opacity-60"
                                 >
-                                    Réinviter
+                                    {t('team.reinvite')}
                                 </button>
                             </li>
                         ))}

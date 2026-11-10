@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 /**
  * A failure the reader has to know about, announced to screen readers as
  * it appears. With onRetry it offers to ask again, which is usually all a
@@ -12,11 +14,13 @@ export default function ErrorMessage({
 }: {
     /** What went wrong. */
     children: React.ReactNode
-    /** Shows a Réessayer button that calls it. */
+    /** Shows a try-again button that calls it. */
     onRetry?: () => void
     /** Classes for spacing around the box. */
     className?: string
 }) {
+    const { t } = useTranslation()
+
     return (
         <div
             role="alert"
@@ -29,7 +33,7 @@ export default function ErrorMessage({
                     onClick={onRetry}
                     className="shrink-0 text-xs font-medium underline underline-offset-2 hover:no-underline"
                 >
-                    Réessayer
+                    {t('common.retry')}
                 </button>
             )}
         </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useMemo, useState } from 'react'
 import {
     differenceInCalendarDays,
@@ -11,7 +12,7 @@ import {
     startOfMonth,
     startOfWeek,
 } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 import MonthNav from './MonthNav'
 import { initialPlanningMonth } from '../utils/planning'
 import type { Task } from '../types'
@@ -93,6 +94,7 @@ export default function MonthCalendar({
     /** Called with the task whose bar was clicked. */
     onOpenTask: (task: Task) => void
 }) {
+    const { t } = useTranslation()
     const [month, setMonth] = useState(() => initialPlanningMonth(tasks))
 
     const lanes = useMemo(() => assignLanes(tasks), [tasks])
@@ -129,7 +131,7 @@ export default function MonthCalendar({
                             key={day.toISOString()}
                             className="px-2 py-1.5 text-xs font-medium text-slate-500 capitalize text-center"
                         >
-                            {format(day, 'EEE', { locale: fr })}
+                            {format(day, 'EEE', { locale: dateLocale() })}
                         </div>
                     ))}
                 </div>
@@ -204,7 +206,7 @@ export default function MonthCalendar({
             </div>
 
             {tasks.length === 0 && (
-                <p className="text-sm text-slate-500 mt-4">Aucune tâche à planifier pour l'instant.</p>
+                <p className="text-sm text-slate-500 mt-4">{t('planning.calendarEmpty')}</p>
             )}
         </div>
     )

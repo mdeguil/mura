@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useId, useState } from 'react'
 import Modal from './Modal'
 
@@ -28,11 +29,12 @@ export default function ConfirmDialog({
     icon?: string
     /** Red for what cannot be undone, the brand colour otherwise. */
     tone?: 'danger' | 'neutral'
-    /** Called on Annuler and Escape. */
+    /** Called on cancel and on Escape. */
     onCancel: () => void
     /** Called on the confirm button; the dialog waits for it. */
     onConfirm: () => void | Promise<void>
 }) {
+    const { t } = useTranslation()
     const [busy, setBusy] = useState(false)
     const titleId = useId()
 
@@ -62,7 +64,7 @@ export default function ConfirmDialog({
                     onClick={onCancel}
                     className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface transition"
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </button>
                 <button
                     onClick={confirm}
@@ -73,7 +75,7 @@ export default function ConfirmDialog({
                             : 'bg-brand-500 hover:bg-brand-600 text-ink'
                     }`}
                 >
-                    {busy ? 'En cours…' : confirmLabel}
+                    {busy ? t('common.working') : confirmLabel}
                 </button>
             </div>
         </Modal>

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -12,6 +13,7 @@ import Logo from '../components/Logo'
  * projects.
  */
 export default function LoginPage() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const setAuth = useAuthStore((s) => s.setAuth)
     const [email, setEmail] = useState('')
@@ -28,7 +30,7 @@ export default function LoginPage() {
             setAuth(data.token, data.user)
             navigate('/projets')
         } catch (err) {
-            setError(apiErrorMessage(err, 'Email ou mot de passe incorrect.'))
+            setError(apiErrorMessage(err, t('auth.login.failed')))
         } finally {
             setLoading(false)
         }
@@ -44,27 +46,29 @@ export default function LoginPage() {
                         <span className="text-xl font-semibold text-slate-800">Mura</span>
                     </div>
 
-                    <h1 className="text-xl font-semibold text-slate-800 mb-1">Bon retour 👋</h1>
-                    <p className="text-sm text-slate-500 mb-6">Connecte-toi à ton espace Mura</p>
+                    <h1 className="text-xl font-semibold text-slate-800 mb-1">{t('auth.login.title')}</h1>
+                    <p className="text-sm text-slate-500 mb-6">{t('auth.login.subtitle')}</p>
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1.5">Adresse email</label>
+                            <label htmlFor="email" className="block text-xs font-medium text-slate-600 mb-1.5">{t('auth.email')}</label>
                             <input
+                                id="email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="toi@exemple.com"
+                                placeholder={t('common.emailPlaceholder')}
                                 required
                                 className="w-full h-9 rounded-lg border border-border-strong bg-surface-muted px-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition"
                             />
                         </div>
                         <div>
                             <div className="flex items-center justify-between mb-1.5">
-                                <label className="text-xs font-medium text-slate-600">Mot de passe</label>
-                                <Link to="/mot-de-passe-oublie" className="text-xs text-brand-600 hover:text-brand-700">Mot de passe oublié ?</Link>
+                                <label htmlFor="password" className="text-xs font-medium text-slate-600">{t('auth.password')}</label>
+                                <Link to="/mot-de-passe-oublie" className="text-xs text-brand-600 hover:text-brand-700">{t('auth.login.forgot')}</Link>
                             </div>
                             <PasswordInput
+                                id="password"
                                 value={password}
                                 onChange={setPassword}
                                 autoComplete="current-password"
@@ -81,14 +85,14 @@ export default function LoginPage() {
                             disabled={loading}
                             className="mt-1 h-9 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                         >
-                            {loading ? 'Connexion…' : 'Se connecter'}
+                            {loading ? t('auth.login.submitting') : t('auth.login.submit')}
                         </button>
                     </form>
 
                     <p className="text-center text-sm text-slate-500 mt-5">
-                        Pas encore de compte ?{' '}
+                        {t('auth.login.noAccount')}{' '}
                         <Link to="/register" className="text-brand-600 font-medium hover:text-brand-700">
-                            Créer un compte
+                            {t('auth.login.createAccount')}
                         </Link>
                     </p>
                 </div>

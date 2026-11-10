@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import { useCallback, type SetStateAction } from 'react'
 import { useApiQuery } from './useApiQuery'
 import type { Invitation, Member, Project, Task } from '../types'
@@ -15,7 +16,7 @@ import type { Invitation, Member, Project, Task } from '../types'
  *          when they are only invited; and the load errors with how to retry
  */
 export function useProject(id: string | undefined) {
-    const projectQuery = useApiQuery<Project | null>(`/projects/${id}`, null, 'Impossible de charger ce projet.')
+    const projectQuery = useApiQuery<Project | null>(`/projects/${id}`, null, i18n.t('projects.load.project'))
     const project = projectQuery.data
     const isMember = project?.access === 'MEMBER'
     const isInvited = project?.access === 'INVITED'
@@ -23,22 +24,22 @@ export function useProject(id: string | undefined) {
     const tasksQuery = useApiQuery<Task[]>(
         isMember ? `/projects/${id}/tasks` : null,
         [],
-        'Impossible de charger les tâches.'
+        i18n.t('projects.load.tasks')
     )
     const archivedQuery = useApiQuery<Task[]>(
         isMember ? `/projects/${id}/tasks/archived` : null,
         [],
-        'Impossible de charger les tâches archivées.'
+        i18n.t('projects.load.archivedTasks')
     )
     const invitationsQuery = useApiQuery<Invitation[]>(
         isMember ? `/projects/${id}/invitations` : null,
         [],
-        'Impossible de charger les invitations du projet.'
+        i18n.t('projects.load.invitations')
     )
     const ownInvitationsQuery = useApiQuery<Invitation[]>(
         isInvited ? '/invitations' : null,
         [],
-        'Impossible de retrouver ton invitation.'
+        i18n.t('projects.load.ownInvitation')
     )
 
     const { setData: setProject } = projectQuery

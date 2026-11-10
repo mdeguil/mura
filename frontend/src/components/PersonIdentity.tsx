@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import UserAvatar, { SuspendedPill } from './UserAvatar'
 import type { User } from '../types'
 
@@ -13,16 +14,17 @@ export default function PersonIdentity({
 }: {
     /** The person. */
     person: User
-    /** Whether the person is the reader; adds « · toi ». */
+    /** Whether the person is the reader; adds « · toi » (« · you »). */
     isMe: boolean
 }) {
+    const { t } = useTranslation()
     return (
         <>
             <UserAvatar user={person} />
             <div className="min-w-0 flex-1">
                 <p className="text-sm text-slate-700 truncate flex items-center gap-1.5">
                     <span className="truncate">{person.username}</span>
-                    {isMe && <span className="text-slate-400"> · toi</span>}
+                    {isMe && <span className="text-slate-400"> · {t('common.you')}</span>}
                     {person.suspended && <SuspendedPill />}
                 </p>
                 {person.email && <p className="text-xs text-slate-400 truncate">{person.email}</p>}

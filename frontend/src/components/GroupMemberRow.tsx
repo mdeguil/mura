@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import PersonIdentity from './PersonIdentity'
 import type { GroupMember } from '../types'
 
@@ -28,6 +29,7 @@ export default function GroupMemberRow({
     /** Asks to take the member out of the group. */
     onRemove: () => void
 }) {
+    const { t } = useTranslation()
     return (
         <li className="flex items-center gap-3 py-2.5 first:pt-0">
             <div className={`flex items-center gap-3 min-w-0 flex-1 ${member.onHold ? 'opacity-50' : ''}`}>
@@ -36,15 +38,15 @@ export default function GroupMemberRow({
 
             {isManager ? (
                 <span className="text-xs font-medium text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full shrink-0">
-                    Gérant
+                    {t('groups.managerBadge')}
                 </span>
             ) : (
                 member.onHold && (
                     <span
                         className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full shrink-0"
-                        title="Reste dans le groupe, mais ne sera pas ajouté aux projets avec lui. Son compte n'est pas touché."
+                        title={t('groups.member.onHoldHint')}
                     >
-                        En retrait
+                        {t('groups.onHold')}
                     </span>
                 )
             )}
@@ -56,17 +58,17 @@ export default function GroupMemberRow({
                         className="h-7 px-2.5 rounded-lg border border-border-strong text-xs text-slate-600 hover:border-brand-500 transition shrink-0"
                         title={
                             member.onHold
-                                ? `${member.username} sera de nouveau ajouté aux projets avec le groupe`
-                                : `${member.username} reste dans le groupe mais ne sera plus ajouté aux projets avec lui`
+                                ? t('groups.member.restoreHint', { name: member.username })
+                                : t('groups.member.holdHint', { name: member.username })
                         }
                     >
-                        {member.onHold ? 'Réintégrer' : 'Mettre en retrait'}
+                        {member.onHold ? t('groups.member.restore') : t('groups.member.hold')}
                     </button>
                     <button
                         onClick={onRemove}
                         className="text-slate-300 hover:text-red-500 transition text-xs leading-none shrink-0"
-                        title={`Retirer ${member.username} du groupe`}
-                        aria-label={`Retirer ${member.username} du groupe`}
+                        title={t('groups.member.remove', { name: member.username })}
+                        aria-label={t('groups.member.remove', { name: member.username })}
                     >
                         ✕
                     </button>

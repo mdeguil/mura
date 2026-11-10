@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 /**
  * The round button that opens an "add someone" form and, turned a quarter,
  * closes it again.
@@ -9,21 +10,22 @@ export default function AddToggleButton({
     label,
     onClick,
 }: {
-    /** Whether the form it controls is open; the button then reads Annuler. */
+    /** Whether the form it controls is open; the button then reads cancel. */
     open: boolean
     /** What opening it does, said to screen readers and on hover. */
     label: string
     /** Opens or closes the form. */
     onClick: () => void
 }) {
+    const { t } = useTranslation()
     return (
         <button
             onClick={onClick}
             className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center transition ${
                 open ? 'bg-surface-muted text-slate-500 rotate-45' : 'bg-brand-500 text-ink hover:bg-brand-600'
             }`}
-            title={open ? 'Annuler' : label}
-            aria-label={open ? 'Annuler' : label}
+            title={open ? t('common.cancel') : label}
+            aria-label={open ? t('common.cancel') : label}
             aria-expanded={open}
         >
             <svg

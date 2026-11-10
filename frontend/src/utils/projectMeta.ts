@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import type { ProjectStatus } from '../types'
 
 /**
@@ -12,11 +13,20 @@ export function projectTypeLabel(type: { emoji: string; label: string }): string
     return `${type.emoji} ${type.label}`
 }
 
-/** What each project status is called on screen. */
+/**
+ * What each project status is called on screen, in the language shown
+ * right now: each entry is read when the screen draws it.
+ */
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
-    A_VENIR: 'À venir',
-    EN_COURS: 'En cours',
-    ACHEVE: 'Achevé',
+    get A_VENIR() {
+        return i18n.t('projects.status.A_VENIR')
+    },
+    get EN_COURS() {
+        return i18n.t('projects.status.EN_COURS')
+    },
+    get ACHEVE() {
+        return i18n.t('projects.status.ACHEVE')
+    },
 }
 
 /** The badge colours of each project status. */

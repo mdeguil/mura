@@ -1,5 +1,6 @@
+import { Trans, useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 import MemberList from './MemberList'
 import type { Invitation, Member, Project, Task } from '../types'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, projectTypeLabel } from '../utils/projectMeta'
@@ -66,6 +67,7 @@ export default function ProjectInfo({
     /** Called with the whole team when it changed some other way. */
     onMembersChanged: (members: Member[]) => void
 }) {
+    const { t } = useTranslation()
     const invitedOnly = project.access === 'INVITED'
 
     if (invitedOnly) {
@@ -74,12 +76,11 @@ export default function ProjectInfo({
                 <section className="bg-surface border border-brand-500/40 rounded-xl p-5">
                     <h2 className="text-sm font-semibold text-slate-800 mb-1">
                         {invitation
-                            ? `${invitation.invitedBy.username} t'invite à rejoindre ce projet`
-                            : 'Tu es invité sur ce projet'}
+                            ? t('info.invitedBy', { name: invitation.invitedBy.username })
+                            : t('info.invited')}
                     </h2>
                     <p className="text-sm text-slate-500">
-                        Tu vois sa description et son équipe. Le planning et les tâches s'ouvrent
-                        une fois l'invitation acceptée.
+                        {t('info.invitedHint')}
                     </p>
                     <div className="flex gap-2 mt-4">
                         <button
@@ -87,44 +88,44 @@ export default function ProjectInfo({
                             disabled={!invitation}
                             className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                         >
-                            Rejoindre le projet
+                            {t('info.join')}
                         </button>
                         <button
                             onClick={() => onAnswerInvitation(false)}
                             disabled={!invitation}
                             className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface-muted transition disabled:opacity-60"
                         >
-                            Refuser
+                            {t('info.decline')}
                         </button>
                     </div>
                 </section>
 
                 <section className="bg-surface border border-border rounded-xl p-5">
                     <dl className="grid grid-cols-2 sm:grid-cols-3 gap-5">
-                        <Fact label="Type">{projectTypeLabel(project.type)}</Fact>
-                        <Fact label="Statut">
+                        <Fact label={t('info.type')}>{projectTypeLabel(project.type)}</Fact>
+                        <Fact label={t('info.status')}>
                             <span
                                 className={`text-xs font-medium px-2 py-0.5 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}
                             >
                                 {PROJECT_STATUS_LABELS[project.status]}
                             </span>
                         </Fact>
-                        <Fact label="Début">
+                        <Fact label={t('info.start')}>
                             {project.startDate
-                                ? format(new Date(project.startDate), 'dd MMMM yyyy', { locale: fr })
-                                : <span className="text-slate-400">Non définie</span>}
+                                ? format(new Date(project.startDate), 'dd MMMM yyyy', { locale: dateLocale() })
+                                : <span className="text-slate-400">{t('info.undefined')}</span>}
                         </Fact>
                     </dl>
                 </section>
 
                 <section className="bg-surface border border-border rounded-xl p-5">
-                    <h2 className="text-sm font-semibold text-slate-800 mb-3">À propos</h2>
+                    <h2 className="text-sm font-semibold text-slate-800 mb-3">{t('info.about')}</h2>
                     {project.description ? (
                         <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
                             {project.description}
                         </p>
                     ) : (
-                        <p className="text-sm text-slate-400">Ce projet n'a pas encore de description.</p>
+                        <p className="text-sm text-slate-400">{t('info.noDescription')}</p>
                     )}
                 </section>
 
@@ -154,21 +155,23 @@ export default function ProjectInfo({
         <div className="flex flex-col gap-4">
             <section className="bg-surface border border-border rounded-xl p-5">
                 <div className="flex items-baseline justify-between gap-4 mb-3">
-                    <h2 className="text-sm font-semibold text-slate-800">Avancement</h2>
+                    <h2 className="text-sm font-semibold text-slate-800">{t('info.progress')}</h2>
                     <p className="text-sm text-slate-500">
                         {tasks.length === 0 ? (
-                            'Aucune tâche'
+                            t('info.noTask')
                         ) : (
-                            <>
-                                <span className="text-slate-800 font-medium">{done}</span> / {tasks.length} terminées
-                            </>
+                            <Trans
+                                i18nKey="info.done"
+                                values={{ done, total: tasks.length }}
+                                components={{ strong: <span className="text-slate-800 font-medium" /> }}
+                            />
                         )}
                     </p>
                 </div>
 
                 {tasks.length === 0 ? (
                     <p className="text-sm text-slate-400">
-                        Les tâches créées dans l'onglet Tâches apparaîtront ici.
+                        {t('info.noTaskHint')}
                     </p>
                 ) : (
                     <>
@@ -180,7 +183,7 @@ export default function ProjectInfo({
                                         key={status}
                                         className={TASK_STATUS_BAR_CLASSES[status]}
                                         style={{ width: `${(count / tasks.length) * 100}%` }}
-                                        title={`${TASK_STATUS_LABELS[status]} : ${count}`}
+                                        title={t('info.statusCount', { status: TASK_STATUS_LABELS[status], count })}
                                     />
                                 ))}
                         </div>
@@ -198,7 +201,7 @@ export default function ProjectInfo({
                                 </div>
                             ))}
                             {archivedCount > 0 && (
-                                <span className="text-xs text-slate-400">· {archivedCount} archivée{archivedCount > 1 ? 's' : ''}</span>
+                                <span className="text-xs text-slate-400">{t('info.archived', { count: archivedCount })}</span>
                             )}
                         </div>
                     </>
@@ -209,35 +212,35 @@ export default function ProjectInfo({
                 <div className="lg:col-span-2 flex flex-col gap-4">
                     <section className="bg-surface border border-border rounded-xl p-5">
                         <dl className="grid grid-cols-2 sm:grid-cols-3 gap-5">
-                            <Fact label="Type">{projectTypeLabel(project.type)}</Fact>
-                            <Fact label="Statut">
+                            <Fact label={t('info.type')}>{projectTypeLabel(project.type)}</Fact>
+                            <Fact label={t('info.status')}>
                                 <span
                                     className={`text-xs font-medium px-2 py-0.5 rounded-full ${PROJECT_STATUS_CLASSES[project.status]}`}
                                 >
                                     {PROJECT_STATUS_LABELS[project.status]}
                                 </span>
                             </Fact>
-                            <Fact label="Début">
+                            <Fact label={t('info.start')}>
                                 {project.startDate
-                                    ? format(new Date(project.startDate), 'dd MMMM yyyy', { locale: fr })
-                                    : <span className="text-slate-400">Non définie</span>}
+                                    ? format(new Date(project.startDate), 'dd MMMM yyyy', { locale: dateLocale() })
+                                    : <span className="text-slate-400">{t('info.undefined')}</span>}
                             </Fact>
                             {project.completedAt && (
-                                <Fact label="Achevé le">
-                                    {format(new Date(project.completedAt), 'dd MMMM yyyy', { locale: fr })}
+                                <Fact label={t('info.completedOn')}>
+                                    {format(new Date(project.completedAt), 'dd MMMM yyyy', { locale: dateLocale() })}
                                 </Fact>
                             )}
                         </dl>
                     </section>
 
                     <section className="bg-surface border border-border rounded-xl p-5">
-                        <h2 className="text-sm font-semibold text-slate-800 mb-3">À propos</h2>
+                        <h2 className="text-sm font-semibold text-slate-800 mb-3">{t('info.about')}</h2>
                         {project.description ? (
                             <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
                                 {project.description}
                             </p>
                         ) : (
-                            <p className="text-sm text-slate-400">Ce projet n'a pas encore de description.</p>
+                            <p className="text-sm text-slate-400">{t('info.noDescription')}</p>
                         )}
                     </section>
                 </div>

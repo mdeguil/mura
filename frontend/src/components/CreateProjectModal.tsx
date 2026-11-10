@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
@@ -28,6 +29,7 @@ export default function CreateProjectModal({
     /** Called with the project once the server has created it. */
     onCreated: (project: Project) => void
 }) {
+    const { t } = useTranslation()
     const [values, setValues] = useState<ProjectFormValues>({
         name: '',
         description: '',
@@ -49,7 +51,7 @@ export default function CreateProjectModal({
         const email = emailDraft.trim().toLowerCase()
         if (!email) return
         if (!email.includes('@')) {
-            setError('« ' + email + " » n'est pas une adresse email.")
+            setError(t('createProject.notAnEmail', { email }))
             return
         }
         setError('')
@@ -77,7 +79,7 @@ export default function CreateProjectModal({
             onCreated(data)
             onClose()
         } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible de créer le projet. Réessaie.'))
+            setError(apiErrorMessage(err, t('createProject.failed')))
         } finally {
             setLoading(false)
         }
@@ -91,9 +93,9 @@ export default function CreateProjectModal({
             />
 
             <div className="px-6 pt-5 pb-4 border-b border-border shrink-0">
-                <h2 id="create-project-title" className="text-base font-semibold text-slate-800">Créer un projet</h2>
+                <h2 id="create-project-title" className="text-base font-semibold text-slate-800">{t('createProject.title')}</h2>
                 <p className="text-sm text-slate-500 mt-0.5">
-                    Donne-lui un nom, et réunis déjà celles et ceux qui vont y travailler.
+                    {t('createProject.subtitle')}
                 </p>
             </div>
 
@@ -107,13 +109,13 @@ export default function CreateProjectModal({
                         <ColorPicker color={values.color} onChange={(color) => patch({ color })} />
 
                         <div>
-                            <label className={LABEL}>L'équipe (optionnel)</label>
+                            <label className={LABEL}>{t('createProject.team')}</label>
 
                             <div className="flex items-center gap-1 mb-2.5 w-fit bg-surface-muted border border-border rounded-lg p-0.5">
                                 {(
                                     [
-                                        ['person', 'Une personne'],
-                                        ['group', 'Un groupe'],
+                                        ['person', t('createProject.person')],
+                                        ['group', t('createProject.group')],
                                     ] as const
                                 ).map(([key, label]) => (
                                     <button
@@ -133,14 +135,13 @@ export default function CreateProjectModal({
 
                             <div className={mode === 'group' ? '' : 'hidden'}>
                                 <GroupPicker
-                                    leftOut={(person) => (person.id === currentUserId ? 'Toi' : null)}
+                                    leftOut={(person) => (person.id === currentUserId ? t('createProject.you') : null)}
                                     allowNone
                                     countOnly
                                     onChange={setFromGroup}
                                 />
                                 <p className="text-xs text-slate-400 mt-2">
-                                    Les personnes du groupe rejoignent le projet dès sa création, sans
-                                    invitation, et en sont prévenues.
+                                    {t('createProject.groupHint')}
                                 </p>
                             </div>
 
@@ -159,7 +160,7 @@ export default function CreateProjectModal({
                                             })
                                             setEmailDraft('')
                                         }}
-                                        placeholder="Un nom du carnet, ou prenom@exemple.com"
+                                        placeholder={t('people.addPlaceholder')}
                                         excludeEmails={invited.map((p) => p.email)}
                                     />
                                     <button
@@ -167,7 +168,7 @@ export default function CreateProjectModal({
                                         onClick={addEmail}
                                         disabled={!emailDraft.trim()}
                                         className="w-10 h-10 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink flex items-center justify-center transition disabled:opacity-40 shrink-0"
-                                        aria-label="Ajouter cette personne à la liste"
+                                        aria-label={t('createProject.addPerson')}
                                     >
                                         <svg
                                             viewBox="0 0 16 16"
@@ -204,7 +205,7 @@ export default function CreateProjectModal({
                                                         )
                                                     }
                                                     className="text-slate-300 hover:text-red-500 transition text-xs leading-none"
-                                                    aria-label={`Retirer ${person.username ?? person.email}`}
+                                                    aria-label={t('createProject.remove', { name: person.username ?? person.email })}
                                                 >
                                                     ✕
                                                 </button>
@@ -213,21 +214,19 @@ export default function CreateProjectModal({
                                     </ul>
                                 ) : (
                                     <p className="text-xs text-slate-400 mt-2">
-                                        Elles recevront une invitation et rejoindront le projet si elles
-                                        l'acceptent.
+                                        {t('createProject.inviteHint')}
                                     </p>
                                 )}
                             </div>
 
                             {mode === 'person' && fromGroup && (
                                 <p className="text-xs text-slate-500 mt-2">
-                                    + le groupe {fromGroup.groupName}, ajouté directement.
+                                    {t('createProject.plusGroup', { name: fromGroup.groupName })}
                                 </p>
                             )}
                             {mode === 'group' && invited.length > 0 && (
                                 <p className="text-xs text-slate-500 mt-2">
-                                    + {invited.length} personne{invited.length > 1 ? 's' : ''} à
-                                    inviter.
+                                    {t('createProject.plusPeople', { count: invited.length })}
                                 </p>
                             )}
                         </div>
@@ -242,14 +241,14 @@ export default function CreateProjectModal({
                             onClick={onClose}
                             className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface transition"
                         >
-                            Annuler
+                            {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
                             className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                         >
-                            {loading ? 'Création…' : 'Créer le projet'}
+                            {loading ? t('createProject.submitting') : t('createProject.submit')}
                         </button>
                     </div>
                 </div>

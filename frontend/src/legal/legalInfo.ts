@@ -22,7 +22,7 @@ export const LEGAL_INFO = {
         phone: read(env.VITE_LEGAL_HOST_PHONE),
     },
     privacyContact: read(env.VITE_LEGAL_PRIVACY_CONTACT) ?? read(env.VITE_LEGAL_CONTACT_EMAIL),
-    lastUpdated: '3 novembre 2026',
+    lastUpdated: '2026-11-03',
 }
 
 /**

@@ -1,6 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 import type { Project } from '../types'
 import { projectGlassBackground } from '../utils/color'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS, projectTypeLabel } from '../utils/projectMeta'
@@ -15,6 +16,7 @@ export default function ProjectCard({ project }: {
     /** The project shown. */
     project: Project
 }) {
+    const { t } = useTranslation()
     return (
         <Link
             to={`/project/${project.id}`}
@@ -32,12 +34,12 @@ export default function ProjectCard({ project }: {
             <p className="text-xs text-slate-500 mt-1">{projectTypeLabel(project.type)}</p>
             {project.startDate && (
                 <p className="text-xs text-slate-500">
-                    Date de début : {format(new Date(project.startDate), 'dd/MM/yyyy', { locale: fr })}
+                    {t('projects.card.startDate', { date: format(new Date(project.startDate), 'dd/MM/yyyy', { locale: dateLocale() }) })}
                 </p>
             )}
             {project.completedAt && (
                 <p className="text-xs text-emerald-700">
-                    Achevé le {format(new Date(project.completedAt), 'dd/MM/yyyy', { locale: fr })}
+                    {t('projects.card.completedOn', { date: format(new Date(project.completedAt), 'dd/MM/yyyy', { locale: dateLocale() }) })}
                 </p>
             )}
 

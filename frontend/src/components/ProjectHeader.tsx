@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import ProjectStatusPicker from './ProjectStatusPicker'
 import type { Project, ProjectStatus } from '../types'
 import { projectGlassBackground } from '../utils/color'
@@ -30,6 +31,7 @@ export default function ProjectHeader({
     /** Called to open the archive dialog. */
     onArchive: () => void
 }) {
+    const { t } = useTranslation()
     return (
         <div className="mt-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -61,14 +63,14 @@ export default function ProjectHeader({
                         >
                             <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
                         </svg>
-                        Modifier
+                        {t('projects.header.edit')}
                     </button>
                 )}
                 {isOwner && (
                     <button
                         onClick={onArchive}
                         className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition flex items-center gap-1.5"
-                        title="Le projet quitte la liste de l'équipe, rien n'est perdu"
+                        title={t('projects.header.archiveHint')}
                     >
                         <svg
                             viewBox="0 0 24 24"
@@ -84,7 +86,7 @@ export default function ProjectHeader({
                             <path d="M1 3h22v5H1z" />
                             <path d="M10 12h4" />
                         </svg>
-                        Archiver
+                        {t('projects.header.archive')}
                     </button>
                 )}
             </div>

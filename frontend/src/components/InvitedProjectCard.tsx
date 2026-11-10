@@ -1,6 +1,7 @@
+import { Trans, useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 import type { Invitation } from '../types'
 import { projectGlassBackground } from '../utils/color'
 
@@ -17,6 +18,7 @@ export default function InvitedProjectCard({
     /** The pending invitation. */
     invitation: Invitation
 }) {
+    const { t } = useTranslation()
     return (
         <Link
             to={`/project/${invitation.projectId}`}
@@ -24,16 +26,21 @@ export default function InvitedProjectCard({
         >
             <h3 className="text-sm font-medium text-slate-800 pr-20">{invitation.projectName}</h3>
             <p className="text-xs text-slate-500 mt-1">
-                Invité par <span className="text-slate-700">{invitation.invitedBy.username}</span>
+                <Trans
+                    i18nKey="projects.invited.by"
+                    values={{ name: invitation.invitedBy.username }}
+                    components={{ strong: <span className="text-slate-700" /> }}
+                />
             </p>
-            <p className="text-xs text-brand-700 mt-3">Voir le projet et répondre →</p>
+            <p className="text-xs text-brand-700 mt-3">{t('projects.invited.open')}</p>
             <p className="text-xs text-slate-400 mt-1">
-                Expire{' '}
-                {formatDistanceToNow(new Date(invitation.expiresAt), { addSuffix: true, locale: fr })}
+                {t('projects.invited.expires', {
+                    when: formatDistanceToNow(new Date(invitation.expiresAt), { addSuffix: true, locale: dateLocale() }),
+                })}
             </p>
 
             <span className="absolute top-4 right-4 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-                Invitation
+                {t('projects.invited.badge')}
             </span>
             <span
                 className="absolute inset-x-0 bottom-0 h-1.5"

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useCallback, useState } from 'react'
 import { anchoredStyle, useAnchoredMenu } from '../hooks/useAnchoredMenu'
 import UserAvatar from './UserAvatar'
@@ -29,6 +30,7 @@ export default function AssigneePicker({
     /** Fills its row, for the create form, which wants a field that lines up with its other inputs. */
     fullWidth?: boolean
 }) {
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const [saving, setSaving] = useState(false)
     const close = useCallback(() => setOpen(false), [])
@@ -61,7 +63,7 @@ export default function AssigneePicker({
                         ? 'border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100'
                         : 'border-dashed border-border-strong bg-surface-muted text-slate-500 hover:border-brand-500'
                 }`}
-                title="Choisir le responsable"
+                title={t('tasks.assignee.choose')}
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >
@@ -74,7 +76,7 @@ export default function AssigneePicker({
                     ) : (
                         <>
                             <PersonIcon />
-                            <span>Personne</span>
+                            <span>{t('tasks.assignee.nobody')}</span>
                         </>
                     )}
                 </span>
@@ -92,7 +94,7 @@ export default function AssigneePicker({
                             <span className="w-6 h-6 rounded-full border border-dashed border-border-strong flex items-center justify-center">
                                 <PersonIcon />
                             </span>
-                            Personne
+                            {t('tasks.assignee.nobody')}
                         </span>
                     </Option>
 

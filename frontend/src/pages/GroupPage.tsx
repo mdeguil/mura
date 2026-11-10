@@ -1,7 +1,8 @@
+import { Trans, useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 import Navbar from '../components/Navbar'
 import AddToggleButton from '../components/AddToggleButton'
 import CarnetAddForm from '../components/CarnetAddForm'
@@ -21,6 +22,7 @@ import type { Group, GroupMember } from '../types'
  * list, and a member can at least see who else is in it.
  */
 export default function GroupPage() {
+    const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const currentUserId = useAuthStore((s) => s.user?.id) ?? ''
@@ -31,7 +33,7 @@ export default function GroupPage() {
         loading,
         error: loadError,
         reload,
-    } = useApiQuery<Group | null>(`/groups/${id}`, null, 'Impossible de charger ce groupe.')
+    } = useApiQuery<Group | null>(`/groups/${id}`, null, t('groups.page.errors.load'))
     const [error, setError] = useState('')
 
     const [adding, setAdding] = useState(false)
@@ -55,7 +57,7 @@ export default function GroupPage() {
         return attempt(async () => {
             const { data } = await api.put<Group>(`/groups/${id}`, { name })
             setGroup(data)
-        }, 'Impossible de renommer ce groupe.')
+        }, t('groups.page.errors.rename'))
     }
 
     async function addMember(address: string) {
@@ -63,7 +65,7 @@ export default function GroupPage() {
         const added = await attempt(async () => {
             const { data } = await api.post<Group>(`/groups/${id}/members`, { email: address })
             setGroup(data)
-        }, "Impossible d'ajouter cette personne.")
+        }, t('groups.page.errors.add'))
         setBusy(false)
         if (added) setAdding(false)
     }
@@ -74,7 +76,7 @@ export default function GroupPage() {
                 const { data } = await api.put<Group>(`/groups/${id}/members/${member.id}/hold`, { onHold })
                 setGroup(data)
             },
-            onHold ? 'Impossible de mettre cette personne en retrait.' : 'Impossible de la réintégrer.'
+            onHold ? t('groups.page.errors.hold') : t('groups.page.errors.restore')
         )
     }
 
@@ -82,14 +84,14 @@ export default function GroupPage() {
         await attempt(async () => {
             await api.delete(`/groups/${id}/members/${member.id}`)
             setGroup((current) => current && { ...current, members: current.members.filter((m) => m.id !== member.id) })
-        }, 'Impossible de retirer cette personne.')
+        }, t('groups.page.errors.remove'))
         setRemoving(null)
     }
 
     async function leave() {
         const left = await attempt(async () => {
             await api.delete(`/groups/${id}/members/${currentUserId}`)
-        }, 'Impossible de quitter ce groupe.')
+        }, t('groups.page.errors.leave'))
         if (left) navigate('/carnet')
         else setLeaving(false)
     }
@@ -97,7 +99,7 @@ export default function GroupPage() {
     async function removeGroup() {
         const removed = await attempt(async () => {
             await api.delete(`/groups/${id}`)
-        }, 'Impossible de supprimer ce groupe.')
+        }, t('groups.page.errors.delete'))
         if (removed) navigate('/carnet')
         else setDeleting(false)
     }
@@ -108,14 +110,14 @@ export default function GroupPage() {
 
             <main className="flex-1 w-full max-w-3xl mx-auto px-6 py-8">
                 <Link to="/carnet" className="text-sm text-slate-500 hover:text-slate-700 transition">
-                    ← Mon carnet
+                    {t('groups.page.back')}
                 </Link>
 
                 {loading ? (
-                    <div className="text-sm text-slate-500 mt-6">Chargement…</div>
+                    <div className="text-sm text-slate-500 mt-6">{t('common.loading')}</div>
                 ) : !group ? (
                     <ErrorMessage onRetry={loadError ? reload : undefined} className="mt-6">
-                        {loadError || 'Groupe introuvable.'}
+                        {loadError || t('groups.page.notFound')}
                     </ErrorMessage>
                 ) : (
                     <>
@@ -127,9 +129,9 @@ export default function GroupPage() {
                         />
 
                         <p className="text-xs text-slate-400 mt-3">
-                            Un groupe n'ouvre aucun projet par lui-même : il réunit des personnes pour
-                            les ajouter ensemble à un projet. Créé le{' '}
-                            {format(new Date(group.createdAt), 'd MMMM yyyy', { locale: fr })}.
+                            {t('groups.page.intro', {
+                                date: format(new Date(group.createdAt), 'd MMMM yyyy', { locale: dateLocale() }),
+                            })}
                         </p>
 
                         {error && <ErrorMessage className="mt-4">{error}</ErrorMessage>}
@@ -137,12 +139,12 @@ export default function GroupPage() {
                         <section className="bg-surface border border-border rounded-xl p-5 mt-6">
                             <div className="flex items-center justify-between gap-3 mb-4">
                                 <h2 className="text-sm font-semibold text-slate-800">
-                                    Membres <span className="text-slate-400 font-normal">{group.members.length}</span>
+                                    {t('groups.page.members')} <span className="text-slate-400 font-normal">{group.members.length}</span>
                                 </h2>
                                 {group.owned && (
                                     <AddToggleButton
                                         open={adding}
-                                        label="Ajouter une personne"
+                                        label={t('groups.page.addPerson')}
                                         onClick={() => setAdding((v) => !v)}
                                     />
                                 )}
@@ -150,14 +152,14 @@ export default function GroupPage() {
 
                             {adding && (
                                 <CarnetAddForm
-                                    label="Qui veux-tu ajouter ?"
-                                    submitLabel="Ajouter"
-                                    busyLabel="Ajout…"
+                                    label={t('groups.page.who')}
+                                    submitLabel={t('groups.page.add')}
+                                    busyLabel={t('groups.page.adding')}
                                     busy={busy}
                                     excludeIds={group.members.map((m) => m.id)}
                                     onSubmit={addMember}
                                     onEscape={() => setAdding(false)}
-                                    hint="La personne est prévenue qu'elle fait partie du groupe."
+                                    hint={t('groups.page.addHint')}
                                 />
                             )}
 
@@ -181,17 +183,17 @@ export default function GroupPage() {
 
             {removing && (
                 <ConfirmDialog
-                    title={`Retirer ${removing.username} du groupe ?`}
+                    title={t('groups.page.removeTitle', { name: removing.username })}
                     icon="👤"
                     tone="danger"
                     body={
-                        <>
-                            <strong>{removing.username}</strong> sera prévenu. Ses projets et ses tâches
-                            ne changent pas, et tu peux l'ajouter de nouveau à tout moment. Pour une
-                            absence passagère, mets-le plutôt en retrait.
-                        </>
+                        <Trans
+                            i18nKey="groups.page.removeBody"
+                            values={{ name: removing.username }}
+                            components={{ strong: <strong /> }}
+                        />
                     }
-                    confirmLabel="Retirer"
+                    confirmLabel={t('groups.page.remove')}
                     onCancel={() => setRemoving(null)}
                     onConfirm={() => removeMember(removing)}
                 />
@@ -199,17 +201,13 @@ export default function GroupPage() {
 
             {deleting && group && (
                 <ConfirmDialog
-                    title={`Supprimer le groupe « ${group.name} » ?`}
+                    title={t('groups.page.deleteTitle', { name: group.name })}
                     icon="🗑️"
                     tone="danger"
                     body={
-                        <>
-                            Les {group.members.length} personne{group.members.length > 1 ? 's' : ''} qui
-                            en font partie sont prévenues, mais rien ne leur arrive : leurs comptes,
-                            leurs projets et ton carnet restent intacts. Seule la liste disparaît.
-                        </>
+                        t('groups.page.deleteBody', { count: group.members.length })
                     }
-                    confirmLabel="Supprimer le groupe"
+                    confirmLabel={t('groups.page.delete')}
                     onCancel={() => setDeleting(false)}
                     onConfirm={removeGroup}
                 />
@@ -217,16 +215,13 @@ export default function GroupPage() {
 
             {leaving && group && (
                 <ConfirmDialog
-                    title={`Quitter « ${group.name} » ?`}
+                    title={t('groups.page.leaveTitle', { name: group.name })}
                     icon="🚪"
                     tone="danger"
                     body={
-                        <>
-                            {group.owner.username} sera prévenu de ton départ. Tu ne seras plus ajouté
-                            aux projets avec ce groupe, et seul {group.owner.username} peut t'y remettre.
-                        </>
+                        t('groups.page.leaveBody', { owner: group.owner.username })
                     }
-                    confirmLabel="Quitter le groupe"
+                    confirmLabel={t('groups.page.leave')}
                     onCancel={() => setLeaving(false)}
                     onConfirm={leave}
                 />

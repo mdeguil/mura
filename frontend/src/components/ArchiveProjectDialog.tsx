@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
@@ -24,6 +25,7 @@ export default function ArchiveProjectDialog({
     /** Called once the server has archived it. */
     onArchived: () => void
 }) {
+    const { t } = useTranslation()
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
 
@@ -34,7 +36,7 @@ export default function ArchiveProjectDialog({
             await api.patch(`/projects/${project.id}/archive`)
             onArchived()
         } catch (err) {
-            setError(apiErrorMessage(err, 'Impossible d’archiver ce projet.'))
+            setError(apiErrorMessage(err, t('archiveProject.failed')))
             setLoading(false)
         }
     }
@@ -48,10 +50,10 @@ export default function ArchiveProjectDialog({
 
             <div className="px-6 pt-5 pb-4 border-b border-border">
                 <h2 id="archive-project-title" className="text-base font-semibold text-slate-800">
-                    Archiver « {project.name} » ?
+                    {t('archiveProject.title', { name: project.name })}
                 </h2>
                 <p className="text-sm text-slate-500 mt-0.5">
-                    Le projet quitte la liste de toute l’équipe.
+                    {t('archiveProject.subtitle')}
                 </p>
             </div>
 
@@ -59,15 +61,15 @@ export default function ArchiveProjectDialog({
                 <ul className="flex flex-col gap-2 text-sm text-slate-600">
                     <li className="flex gap-2">
                         <span className="text-emerald-600">✓</span>
-                        Ses tâches, son planning et son équipe sont conservés.
+                        {t('archiveProject.kept')}
                     </li>
                     <li className="flex gap-2">
                         <span className="text-emerald-600">✓</span>
-                        Tu peux le restaurer quand tu veux depuis les projets archivés.
+                        {t('archiveProject.restore')}
                     </li>
                     <li className="flex gap-2">
                         <span className="text-slate-400">·</span>
-                        Les membres ne le verront plus dans leur liste.
+                        {t('archiveProject.hidden')}
                     </li>
                 </ul>
 
@@ -79,14 +81,14 @@ export default function ArchiveProjectDialog({
                     onClick={onClose}
                     className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface transition"
                 >
-                    Annuler
+                    {t('common.cancel')}
                 </button>
                 <button
                     onClick={confirm}
                     disabled={loading}
                     className="h-9 px-4 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-sm font-medium transition disabled:opacity-60"
                 >
-                    {loading ? 'Archivage…' : 'Archiver le projet'}
+                    {loading ? t('archiveProject.submitting') : t('archiveProject.submit')}
                 </button>
             </div>
         </Modal>

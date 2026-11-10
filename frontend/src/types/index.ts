@@ -391,6 +391,8 @@ export interface Account {
   suspendedAt: string | null
   /** When it was registered. */
   createdAt: string
+  /** The language it reads Mura in; its mails are written in it. */
+  language?: 'fr' | 'en'
 }
 
 /**

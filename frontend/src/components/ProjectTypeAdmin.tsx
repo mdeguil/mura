@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next'
 import React, { useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
@@ -14,13 +15,14 @@ const SUGGESTED = ['🌐', '📱', '📣', '🎉', '📁', '🔬', '🧪', '🎨
  * type can be neither edited nor deleted.
  */
 export default function ProjectTypeAdmin() {
+    const { t } = useTranslation()
     const {
         data: types,
         setData: setTypes,
         loading,
         error: loadError,
         reload,
-    } = useApiQuery<ProjectType[]>('/admin/project-types', [], 'Impossible de charger les types.')
+    } = useApiQuery<ProjectType[]>('/admin/project-types', [], t('admin.types.loadFailed'))
     const [error, setError] = useState('')
 
     const [editing, setEditing] = useState<ProjectType | null>(null)
@@ -70,7 +72,7 @@ export default function ProjectTypeAdmin() {
             }
             close()
         } catch (err) {
-            setError(apiErrorMessage(err, "Ce type n'a pas pu être enregistré."))
+            setError(apiErrorMessage(err, t('admin.types.saveFailed')))
         } finally {
             setSaving(false)
         }
@@ -91,25 +93,24 @@ export default function ProjectTypeAdmin() {
             )
             setRemoving(null)
         } catch (err) {
-            setError(apiErrorMessage(err, "Ce type n'a pas pu être supprimé."))
+            setError(apiErrorMessage(err, t('admin.types.deleteFailed')))
             setRemoving(null)
         }
     }
 
-    if (loading) return <p className="text-sm text-slate-500">Chargement…</p>
+    if (loading) return <p className="text-sm text-slate-500">{t('common.loading')}</p>
 
     return (
         <div>
             <div className="flex items-center justify-between gap-4 mb-4">
                 <p className="text-sm text-slate-500">
-                    Les catégories proposées à la création d'un projet. Supprimer un type déplace ses
-                    projets vers le type de repli.
+                    {t('admin.types.intro')}
                 </p>
                 <button
                     onClick={creating ? close : openCreate}
                     className="h-9 px-4 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition shrink-0"
                 >
-                    {creating ? 'Annuler' : '+ Nouveau type'}
+                    {creating ? t('common.cancel') : t('admin.types.new')}
                 </button>
             </div>
 
@@ -129,7 +130,7 @@ export default function ProjectTypeAdmin() {
                 <form onSubmit={save} className="bg-surface border border-border rounded-xl p-4 mb-5">
                     <div className="flex flex-wrap items-end gap-3">
                         <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1.5">Emoji</label>
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">{t('admin.types.emoji')}</label>
                             <input
                                 type="text"
                                 value={emoji}
@@ -140,12 +141,12 @@ export default function ProjectTypeAdmin() {
                             />
                         </div>
                         <div className="flex-1 min-w-[12rem]">
-                            <label className="block text-xs font-medium text-slate-600 mb-1.5">Nom</label>
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">{t('admin.types.name')}</label>
                             <input
                                 type="text"
                                 value={label}
                                 onChange={(e) => setLabel(e.target.value)}
-                                placeholder="Ex : Recherche"
+                                placeholder={t('admin.types.namePlaceholder')}
                                 maxLength={50}
                                 required
                                 autoFocus
@@ -157,14 +158,14 @@ export default function ProjectTypeAdmin() {
                             disabled={saving || !label.trim()}
                             className="h-9 px-4 rounded-lg bg-brand-500 hover:bg-brand-600 text-ink text-xs font-medium transition disabled:opacity-40"
                         >
-                            {saving ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Créer'}
+                            {saving ? t('common.saving') : editing ? t('common.save') : t('admin.types.create')}
                         </button>
                         <button
                             type="button"
                             onClick={close}
                             className="h-9 px-3 rounded-lg text-xs font-medium text-slate-500 hover:bg-surface-muted transition"
                         >
-                            Annuler
+                            {t('common.cancel')}
                         </button>
                     </div>
 
@@ -177,7 +178,7 @@ export default function ProjectTypeAdmin() {
                                 className={`w-8 h-8 rounded-lg text-base transition ${
                                     emoji === e ? 'bg-brand-100' : 'hover:bg-surface-muted'
                                 }`}
-                                aria-label={`Utiliser ${e}`}
+                                aria-label={t('admin.types.use', { emoji: e })}
                             >
                                 {e}
                             </button>
@@ -201,30 +202,30 @@ export default function ProjectTypeAdmin() {
 
                         {type.fallback && (
                             <span className="shrink-0 text-[10px] font-medium rounded-full px-2 py-0.5 border border-border-strong bg-surface-muted text-slate-500">
-                                Type de repli
+                                {t('admin.types.fallback')}
                             </span>
                         )}
 
                         <span className="shrink-0 w-24 text-right text-xs text-slate-400">
-                            {type.projectCount ?? 0} projet{(type.projectCount ?? 0) > 1 ? 's' : ''}
+                            {t('admin.types.projects', { count: type.projectCount ?? 0 })}
                         </span>
 
                         <div className="flex items-center gap-2 shrink-0 w-[168px] justify-end">
                             {type.fallback ? (
-                                <span className="text-xs text-slate-400">Non modifiable</span>
+                                <span className="text-xs text-slate-400">{t('admin.types.locked')}</span>
                             ) : (
                                 <>
                                     <button
                                         onClick={() => openEdit(type)}
                                         className="h-8 px-3 rounded-lg border border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-medium transition"
                                     >
-                                        Modifier
+                                        {t('admin.types.edit')}
                                     </button>
                                     <button
                                         onClick={() => setRemoving(type)}
                                         className="h-8 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-medium transition"
                                     >
-                                        Supprimer
+                                        {t('common.delete')}
                                     </button>
                                 </>
                             )}
@@ -235,23 +236,21 @@ export default function ProjectTypeAdmin() {
 
             {removing && (
                 <ConfirmDialog
-                    title={`Supprimer « ${removing.label} » ?`}
+                    title={t('admin.types.deleteTitle', { name: removing.label })}
                     icon="🗑️"
                     body={
                         (removing.projectCount ?? 0) > 0 ? (
-                            <>
-                                {removing.projectCount} projet
-                                {(removing.projectCount ?? 0) > 1 ? 's' : ''} porte
-                                {(removing.projectCount ?? 0) > 1 ? 'nt' : ''} ce type. Il
-                                {(removing.projectCount ?? 0) > 1 ? 's' : ''} passeront sur{' '}
-                                <strong>{types.find((t) => t.fallback)?.label}</strong>. Aucun projet
-                                n'est supprimé.
-                            </>
+                            <Trans
+                                i18nKey="admin.types.deleteBody"
+                                count={removing.projectCount ?? 0}
+                                values={{ fallback: types.find((type) => type.fallback)?.label ?? '' }}
+                                components={{ strong: <strong /> }}
+                            />
                         ) : (
-                            <>Aucun projet ne porte ce type.</>
+                            t('admin.types.deleteUnused')
                         )
                     }
-                    confirmLabel="Supprimer"
+                    confirmLabel={t('common.delete')}
                     onCancel={() => setRemoving(null)}
                     onConfirm={() => remove(removing)}
                 />

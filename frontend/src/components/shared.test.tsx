@@ -144,7 +144,7 @@ describe('PasswordInput', () => {
 
 describe('passwordRules', () => {
     const met = (password: string, email = 'alice@mura.test', username = 'alice') =>
-        passwordRules(password, email, username).filter((r) => r.met).map((r) => r.label)
+        passwordRules(password, email, username).filter((r) => r.met).map((r) => r.key)
 
     it('meets every rule with a strong password', () => {
         expect(met('Secret-123')).toHaveLength(6)
@@ -155,13 +155,13 @@ describe('passwordRules', () => {
     })
 
     it('refuses the username or the email as a password, whatever the case', () => {
-        expect(met('ALICE')).not.toContain("Différent de ton email et de ton nom d'utilisateur")
-        expect(met('Alice@Mura.test')).not.toContain("Différent de ton email et de ton nom d'utilisateur")
+        expect(met('ALICE')).not.toContain('distinct')
+        expect(met('Alice@Mura.test')).not.toContain('distinct')
     })
 
     it("accepts accented letters and any symbol, and caps at bcrypt's 72", () => {
         expect(met('Éléphant-9')).toHaveLength(6)
-        expect(met('Aa1!' + 'x'.repeat(69))).not.toContain('Au moins 8 caractères')
+        expect(met('Aa1!' + 'x'.repeat(69))).not.toContain('length')
     })
 
     it('lists every rule with its state', () => {

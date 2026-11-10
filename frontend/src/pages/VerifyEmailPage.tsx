@@ -1,3 +1,5 @@
+import LegalLinks from '../components/LegalLinks'
+import { Trans, useTranslation } from 'react-i18next'
 import React, { useEffect, useRef, useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
@@ -14,6 +16,7 @@ const LENGTH = 6
  * the app is until the code comes back.
  */
 export default function VerifyEmailPage() {
+    const { t } = useTranslation()
     const user = useAuthStore((s) => s.user)
     const setUser = useAuthStore((s) => s.setUser)
     const logout = useAuthStore((s) => s.logout)
@@ -62,7 +65,7 @@ export default function VerifyEmailPage() {
     async function submit(e?: React.FormEvent) {
         e?.preventDefault()
         if (code.length !== LENGTH) {
-            setError('Entre les 6 chiffres du code.')
+            setError(t('auth.verify.incomplete'))
             return
         }
 
@@ -73,7 +76,7 @@ export default function VerifyEmailPage() {
             const { data } = await api.post<Account>('/auth/verify', { code })
             setUser(data)
         } catch (err) {
-            setError(apiErrorMessage(err, "Ce code n'a pas été accepté."))
+            setError(apiErrorMessage(err, t('auth.verify.refused')))
             setDigits(Array(LENGTH).fill(''))
             boxes.current[0]?.focus()
         } finally {
@@ -87,9 +90,9 @@ export default function VerifyEmailPage() {
         setResending(true)
         try {
             await api.post('/auth/verify/resend')
-            setNotice('Un nouveau code vient de partir. Le précédent ne marche plus.')
+            setNotice(t('auth.verify.resent'))
         } catch (err) {
-            setError(apiErrorMessage(err, "Le code n'a pas pu être renvoyé."))
+            setError(apiErrorMessage(err, t('auth.verify.resendFailed')))
         } finally {
             setResending(false)
         }
@@ -104,11 +107,13 @@ export default function VerifyEmailPage() {
                         <span className="text-xl font-semibold text-slate-800">Mura</span>
                     </div>
 
-                    <h1 className="text-xl font-semibold text-slate-800 mb-1">Confirme ton adresse 📬</h1>
+                    <h1 className="text-xl font-semibold text-slate-800 mb-1">{t('auth.verify.title')}</h1>
                     <p className="text-sm text-slate-500 mb-6">
-                        On vient d'envoyer un code à 6 chiffres à{' '}
-                        <span className="font-medium text-slate-700">{user?.email}</span>. Il est
-                        valable 15 minutes.
+                        <Trans
+                            i18nKey="auth.verify.sent"
+                            values={{ email: user?.email ?? '' }}
+                            components={{ strong: <span className="font-medium text-slate-700" /> }}
+                        />
                     </p>
 
                     <form onSubmit={submit}>
@@ -126,7 +131,7 @@ export default function VerifyEmailPage() {
                                     value={digit}
                                     onChange={(e) => put(index, e.target.value)}
                                     onKeyDown={(e) => onKeyDown(index, e)}
-                                    aria-label={`Chiffre ${index + 1}`}
+                                    aria-label={t('auth.verify.digit', { n: index + 1 })}
                                     className={`w-full h-14 rounded-xl border text-center text-xl font-semibold text-slate-800 bg-surface-muted outline-none transition ${
                                         error
                                             ? 'border-red-300 focus:border-red-400'
@@ -144,7 +149,7 @@ export default function VerifyEmailPage() {
                             disabled={loading}
                             className="w-full mt-5 h-10 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                         >
-                            {loading ? 'Vérification…' : 'Confirmer'}
+                            {loading ? t('auth.verify.submitting') : t('auth.verify.submit')}
                         </button>
                     </form>
 
@@ -154,20 +159,22 @@ export default function VerifyEmailPage() {
                             disabled={resending}
                             className="text-brand-600 font-medium hover:text-brand-700 transition disabled:opacity-60"
                         >
-                            {resending ? 'Envoi…' : 'Renvoyer le code'}
+                            {resending ? t('common.sending') : t('auth.verify.resend')}
                         </button>
                         <button
                             onClick={logout}
                             className="text-slate-400 hover:text-slate-600 transition"
                         >
-                            Se déconnecter
+                            {t('auth.verify.signOut')}
                         </button>
                     </div>
                 </div>
 
                 <p className="text-center text-xs text-slate-400 mt-4">
-                    Rien reçu ? Regarde dans les indésirables, ou renvoie le code.
+                    {t('auth.verify.nothing')}
                 </p>
+
+                <LegalLinks className="mt-6" />
             </div>
         </div>
     )

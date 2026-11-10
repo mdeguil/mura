@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { User } from '../types'
 
 const SIZES = {
@@ -23,6 +24,7 @@ export default function UserAvatar({
     /** The tooltip; the name, and the suspension if any, by default. */
     title?: string
 }) {
+    const { t } = useTranslation()
     const suspended = user.suspended === true
 
     return (
@@ -33,8 +35,8 @@ export default function UserAvatar({
                         ? 'bg-slate-300'
                         : 'bg-brand-gradient-diagonal'
                 }`}
-                title={title ?? (suspended ? `${user.username} · compte suspendu` : user.username)}
-                aria-label={suspended ? `${user.username}, compte suspendu` : user.username}
+                title={title ?? (suspended ? t('people.suspendedTitle', { name: user.username }) : user.username)}
+                aria-label={suspended ? t('people.suspendedLabel', { name: user.username }) : user.username}
             >
                 {user.username[0]?.toUpperCase()}
             </span>
@@ -61,11 +63,12 @@ export function SuspendedPill({ className = '' }: {
     /** Classes added to the pill's own. */
     className?: string
 }) {
+    const { t } = useTranslation()
     return (
         <span
             className={`shrink-0 text-[10px] font-medium rounded-full px-1.5 py-0.5 border border-red-200 bg-red-50 text-red-600 ${className}`}
         >
-            Suspendu
+            {t('people.suspended')}
         </span>
     )
 }

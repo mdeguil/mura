@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useId, useState } from 'react'
 import CarnetCombobox from './CarnetCombobox'
 
@@ -35,6 +36,7 @@ export default function CarnetAddForm({
     /** A line under the field, if any. */
     hint?: string
 }) {
+    const { t } = useTranslation()
     const [email, setEmail] = useState('')
     const fieldId = useId()
 
@@ -58,7 +60,7 @@ export default function CarnetAddForm({
                     onPick={(person) => person.email && onSubmit(person.email)}
                     onEscape={onEscape}
                     autoFocus
-                    placeholder="Un nom du carnet, ou prenom@exemple.com"
+                    placeholder={t('people.addPlaceholder')}
                     excludeIds={excludeIds}
                 />
                 <button

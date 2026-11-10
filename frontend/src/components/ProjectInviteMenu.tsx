@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useCallback, useState } from 'react'
 import api from '../services/api'
 import { apiErrorMessage } from '../utils/apiError'
@@ -27,6 +28,7 @@ export default function ProjectInviteMenu({
     /** The reader's account id. */
     currentUserId: string
 }) {
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const [busy, setBusy] = useState<string | null>(null)
     const [error, setError] = useState('')
@@ -49,7 +51,7 @@ export default function ProjectInviteMenu({
             await api.post(`/projects/${project.id}/invitations`, { email: person.email })
             setInvited((prev) => [...prev, project.id])
         } catch (err) {
-            setError(apiErrorMessage(err, "L'invitation n'a pas pu être envoyée."))
+            setError(apiErrorMessage(err, t('projects.inviteMenu.failed')))
         } finally {
             setBusy(null)
         }
@@ -64,8 +66,8 @@ export default function ProjectInviteMenu({
                 type="button"
                 onClick={() => setOpen((v) => !v)}
                 className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
-                title="Ajouter à un projet"
-                aria-label={`Ajouter ${person.username} à un projet`}
+                title={t('projects.inviteMenu.title')}
+                aria-label={t('projects.inviteMenu.label', { name: person.username })}
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >
@@ -92,7 +94,7 @@ export default function ProjectInviteMenu({
                     className="overflow-y-auto bg-surface border border-border rounded-xl shadow-lg p-1.5 z-50 flex flex-col gap-1"
                 >
                     <p className="text-[11px] text-slate-400 px-2 pt-1 pb-1.5">
-                        Inviter {person.username} sur…
+                        {t('projects.inviteMenu.heading', { name: person.username })}
                     </p>
 
                     {invitable.map((project) => {
@@ -119,9 +121,9 @@ export default function ProjectInviteMenu({
                                 </span>
                                 <span className="text-[10px] shrink-0">
                                     {already ? (
-                                        <span className="text-slate-400">déjà membre</span>
+                                        <span className="text-slate-400">{t('projects.inviteMenu.alreadyMember')}</span>
                                     ) : sent ? (
-                                        <span className="text-emerald-600">invité ✓</span>
+                                        <span className="text-emerald-600">{t('projects.inviteMenu.invited')}</span>
                                     ) : busy === project.id ? (
                                         <span className="text-slate-400">…</span>
                                     ) : null}

@@ -1,179 +1,141 @@
 import { Link } from 'react-router-dom'
+import { Trans, useTranslation } from 'react-i18next'
 import LegalLayout, { LegalSection } from '../components/LegalLayout'
 import { LEGAL_INFO } from '../legal/legalInfo'
+
+const STRONG = { strong: <strong className="text-slate-800" /> }
 
 /**
  * The politique de confidentialité, at /confidentialite (RGPD, art. 13).
  * Every sentence here describes what the code actually does: when a
  * behaviour changes -- what is collected, who sees it, how long it stays --
- * this page changes with it.
+ * this page changes with it, in both languages.
  */
 export default function PrivacyPage() {
+    const { t } = useTranslation()
     const { publisher, host, privacyContact } = LEGAL_INFO
+    const contact = privacyContact ?? t('legal.theAdministrator')
+    const controllerName = publisher.name
+        ? publisher.name + (publisher.address ? `, ${publisher.address}` : '')
+        : null
 
     return (
-        <LegalLayout title="Politique de confidentialité">
-            <p>
-                Cette page dit quelles données Mura conserve sur toi, pourquoi, qui peut les voir, combien de
-                temps, et comment exercer tes droits.
-            </p>
+        <LegalLayout title={t('legal.privacy.title')}>
+            <p>{t('legal.privacy.intro')}</p>
 
-            <LegalSection title="Responsable du traitement">
+            <LegalSection title={t('legal.privacy.controller')}>
                 <p>
-                    Mura s'installe chez ceux qui l'utilisent. Le responsable de tes données est la personne ou
-                    l'organisation qui administre cette instance
-                    {publisher.name ? (
-                        <>
-                            {' '}: <span className="text-slate-800">{publisher.name}</span>
-                            {publisher.address && <>, {publisher.address}</>}
-                        </>
-                    ) : null}
-                    . Les auteurs du logiciel n'y ont aucun accès.
+                    <Trans
+                        i18nKey="legal.privacy.controllerBody"
+                        values={{
+                            who: controllerName ? t('legal.privacy.controllerNamed', { name: controllerName }) : '',
+                        }}
+                        components={STRONG}
+                    />
                 </p>
                 <p>
-                    Pour toute question sur tes données :{' '}
                     {privacyContact ? (
-                        <span className="text-slate-800">{privacyContact}</span>
+                        <Trans i18nKey="legal.privacy.questions" values={{ contact }} components={STRONG} />
                     ) : (
-                        "l'administrateur de cette instance"
+                        <Trans i18nKey="legal.privacy.questions" values={{ contact }} components={{ strong: <span /> }} />
                     )}
-                    .
                 </p>
             </LegalSection>
 
-            <LegalSection title="Les données conservées">
+            <LegalSection title={t('legal.privacy.kept')}>
                 <ul className="list-disc pl-5 space-y-1">
                     <li>
-                        <strong className="text-slate-800">Ton compte :</strong> nom d'utilisateur, adresse e-mail,
-                        mot de passe (conservé haché, jamais en clair), date de création, date de vérification de
-                        l'adresse.
+                        <Trans i18nKey="legal.privacy.keptAccount" components={STRONG} />
                     </li>
                     <li>
-                        <strong className="text-slate-800">Ce que tu fais dans Mura :</strong> projets, tâches,
-                        sous-tâches et leur historique de statut, invitations envoyées et reçues, groupes, carnet de
-                        contacts, notifications.
+                        <Trans i18nKey="legal.privacy.keptActivity" components={STRONG} />
                     </li>
                 </ul>
-                <p>Mura ne demande rien d'autre : ni téléphone, ni date de naissance, ni adresse postale.</p>
+                <p>{t('legal.privacy.keptNothingElse')}</p>
             </LegalSection>
 
-            <LegalSection title="Pourquoi">
+            <LegalSection title={t('legal.privacy.why')}>
                 <ul className="list-disc pl-5 space-y-1">
-                    <li>
-                        Faire fonctionner le service : ton compte, le travail en équipe sur les projets, et les
-                        e-mails qui l'accompagnent (code de vérification, lien de réinitialisation du mot de
-                        passe, invitations, notifications). Base légale : l'exécution du service que tu as
-                        demandé (RGPD, art. 6-1-b).
-                    </li>
-                    <li>
-                        Protéger le service : vérifier qu'une adresse e-mail t'appartient, permettre à un
-                        administrateur de suspendre un compte. Base légale : l'intérêt légitime de
-                        l'administrateur de cette instance à en assurer la sécurité (RGPD, art. 6-1-f).
-                    </li>
+                    <li>{t('legal.privacy.whyService')}</li>
+                    <li>{t('legal.privacy.whySecurity')}</li>
                 </ul>
-                <p>Tes données ne servent à aucune publicité, à aucun profilage, et ne sont ni vendues ni louées.</p>
+                <p>{t('legal.privacy.whyNot')}</p>
             </LegalSection>
 
-            <LegalSection title="Qui peut les voir">
+            <LegalSection title={t('legal.privacy.who')}>
                 <ul className="list-disc pl-5 space-y-1">
+                    <li>{t('legal.privacy.whoMembers')}</li>
+                    <li>{t('legal.privacy.whoAdmins')}</li>
                     <li>
-                        Les membres des projets et des groupes que tu partages voient ton nom d'utilisateur et ton
-                        adresse e-mail. Une personne seulement invitée sur un projet ne voit pas les adresses de
-                        l'équipe.
-                    </li>
-                    <li>
-                        Les administrateurs de cette instance voient la liste des comptes (nom, adresse, rôle, état) pour
-                        pouvoir les gérer. Ils n'ont aucun accès aux projets dont ils ne sont pas membres.
-                    </li>
-                    <li>
-                        L'hébergeur de cette instance
-                        {host.name && (
-                            <>
-                                , <span className="text-slate-800">{host.name}</span>,
-                            </>
-                        )}{' '}
-                        stocke les données pour le compte de son administrateur, et le service d'envoi d'e-mails
-                        qu'il a choisi transmet les messages.
+                        <Trans
+                            i18nKey="legal.privacy.whoHost"
+                            values={{ host: host.name ? t('legal.privacy.whoHostNamed', { name: host.name }) : '' }}
+                            components={STRONG}
+                        />
                     </li>
                 </ul>
             </LegalSection>
 
-            <LegalSection title="Combien de temps">
+            <LegalSection title={t('legal.privacy.howLong')}>
                 <ul className="list-disc pl-5 space-y-1">
-                    <li>Tes données sont conservées tant que ton compte existe.</li>
-                    <li>
-                        Quand tu supprimes ton compte, il est effacé aussitôt, avec tes invitations, tes
-                        notifications, ton carnet et les groupes que tu gères. Un projet que tu partageais est
-                        transmis à un autre de ses membres ; un projet où tu étais seul est supprimé. Les tâches
-                        qui t'étaient confiées restent dans leur projet, sans ton nom.
-                    </li>
-                    <li>Une invitation sans réponse expire au bout de 14 jours.</li>
-                    <li>Un lien de réinitialisation du mot de passe ne vaut qu'une heure et qu'une fois.</li>
+                    <li>{t('legal.privacy.howLongAccount')}</li>
+                    <li>{t('legal.privacy.howLongDeletion')}</li>
+                    <li>{t('legal.privacy.howLongInvitation')}</li>
+                    <li>{t('legal.privacy.howLongReset')}</li>
                 </ul>
             </LegalSection>
 
-            <LegalSection title="Ce que Mura garde dans ton navigateur">
-                <p>Mura ne dépose aucun cookie et ne fait appel à aucun service de mesure d'audience ou de publicité. Ton navigateur garde seulement :</p>
+            <LegalSection title={t('legal.privacy.browser')}>
+                <p>{t('legal.privacy.browserIntro')}</p>
                 <ul className="list-disc pl-5 space-y-1">
-                    <li>
-                        <code className="text-slate-800">mura-auth</code> : ce qui te garde connecté (valable 24
-                        heures, vidé quand tu te déconnectes) ;
-                    </li>
-                    <li>
-                        <code className="text-slate-800">mura-theme</code> : ton choix entre thème clair et thème
-                        sombre.
-                    </li>
+                    {(['browserAuth', 'browserTheme', 'browserLang'] as const).map((key) => (
+                        <li key={key}>
+                            <Trans i18nKey={`legal.privacy.${key}`} components={{ code: <code className="text-slate-800" /> }} />
+                        </li>
+                    ))}
                 </ul>
-                <p>
-                    Les deux sont nécessaires au service que tu demandes : la loi ne demande pas ton consentement
-                    pour eux.
-                </p>
+                <p>{t('legal.privacy.browserConsent')}</p>
             </LegalSection>
 
-            <LegalSection title="Tes droits">
-                <p>
-                    Tu peux à tout moment accéder à tes données, les faire corriger, les récupérer, les faire
-                    effacer, t'opposer à leur usage ou en demander la limitation.
-                </p>
+            <LegalSection title={t('legal.privacy.rights')}>
+                <p>{t('legal.privacy.rightsIntro')}</p>
                 <ul className="list-disc pl-5 space-y-1">
                     <li>
-                        <strong className="text-slate-800">Récupérer tes données</strong> et{' '}
-                        <strong className="text-slate-800">supprimer ton compte</strong> : directement depuis la
-                        page{' '}
-                        <Link to="/compte" className="text-brand-700 underline underline-offset-2">
-                            Mon compte
-                        </Link>
-                        .
+                        <Trans
+                            i18nKey="legal.privacy.rightsSelf"
+                            components={{
+                                ...STRONG,
+                                anchor: <Link to="/compte" className="text-brand-700 underline underline-offset-2" />,
+                            }}
+                        />
                     </li>
                     <li>
-                        Pour tout le reste : écris à{' '}
                         {privacyContact ? (
-                            <span className="text-slate-800">{privacyContact}</span>
+                            <Trans i18nKey="legal.privacy.rightsOther" values={{ contact }} components={STRONG} />
                         ) : (
-                            "l'administrateur de cette instance"
+                            <Trans i18nKey="legal.privacy.rightsOther" values={{ contact }} components={{ strong: <span /> }} />
                         )}
-                        . Une réponse t'est due dans un délai d'un mois.
                     </li>
                 </ul>
                 <p>
-                    Si tu estimes que tes droits ne sont pas respectés, tu peux saisir la CNIL (
-                    <a
-                        href="https://www.cnil.fr/fr/plaintes"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-brand-700 underline underline-offset-2"
-                    >
-                        cnil.fr
-                    </a>
-                    ).
+                    <Trans
+                        i18nKey="legal.privacy.rightsCnil"
+                        components={{
+                            cnil: (
+                                <a
+                                    href="https://www.cnil.fr/fr/plaintes"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-brand-700 underline underline-offset-2"
+                                />
+                            ),
+                        }}
+                    />
                 </p>
             </LegalSection>
 
-            <LegalSection title="Sécurité">
-                <p>
-                    Les mots de passe sont hachés avant d'être conservés, chaque adresse e-mail est vérifiée
-                    avant usage, et un projet n'est visible que de ses membres.
-                </p>
+            <LegalSection title={t('legal.privacy.security')}>
+                <p>{t('legal.privacy.securityBody')}</p>
             </LegalSection>
         </LegalLayout>
     )

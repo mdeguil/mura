@@ -1,7 +1,10 @@
+/** The rules a password has to meet, named as in the `auth.rules` texts. */
+export type PasswordRuleKey = 'length' | 'upper' | 'lower' | 'digit' | 'special' | 'distinct'
+
 /** One rule a password has to meet, and whether the typed one does. */
 export type PasswordRule = {
-    /** The rule, as the form shows it. */
-    label: string
+    /** Which rule; its sentence is `auth.rules.<key>` in the current language. */
+    key: PasswordRuleKey
     /** Whether the password meets it. */
     met: boolean
 }
@@ -24,16 +27,16 @@ export function passwordRules(password: string, email: string, username: string)
     const lower = password.toLowerCase()
 
     return [
-        { label: 'Au moins 8 caractères', met: password.length >= 8 && password.length <= 72 },
-        { label: 'Une majuscule', met: /\p{Lu}/u.test(password) },
-        { label: 'Une minuscule', met: /\p{Ll}/u.test(password) },
-        { label: 'Un chiffre', met: /\d/.test(password) },
+        { key: 'length', met: password.length >= 8 && password.length <= 72 },
+        { key: 'upper', met: /\p{Lu}/u.test(password) },
+        { key: 'lower', met: /\p{Ll}/u.test(password) },
+        { key: 'digit', met: /\d/.test(password) },
         {
-            label: 'Un caractère spécial',
+            key: 'special',
             met: /[^\p{L}\p{N}\s]/u.test(password),
         },
         {
-            label: "Différent de ton email et de ton nom d'utilisateur",
+            key: 'distinct',
             met:
                 password.length > 0 &&
                 (trimmedEmail.length === 0 || lower !== trimmedEmail) &&

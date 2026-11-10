@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /**
  * A password field whose content can be read back. Typing eleven invisible
@@ -37,6 +38,8 @@ export default function PasswordInput({
     const [shown, setShown] = useState(false)
     const height = compact ? 'h-9' : 'h-10'
 
+    const { t } = useTranslation()
+
     return (
         <div className="relative">
             <input
@@ -57,7 +60,7 @@ export default function PasswordInput({
                 type="button"
                 onClick={() => setShown((v) => !v)}
                 tabIndex={-1}
-                aria-label={shown ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                aria-label={shown ? t('auth.hidePassword') : t('auth.showPassword')}
                 className={`absolute right-0 top-0 ${height} w-10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition`}
             >
                 <svg

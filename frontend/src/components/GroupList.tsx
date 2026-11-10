@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import ErrorMessage from './ErrorMessage'
 import UserAvatar from './UserAvatar'
@@ -14,20 +15,19 @@ import type { Group } from '../types'
  * who names the gérant, from the Administration page.
  */
 export default function GroupList() {
+    const { t } = useTranslation()
     const { data: groups, loading, error, reload } = useApiQuery<Group[]>(
         '/groups',
         [],
-        'Impossible de charger tes groupes.'
+        t('groups.loadGroups')
     )
 
-    if (loading) return <div className="text-sm text-slate-500">Chargement…</div>
+    if (loading) return <div className="text-sm text-slate-500">{t('common.loading')}</div>
 
     return (
         <div>
             <p className="text-sm text-slate-500 mb-4">
-                Un groupe garde une équipe sous la main. Il n’ouvre aucun projet par lui-même : il
-                sert à ajouter tout le monde à un projet d’un coup. Les groupes sont créés par un
-                administrateur.
+                {t('groups.list.intro')}
             </p>
 
             {error ? (
@@ -37,10 +37,9 @@ export default function GroupList() {
                     <div className="w-14 h-14 rounded-2xl bg-brand-gradient-diagonal flex items-center justify-center mb-4">
                         <span className="text-white text-2xl">👥</span>
                     </div>
-                    <h2 className="text-base font-semibold text-slate-800 mb-1">Aucun groupe</h2>
+                    <h2 className="text-base font-semibold text-slate-800 mb-1">{t('groups.list.empty')}</h2>
                     <p className="text-sm text-slate-500 max-w-sm">
-                        Tu ne fais partie d’aucun groupe. Quand un administrateur t’en confie un ou
-                        que son gérant t’y ajoute, il apparaît ici.
+                        {t('groups.list.emptyHint')}
                     </p>
                 </div>
             ) : (
@@ -59,17 +58,15 @@ export default function GroupList() {
                                                 {group.name}
                                             </p>
                                             <p className="text-xs text-slate-400 mt-0.5">
-                                                {group.members.length} personne
-                                                {group.members.length > 1 ? 's' : ''}
-                                                {onHold > 0 && <> · {onHold} en retrait</>}
-                                                {group.owned ? (
-                                                    <> · tu le gères</>
-                                                ) : (
-                                                    <> · géré par {group.owner.username}</>
-                                                )}
+                                                {t('groups.people', { count: group.members.length })}
+                                                {onHold > 0 && <> · {t('groups.onHoldCount', { count: onHold })}</>}
+                                                {' · '}
+                                                {group.owned
+                                                    ? t('groups.youManage')
+                                                    : t('groups.managedBy', { name: group.owner.username })}
                                             </p>
                                         </div>
-                                        <span className="text-xs text-slate-400 shrink-0">Ouvrir →</span>
+                                        <span className="text-xs text-slate-400 shrink-0">{t('groups.list.open')}</span>
                                     </div>
 
                                     <ul className="flex flex-wrap gap-2 mt-3">
@@ -84,7 +81,7 @@ export default function GroupList() {
                                                 <span className="text-xs text-slate-600">
                                                     {member.username}
                                                     {member.id === group.owner.id && (
-                                                        <span className="text-slate-400"> · gérant</span>
+                                                        <span className="text-slate-400"> · {t('groups.manager')}</span>
                                                     )}
                                                 </span>
                                             </li>

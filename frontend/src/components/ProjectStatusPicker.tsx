@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useRef, useState } from 'react'
 import type { ProjectStatus } from '../types'
 import { PROJECT_STATUS_CLASSES, PROJECT_STATUS_LABELS } from '../utils/projectMeta'
@@ -24,6 +25,7 @@ export default function ProjectStatusPicker({
     /** Called with the status picked. */
     onChange: (status: ProjectStatus) => void
 }) {
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const [saving, setSaving] = useState(false)
     const wrapper = useRef<HTMLDivElement>(null)
@@ -70,7 +72,7 @@ export default function ProjectStatusPicker({
                 onClick={() => setOpen((v) => !v)}
                 disabled={saving}
                 className={`${badge} flex items-center gap-1.5 hover:brightness-95 transition disabled:opacity-60`}
-                title="Changer le statut du projet"
+                title={t('projects.header.changeStatus')}
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >

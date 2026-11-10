@@ -1,6 +1,8 @@
+import { Trans, useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { fr } from 'date-fns/locale'
+import { dateLocale } from '../utils/dates'
 import Navbar from '../components/Navbar'
 import ConfirmDialog from '../components/ConfirmDialog'
 import UserAvatar from '../components/UserAvatar'
@@ -25,6 +27,7 @@ type Pending =
  * is sent.
  */
 export default function AdminPage() {
+    const { t } = useTranslation()
     const me = useAuthStore((s) => s.user)
     const setUser = useAuthStore((s) => s.setUser)
     const {
@@ -33,7 +36,7 @@ export default function AdminPage() {
         loading,
         error: loadError,
         reload,
-    } = useApiQuery<Account[]>('/admin/accounts', [], 'Impossible de charger les comptes.')
+    } = useApiQuery<Account[]>('/admin/accounts', [], t('admin.accounts.loadFailed'))
     const [error, setError] = useState('')
     const [pending, setPending] = useState<Pending | null>(null)
     const [deleting, setDeleting] = useState<Account | null>(null)
@@ -67,7 +70,7 @@ export default function AdminPage() {
             replace(data)
             setPending(null)
         } catch (err) {
-            setError(apiErrorMessage(err, "L'action n'a pas pu être effectuée."))
+            setError(apiErrorMessage(err, t('admin.accounts.actionFailed')))
             setPending(null)
         }
     }
@@ -79,17 +82,16 @@ export default function AdminPage() {
             <Navbar />
 
             <main className="max-w-5xl mx-auto px-6 py-8">
-                <h1 className="text-xl font-semibold text-slate-800">Administration</h1>
+                <h1 className="text-xl font-semibold text-slate-800">{t('admin.title')}</h1>
                 <p className="text-sm text-slate-500 mt-1">
-                    Ce que les comptes peuvent faire de Mura, les types de projet proposés, et les
-                    groupes et leurs gérants.
+                    {t('admin.subtitle')}
                 </p>
 
                 <div className="flex items-center gap-1 mt-5 border-b border-border">
                     {([
-                        ['accounts', 'Comptes'],
-                        ['types', 'Types de projet'],
-                        ['groups', 'Groupes'],
+                        ['accounts', t('admin.tabs.accounts')],
+                        ['types', t('admin.tabs.types')],
+                        ['groups', t('admin.tabs.groups')],
                     ] as const).map(([key, label]) => (
                         <button
                             key={key}
@@ -124,15 +126,15 @@ export default function AdminPage() {
                 )}
 
                 {loading ? (
-                    <p className="text-sm text-slate-500 mt-6">Chargement…</p>
+                    <p className="text-sm text-slate-500 mt-6">{t('common.loading')}</p>
                 ) : (
                     <div className="bg-surface border border-border rounded-2xl mt-6 overflow-hidden">
                         <div className="px-5 py-3 border-b border-border bg-surface-muted/60 flex items-center justify-between">
                             <span className="text-xs font-medium text-slate-600">
-                                {accounts.length} compte{accounts.length > 1 ? 's' : ''}
+                                {t('admin.accounts.count', { count: accounts.length })}
                             </span>
                             <span className="text-xs text-slate-400">
-                                {admins} administrateur{admins > 1 ? 's' : ''} actif{admins > 1 ? 's' : ''}
+                                {t('admin.accounts.admins', { count: admins })}
                             </span>
                         </div>
 
@@ -151,14 +153,15 @@ export default function AdminPage() {
                                         <div className="min-w-0 flex-1">
                                             <p className="text-sm font-medium text-slate-800 flex items-center gap-2">
                                                 {account.username}
-                                                {isMe && <span className="text-xs text-slate-400">· toi</span>}
+                                                {isMe && <span className="text-xs text-slate-400">· {t('common.you')}</span>}
                                             </p>
                                             <p className="text-xs text-slate-400 truncate">{account.email}</p>
                                         </div>
 
                                         <div className="hidden sm:block text-xs text-slate-400 shrink-0">
-                                            inscrit le{' '}
-                                            {format(new Date(account.createdAt), 'd MMM yyyy', { locale: fr })}
+                                            {t('admin.accounts.joined', {
+                                                date: format(new Date(account.createdAt), 'd MMM yyyy', { locale: dateLocale() }),
+                                            })}
                                         </div>
 
                                         <span
@@ -171,10 +174,10 @@ export default function AdminPage() {
                                             }`}
                                         >
                                             {account.suspended
-                                                ? 'Suspendu'
+                                                ? t('admin.accounts.suspended')
                                                 : isAdmin
-                                                  ? 'Administrateur'
-                                                  : 'Utilisateur'}
+                                                  ? t('admin.accounts.administrator')
+                                                  : t('admin.accounts.user')}
                                         </span>
 
                                         <div className="flex items-center justify-end gap-2 shrink-0 w-[272px]">
@@ -188,7 +191,7 @@ export default function AdminPage() {
                                                 }
                                                 className="h-8 px-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-medium transition"
                                             >
-                                                {isAdmin ? 'Retirer le rôle' : 'Nommer admin'}
+                                                {isAdmin ? t('admin.accounts.removeRole') : t('admin.accounts.makeAdmin')}
                                             </button>
 
                                             {!isMe && (
@@ -206,7 +209,7 @@ export default function AdminPage() {
                                                             : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
                                                     }`}
                                                 >
-                                                    {account.suspended ? 'Réactiver' : 'Suspendre'}
+                                                    {account.suspended ? t('admin.accounts.restore') : t('admin.accounts.suspend')}
                                                 </button>
                                             )}
 
@@ -214,8 +217,8 @@ export default function AdminPage() {
                                                 <button
                                                     onClick={() => setDeleting(account)}
                                                     className="h-8 w-8 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition flex items-center justify-center"
-                                                    aria-label={`Supprimer le compte de ${account.username}`}
-                                                    title="Supprimer définitivement"
+                                                    aria-label={t('admin.accounts.deleteLabel', { name: account.username })}
+                                                    title={t('admin.accounts.deleteForever')}
                                                 >
                                                     <svg viewBox="0 0 24 24" className="w-[16px] h-[16px]" fill="none"
                                                          stroke="currentColor" strokeWidth="2" strokeLinecap="round"
@@ -271,55 +274,31 @@ export default function AdminPage() {
 }
 
 function dialogTitle(pending: Pending, isMe: boolean): string {
+    const name = pending.account.username
     if (pending.kind === 'suspend') {
-        return pending.suspended
-            ? `Suspendre ${pending.account.username} ?`
-            : `Réactiver ${pending.account.username} ?`
+        return pending.suspended ? i18n.t('admin.dialog.suspendTitle', { name }) : i18n.t('admin.dialog.restoreTitle', { name })
     }
-    if (pending.role === 'ADMIN') return `Nommer ${pending.account.username} administrateur ?`
-    return isMe ? 'Abandonner ton rôle d’administrateur ?' : `Retirer le rôle à ${pending.account.username} ?`
+    if (pending.role === 'ADMIN') return i18n.t('admin.dialog.makeAdminTitle', { name })
+    return isMe ? i18n.t('admin.dialog.dropOwnRoleTitle') : i18n.t('admin.dialog.removeRoleTitle', { name })
 }
 
 function dialogBody(pending: Pending, isMe: boolean) {
-    if (pending.kind === 'suspend') {
-        return pending.suspended ? (
-            <>
-                <strong>{pending.account.username}</strong> ne pourra plus se connecter, et sa session en
-                cours s’arrêtera immédiatement. Ses projets, ses tâches et ses messages restent en place,
-                et tu peux le réactiver à tout moment.
-            </>
-        ) : (
-            <>
-                <strong>{pending.account.username}</strong> pourra de nouveau se connecter et retrouvera
-                tout ce qu’il avait.
-            </>
-        )
-    }
-
-    if (pending.role === 'ADMIN') {
-        return (
-            <>
-                <strong>{pending.account.username}</strong> pourra voir tous les comptes, nommer d’autres
-                administrateurs et suspendre un compte. Cela ne lui donne aucun accès aux projets dont il
-                n’est pas membre.
-            </>
-        )
-    }
-
-    return isMe ? (
-        <>
-            Tu perdras l’accès à cette page immédiatement. Il faudra qu’un autre administrateur te
-            renomme pour revenir.
-        </>
-    ) : (
-        <>
-            <strong>{pending.account.username}</strong> gardera son compte et ses projets, mais perdra
-            l’accès à l’administration dès maintenant.
-        </>
-    )
+    const key =
+        pending.kind === 'suspend'
+            ? pending.suspended
+                ? 'admin.dialog.suspendBody'
+                : 'admin.dialog.restoreBody'
+            : pending.role === 'ADMIN'
+              ? 'admin.dialog.makeAdminBody'
+              : isMe
+                ? 'admin.dialog.dropOwnRoleBody'
+                : 'admin.dialog.removeRoleBody'
+    return <Trans i18nKey={key} values={{ name: pending.account.username }} components={{ strong: <strong /> }} />
 }
 
 function dialogConfirm(pending: Pending): string {
-    if (pending.kind === 'suspend') return pending.suspended ? 'Suspendre' : 'Réactiver'
-    return pending.role === 'ADMIN' ? 'Nommer administrateur' : 'Retirer le rôle'
+    if (pending.kind === 'suspend') {
+        return pending.suspended ? i18n.t('admin.dialog.suspend') : i18n.t('admin.dialog.restore')
+    }
+    return pending.role === 'ADMIN' ? i18n.t('admin.dialog.makeAdmin') : i18n.t('admin.dialog.removeRole')
 }

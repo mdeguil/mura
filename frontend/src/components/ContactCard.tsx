@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import ProjectInviteMenu from './ProjectInviteMenu'
 import UserAvatar, { SuspendedPill } from './UserAvatar'
@@ -29,6 +30,7 @@ export default function ContactCard({
     /** Asks to take the person out of the carnet. */
     onRemove: () => void
 }) {
+    const { t } = useTranslation()
     return (
         <li
             className="flex items-start gap-3 bg-surface border border-border rounded-xl px-4 py-3"
@@ -66,19 +68,19 @@ export default function ContactCard({
                     </ul>
                 ) : (
                     <p className="text-xs text-slate-400 mt-2 italic">
-                        Aucun projet en commun pour l'instant.
+                        {t('contact.noSharedProject')}
                     </p>
                 )}
             </div>
             <div className="flex items-center gap-2 shrink-0 mt-0.5">
                 <span className="text-xs text-slate-400">
                     {person.pending
-                        ? 'En attente'
+                        ? t('contact.pending')
                         : person.sharedProjects.length > 0
-                          ? `${person.sharedProjects.length} projet${person.sharedProjects.length > 1 ? 's' : ''}`
+                          ? t('contact.projects', { count: person.sharedProjects.length })
                           : person.saved
-                            ? 'Ajouté'
-                            : 'Invitation'}
+                            ? t('contact.saved')
+                            : t('contact.invitation')}
                 </span>
                 {!person.pending && (
                     <ProjectInviteMenu
@@ -97,13 +99,13 @@ export default function ContactCard({
                     }`}
                     title={
                         person.favourite
-                            ? 'Retirer des favoris'
-                            : 'Mettre en favori'
+                            ? t('contact.unfavourite')
+                            : t('contact.favourite')
                     }
                     aria-label={
                         person.favourite
-                            ? `Retirer ${person.username} des favoris`
-                            : `Mettre ${person.username} en favori`
+                            ? t('contact.unfavouriteName', { name: person.username })
+                            : t('contact.favouriteName', { name: person.username })
                     }
                 >
                     {person.favourite ? '★' : '☆'}
@@ -111,8 +113,8 @@ export default function ContactCard({
                 <button
                     onClick={onRemove}
                     className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
-                    title="Retirer de mon carnet"
-                    aria-label={`Retirer ${person.username} de mon carnet`}
+                    title={t('contact.remove')}
+                    aria-label={t('contact.removeName', { name: person.username })}
                 >
                     <svg
                         viewBox="0 0 24 24"

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useTheme } from '../hooks/useTheme'
 
 /**
@@ -6,8 +7,9 @@ import { useTheme } from '../hooks/useTheme'
  * dark, a moon in the light.
  */
 export default function ThemeToggle() {
+    const { t } = useTranslation()
     const { theme, toggle } = useTheme()
-    const label = theme === 'dark' ? 'Passer en thème clair' : 'Passer en thème sombre'
+    const label = theme === 'dark' ? t('theme.toLight') : t('theme.toDark')
 
     return (
         <button

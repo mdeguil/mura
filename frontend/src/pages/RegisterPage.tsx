@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next'
 import React, { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../services/api'
@@ -19,6 +20,7 @@ type Field = 'username' | 'email' | 'password' | 'confirmPassword'
  * screen.
  */
 export default function RegisterPage() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const setAuth = useAuthStore((s) => s.setAuth)
     const [username, setUsername] = useState('')
@@ -57,19 +59,19 @@ export default function RegisterPage() {
         if (!usernameOk) {
             return fail(
                 username.trim().length < 3
-                    ? "Le nom d'utilisateur doit contenir au moins 3 caractères."
-                    : "Le nom d'utilisateur accepte les lettres, chiffres, point, tiret et underscore, sans espace.",
+                    ? t('auth.register.usernameTooShort')
+                    : t('auth.register.usernameInvalid'),
                 'username'
             )
         }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-            return fail("Cette adresse email n'a pas l'air valide.", 'email')
+            return fail(t('auth.register.emailInvalid'), 'email')
         }
         if (!passwordOk) {
-            return fail('Ton mot de passe ne remplit pas encore toutes les conditions.', 'password')
+            return fail(t('auth.passwordIncomplete'), 'password')
         }
         if (!confirmOk) {
-            return fail('Les mots de passe ne correspondent pas.', 'confirmPassword')
+            return fail(t('auth.passwordsMismatch'), 'confirmPassword')
         }
 
         setLoading(true)
@@ -84,7 +86,7 @@ export default function RegisterPage() {
         } catch (err) {
             const field = apiErrorField(err)
             fail(
-                apiErrorMessage(err, 'Impossible de créer le compte. Vérifie tes informations.'),
+                apiErrorMessage(err, t('auth.register.failed')),
                 field === 'username' || field === 'email' || field === 'password' ? field : null
             )
         } finally {
@@ -115,56 +117,55 @@ export default function RegisterPage() {
                         <span className="text-xl font-semibold text-slate-800">Mura</span>
                     </div>
 
-                    <h1 className="text-xl font-semibold text-slate-800 mb-1">Créer un compte ✨</h1>
-                    <p className="text-sm text-slate-500 mb-6">Rejoins Mura pour organiser tes projets</p>
+                    <h1 className="text-xl font-semibold text-slate-800 mb-1">{t('auth.register.title')}</h1>
+                    <p className="text-sm text-slate-500 mb-6">{t('auth.register.subtitle')}</p>
 
                     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
                         <div>
                             <label htmlFor="username" className="block text-xs font-medium text-slate-600 mb-1.5">
-                                Nom d'utilisateur
+                                {t('auth.register.username')}
                             </label>
                             <input
                                 id="username"
                                 type="text"
                                 value={username}
                                 onChange={(e) => edit(setUsername)(e.target.value)}
-                                placeholder="toncompte"
+                                placeholder={t('auth.register.usernamePlaceholder')}
                                 autoComplete="username"
                                 maxLength={50}
                                 className={inputClass('username')}
                             />
                             {fieldError('username') ?? (
                                 <p className="text-xs text-slate-400 mt-1.5">
-                                    C'est le nom que les autres verront sur tes projets. Lettres, chiffres,
-                                    point, tiret et underscore.
+                                    {t('auth.register.usernameHint')}
                                 </p>
                             )}
                         </div>
 
                         <div>
                             <label htmlFor="email" className="block text-xs font-medium text-slate-600 mb-1.5">
-                                Adresse email
+                                {t('auth.email')}
                             </label>
                             <input
                                 id="email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => edit(setEmail)(e.target.value)}
-                                placeholder="toi@exemple.com"
+                                placeholder={t('common.emailPlaceholder')}
                                 autoComplete="email"
                                 maxLength={255}
                                 className={inputClass('email')}
                             />
                             {fieldError('email') ?? (
                                 <p className="text-xs text-slate-400 mt-1.5">
-                                    C'est avec cet email qu'on t'invitera sur un projet.
+                                    {t('auth.register.emailHint')}
                                 </p>
                             )}
                         </div>
 
                         <div>
                             <label htmlFor="password" className="block text-xs font-medium text-slate-600 mb-1.5">
-                                Mot de passe
+                                {t('auth.password')}
                             </label>
                             <PasswordInput
                                 id="password"
@@ -182,7 +183,7 @@ export default function RegisterPage() {
                                 htmlFor="confirmPassword"
                                 className="block text-xs font-medium text-slate-600 mb-1.5"
                             >
-                                Confirmer le mot de passe
+                                {t('auth.confirmPassword')}
                             </label>
                             <PasswordInput
                                 id="confirmPassword"
@@ -199,8 +200,8 @@ export default function RegisterPage() {
                                         }`}
                                     >
                                         {confirmOk
-                                            ? 'Les deux mots de passe correspondent.'
-                                            : 'Les deux mots de passe ne correspondent pas encore.'}
+                                            ? t('auth.passwordsMatch')
+                                            : t('auth.passwordsDiffer')}
                                     </p>
                                 ))}
                         </div>
@@ -216,23 +217,23 @@ export default function RegisterPage() {
                             disabled={loading}
                             className="mt-1 h-10 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                         >
-                            {loading ? 'Création…' : 'Créer mon compte'}
+                            {loading ? t('auth.register.submitting') : t('auth.register.submit')}
                         </button>
                     </form>
 
                     <p className="text-xs text-slate-500 mt-4">
-                        Mura conserve ton nom d'utilisateur, ton adresse e-mail et ton mot de passe haché pour
-                        faire fonctionner ton compte. Le détail, et tes droits, sont dans la{' '}
-                        <Link to="/confidentialite" className="text-brand-700 underline underline-offset-2">
-                            politique de confidentialité
-                        </Link>
-                        .
+                        <Trans
+                            i18nKey="auth.register.privacy"
+                            components={{
+                                anchor: <Link to="/confidentialite" className="text-brand-700 underline underline-offset-2" />,
+                            }}
+                        />
                     </p>
 
                     <p className="text-center text-sm text-slate-500 mt-5">
-                        Déjà un compte ?{' '}
+                        {t('auth.register.hasAccount')}{' '}
                         <Link to="/login" className="text-brand-600 font-medium hover:text-brand-700">
-                            Se connecter
+                            {t('auth.register.signIn')}
                         </Link>
                     </p>
                 </div>

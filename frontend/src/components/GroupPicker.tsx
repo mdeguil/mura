@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useRef, useState } from 'react'
 import UserAvatar, { SuspendedPill } from './UserAvatar'
 import { useApiQuery } from '../hooks/useApiQuery'
@@ -48,7 +49,8 @@ export default function GroupPicker({
     /** Called with the chosen group, or null, whenever the choice changes. */
     onChange: (selection: GroupSelection | null) => void
 }) {
-    const { data: groups, loading, error } = useApiQuery<Group[]>('/groups', [], 'Impossible de charger tes groupes.')
+    const { t } = useTranslation()
+    const { data: groups, loading, error } = useApiQuery<Group[]>('/groups', [], t('groups.loadGroups'))
     const [groupId, setGroupId] = useState('')
 
     const group = groups.find((g) => g.id === groupId) ?? null
@@ -56,8 +58,8 @@ export default function GroupPicker({
     function reasonLeftOut(person: GroupMember): string | null {
         const own = leftOut(person)
         if (own) return own
-        if (person.onHold) return 'En retrait'
-        if (person.suspended) return 'Suspendu'
+        if (person.onHold) return t('groups.onHold')
+        if (person.suspended) return t('people.suspended')
         return null
     }
 
@@ -82,7 +84,7 @@ export default function GroupPicker({
         onChangeRef.current(group ? { groupId: group.id, groupName: group.name, joiningCount: joining.length } : null)
     }, [group, joining.length])
 
-    if (loading) return <p className="text-xs text-slate-500">Chargement de tes groupes…</p>
+    if (loading) return <p className="text-xs text-slate-500">{t('groups.picker.loading')}</p>
 
     if (error) {
         return (
@@ -95,8 +97,7 @@ export default function GroupPicker({
     if (groups.length === 0) {
         return (
             <p className="text-xs text-slate-500">
-                Tu ne fais partie d'aucun groupe pour l'instant. Les groupes sont créés par un
-                administrateur, et leur gérant y ajoute les personnes.
+                {t('groups.picker.none')}
             </p>
         )
     }
@@ -104,7 +105,7 @@ export default function GroupPicker({
     return (
         <div>
             <p id="group-picker-label" className="text-xs font-medium text-slate-600 mb-1.5">
-                Quel groupe ?
+                {t('groups.picker.which')}
             </p>
             <ul
                 role="radiogroup"
@@ -139,7 +140,7 @@ export default function GroupPicker({
                                         {g.name}
                                     </span>
                                     <span className="block text-[11px] text-slate-400 truncate">
-                                        {g.owned ? 'tu le gères' : `géré par ${g.owner.username}`}
+                                        {g.owned ? t('groups.youManage') : t('groups.managedBy', { name: g.owner.username })}
                                     </span>
                                 </span>
                                 <span
@@ -150,10 +151,8 @@ export default function GroupPicker({
                                     }`}
                                     title={
                                         count === 0
-                                            ? 'Personne à ajouter dans ce groupe'
-                                            : `${count} personne${count > 1 ? 's' : ''} rejoindr${
-                                                  count > 1 ? 'ont' : 'a'
-                                              } le projet`
+                                            ? t('groups.picker.nobody')
+                                            : t('groups.picker.joining', { count })
                                     }
                                 >
                                     👥 {count}
@@ -180,7 +179,7 @@ export default function GroupPicker({
                                             <span className="truncate">{person.username}</span>
                                             {person.suspended && <SuspendedPill />}
                                         </span>
-                                        {reason && reason !== 'Suspendu' && (
+                                        {reason && reason !== t('people.suspended') && (
                                             <span className="text-[10px] text-slate-400 shrink-0">{reason}</span>
                                         )}
                                     </li>
@@ -190,10 +189,8 @@ export default function GroupPicker({
                     )}
                     <p className="text-xs text-slate-500 mt-2">
                         {joining.length === 0
-                            ? 'Personne à ajouter dans ce groupe.'
-                            : `${joining.length} personne${joining.length > 1 ? 's' : ''} rejoindr${
-                                  joining.length > 1 ? 'ont' : 'a'
-                              } le projet.`}
+                            ? t('groups.picker.nobody') + '.'
+                            : t('groups.picker.joining', { count: joining.length }) + '.'}
                         {allowNone && (
                             <>
                                 {' '}
@@ -202,7 +199,7 @@ export default function GroupPicker({
                                     onClick={() => setGroupId('')}
                                     className="text-brand-600 hover:text-brand-700 underline-offset-2 hover:underline"
                                 >
-                                    Retirer le groupe
+                                    {t('groups.picker.remove')}
                                 </button>
                             </>
                         )}

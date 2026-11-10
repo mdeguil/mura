@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect } from 'react'
 import { useProjectTypes } from '../hooks/useProjectTypes'
 import { PROJECT_COLORS, projectGlassBackground } from '../utils/color'
@@ -41,6 +42,7 @@ export default function ProjectFormFields({
     /** Puts the focus on the name. */
     autoFocus?: boolean
 }) {
+    const { t } = useTranslation()
     const { types, loading: loadingTypes, error: typesError } = useProjectTypes()
 
     useEffect(() => {
@@ -52,12 +54,12 @@ export default function ProjectFormFields({
     return (
         <>
             <div>
-                <label className={LABEL}>Nom</label>
+                <label className={LABEL}>{t('projectForm.name')}</label>
                 <input
                     type="text"
                     value={values.name}
                     onChange={(e) => onChange({ name: e.target.value })}
-                    placeholder="Mon nouveau projet"
+                    placeholder={t('projectForm.namePlaceholder')}
                     required
                     maxLength={255}
                     autoFocus={autoFocus}
@@ -67,14 +69,14 @@ export default function ProjectFormFields({
 
             <div className="grid grid-cols-2 gap-3">
                 <div>
-                    <label className={LABEL}>Type</label>
+                    <label className={LABEL}>{t('projectForm.type')}</label>
                     <select
                         value={values.typeId}
                         onChange={(e) => onChange({ typeId: e.target.value })}
                         disabled={loadingTypes}
                         className={FIELD}
                     >
-                        {loadingTypes && <option value="">Chargement…</option>}
+                        {loadingTypes && <option value="">{t('common.loading')}</option>}
                         {types.map((t) => (
                             <option key={t.id} value={t.id}>
                                 {t.emoji} {t.label}
@@ -88,7 +90,7 @@ export default function ProjectFormFields({
                     )}
                 </div>
                 <div>
-                    <label className={LABEL}>Date de début</label>
+                    <label className={LABEL}>{t('projectForm.startDate')}</label>
                     <input
                         type="date"
                         value={values.startDate}
@@ -99,11 +101,11 @@ export default function ProjectFormFields({
             </div>
 
             <div>
-                <label className={LABEL}>Description (optionnel)</label>
+                <label className={LABEL}>{t('projectForm.description')}</label>
                 <textarea
                     value={values.description}
                     onChange={(e) => onChange({ description: e.target.value })}
-                    placeholder="De quoi parle ce projet ?"
+                    placeholder={t('projectForm.descriptionPlaceholder')}
                     rows={5}
                     maxLength={2000}
                     className="w-full rounded-lg border border-border-strong bg-surface-muted px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-brand-500 transition resize-none"
@@ -127,9 +129,10 @@ export function ColorPicker({
     /** Called with the swatch clicked. */
     onChange: (color: string) => void
 }) {
+    const { t } = useTranslation()
     return (
         <div>
-            <label className={LABEL}>Couleur</label>
+            <label className={LABEL}>{t('projectForm.color')}</label>
             <div className="flex gap-2">
                 {PROJECT_COLORS.map((c) => (
                     <button

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import api from '../services/api'
 import { apiErrorField, apiErrorMessage } from '../utils/apiError'
@@ -22,10 +23,11 @@ export default function DeleteOwnAccountDialog({
     /** Called once the server has deleted the account. */
     onDeleted: () => void
 }) {
+    const { t } = useTranslation()
     const { data: preview, error: previewError } = useApiQuery<AccountDeletionPreview | null>(
         '/auth/me/deletion-preview',
         null,
-        'Impossible de préparer la suppression.'
+        t('account.deleteDialog.previewFailed')
     )
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
@@ -43,7 +45,7 @@ export default function DeleteOwnAccountDialog({
             onDeleted()
         } catch (err) {
             setPasswordWrong(apiErrorField(err) === 'password')
-            setError(apiErrorMessage(err, 'Impossible de supprimer ton compte.'))
+            setError(apiErrorMessage(err, t('account.deleteDialog.failed')))
             setLoading(false)
         }
     }
@@ -54,11 +56,10 @@ export default function DeleteOwnAccountDialog({
 
             <div className="px-6 pt-5 pb-4 border-b border-border">
                 <h2 id="delete-own-title" className="text-base font-semibold text-slate-800">
-                    Supprimer ton compte ?
+                    {t('account.deleteDialog.title')}
                 </h2>
                 <p className="text-sm text-slate-500 mt-0.5">
-                    C'est définitif : ni toi ni un administrateur ne pourrez le récupérer. Pense à
-                    télécharger tes données avant.
+                    {t('account.deleteDialog.body')}
                 </p>
             </div>
 
@@ -69,7 +70,7 @@ export default function DeleteOwnAccountDialog({
                 }}
             >
                 <div className="px-6 py-5 max-h-[50vh] overflow-y-auto">
-                    {!preview && !previewError && <p className="text-sm text-slate-500">Vérification en cours…</p>}
+                    {!preview && !previewError && <p className="text-sm text-slate-500">{t('account.deleteDialog.checking')}</p>}
 
                     {preview && (
                         <>
@@ -80,7 +81,7 @@ export default function DeleteOwnAccountDialog({
                                     htmlFor="delete-own-password"
                                     className="block text-xs font-medium text-slate-600 mb-1.5"
                                 >
-                                    Ton mot de passe, pour confirmer
+                                    {t('account.deleteDialog.password')}
                                 </label>
                                 <PasswordInput
                                     id="delete-own-password"
@@ -106,14 +107,14 @@ export default function DeleteOwnAccountDialog({
                         onClick={onClose}
                         className="h-9 px-4 rounded-lg text-sm font-medium text-slate-600 hover:bg-surface transition"
                     >
-                        Annuler
+                        {t('common.cancel')}
                     </button>
                     <button
                         type="submit"
                         disabled={!password || loading || !preview}
                         className="h-9 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition disabled:opacity-40 disabled:hover:bg-red-500"
                     >
-                        {loading ? 'Suppression…' : 'Supprimer définitivement mon compte'}
+                        {loading ? t('account.deleteDialog.submitting') : t('account.deleteDialog.submit')}
                     </button>
                 </div>
             </form>

@@ -1,11 +1,11 @@
 import axios from 'axios'
+import i18n from '../i18n'
 
 /**
  * What to tell the reader about a failed request. The backend answers every
- * failure with `{ message }`, and those messages are written for the person
- * reading them ("Cet email est déjà utilisé."), so they beat anything the
- * caller could invent. The one case it cannot speak for is the request
- * never arriving.
+ * failure with `{ message }`, written for the person reading it and in the
+ * language the request asked for, so it beats anything the caller could
+ * invent. The one case it cannot speak for is the request never arriving.
  *
  * @param err whatever the request rejected with
  * @param fallback what to say when the server gave no message
@@ -15,7 +15,7 @@ export function apiErrorMessage(err: unknown, fallback: string): string {
     if (!axios.isAxiosError(err)) return fallback
 
     if (!err.response) {
-        return 'Serveur injoignable. Vérifie ta connexion et réessaie.'
+        return i18n.t('common.unreachable')
     }
 
     return (err.response.data as { message?: string } | undefined)?.message || fallback

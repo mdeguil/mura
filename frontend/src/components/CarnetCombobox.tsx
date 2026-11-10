@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useApiQuery } from '../hooks/useApiQuery'
 import UserAvatar from './UserAvatar'
@@ -20,7 +21,7 @@ export default function CarnetCombobox({
     onPick,
     excludeIds = [],
     excludeEmails = [],
-    placeholder = 'Nom ou email…',
+    placeholder,
     autoFocus = false,
     onEscape,
     className = '',
@@ -47,6 +48,7 @@ export default function CarnetCombobox({
     /** For a `<label htmlFor>` outside the field. */
     id?: string
 }) {
+    const { t } = useTranslation()
     const { data: people } = useApiQuery<KnownUser[]>('/directory', [], '')
     const [open, setOpen] = useState(false)
     const [highlighted, setHighlighted] = useState(0)
@@ -137,7 +139,7 @@ export default function CarnetCombobox({
                 }}
                 onFocus={() => setOpen(true)}
                 onKeyDown={onKeyDown}
-                placeholder={placeholder}
+                placeholder={placeholder ?? t('people.searchPlaceholder')}
                 autoFocus={autoFocus}
                 autoComplete="off"
                 role="combobox"
@@ -173,7 +175,7 @@ export default function CarnetCombobox({
                                     <span className="block text-xs text-slate-700 truncate">
                                         {person.username}
                                         {person.suspended && (
-                                            <span className="text-red-500"> · suspendu</span>
+                                            <span className="text-red-500"> · {t('people.suspendedInline')}</span>
                                         )}
                                     </span>
                                     <span className="block text-[10px] text-slate-400 truncate">

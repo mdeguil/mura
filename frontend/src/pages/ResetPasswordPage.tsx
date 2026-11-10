@@ -1,3 +1,5 @@
+import LegalLinks from '../components/LegalLinks'
+import { useTranslation } from 'react-i18next'
 import React, { useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
@@ -12,6 +14,7 @@ import Logo from '../components/Logo'
  * checked against the server's rules, set with the token from the link.
  */
 export default function ResetPasswordPage() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const [params] = useSearchParams()
     const token = params.get('token') ?? ''
@@ -31,11 +34,11 @@ export default function ResetPasswordPage() {
         setError('')
 
         if (!passwordOk) {
-            setError('Ton mot de passe ne remplit pas encore toutes les conditions.')
+            setError(t('auth.passwordIncomplete'))
             return
         }
         if (!confirmOk) {
-            setError('Les deux mots de passe ne correspondent pas.')
+            setError(t('auth.passwordsMismatch'))
             return
         }
 
@@ -45,7 +48,7 @@ export default function ResetPasswordPage() {
             setDone(true)
             setTimeout(() => navigate('/login'), 2200)
         } catch (err) {
-            setError(apiErrorMessage(err, "Le mot de passe n'a pas pu être changé."))
+            setError(apiErrorMessage(err, t('auth.reset.failed')))
         } finally {
             setLoading(false)
         }
@@ -62,34 +65,33 @@ export default function ResetPasswordPage() {
 
                     {!token ? (
                         <>
-                            <h1 className="text-xl font-semibold text-slate-800 mb-1">Lien incomplet</h1>
+                            <h1 className="text-xl font-semibold text-slate-800 mb-1">{t('auth.reset.incompleteTitle')}</h1>
                             <p className="text-sm text-slate-500">
-                                Cette adresse ne porte aucun jeton. Ouvre le lien directement depuis le
-                                mail, ou demandes-en un nouveau.
+                                {t('auth.reset.incomplete')}
                             </p>
                             <Link
                                 to="/mot-de-passe-oublie"
                                 className="inline-block text-sm text-brand-600 font-medium hover:text-brand-700 mt-5"
                             >
-                                Demander un nouveau lien
+                                {t('auth.reset.newLink')}
                             </Link>
                         </>
                     ) : done ? (
                         <>
                             <h1 className="text-xl font-semibold text-slate-800 mb-1">
-                                Mot de passe changé ✅
+                                {t('auth.reset.doneTitle')}
                             </h1>
                             <p className="text-sm text-slate-500">
-                                Tu peux te connecter avec le nouveau. On t'y emmène…
+                                {t('auth.reset.done')}
                             </p>
                         </>
                     ) : (
                         <>
                             <h1 className="text-xl font-semibold text-slate-800 mb-1">
-                                Choisis un nouveau mot de passe
+                                {t('auth.reset.title')}
                             </h1>
                             <p className="text-sm text-slate-500 mb-6">
-                                Il remplacera l'ancien immédiatement.
+                                {t('auth.reset.subtitle')}
                             </p>
 
                             <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
@@ -98,7 +100,7 @@ export default function ResetPasswordPage() {
                                         htmlFor="password"
                                         className="block text-xs font-medium text-slate-600 mb-1.5"
                                     >
-                                        Nouveau mot de passe
+                                        {t('auth.reset.newPassword')}
                                     </label>
                                     <PasswordInput
                                         id="password"
@@ -117,7 +119,7 @@ export default function ResetPasswordPage() {
                                         htmlFor="confirmPassword"
                                         className="block text-xs font-medium text-slate-600 mb-1.5"
                                     >
-                                        Confirmer le mot de passe
+                                        {t('auth.confirmPassword')}
                                     </label>
                                     <PasswordInput
                                         id="confirmPassword"
@@ -135,8 +137,8 @@ export default function ResetPasswordPage() {
                                             }`}
                                         >
                                             {confirmOk
-                                                ? 'Les deux mots de passe correspondent.'
-                                                : 'Les deux mots de passe ne correspondent pas encore.'}
+                                                ? t('auth.passwordsMatch')
+                                                : t('auth.passwordsDiffer')}
                                         </p>
                                     )}
                                 </div>
@@ -152,12 +154,14 @@ export default function ResetPasswordPage() {
                                     disabled={loading}
                                     className="mt-1 h-10 rounded-lg bg-brand-gradient hover:opacity-90 text-white text-sm font-medium transition disabled:opacity-60"
                                 >
-                                    {loading ? 'Changement…' : 'Changer mon mot de passe'}
+                                    {loading ? t('auth.reset.submitting') : t('auth.reset.submit')}
                                 </button>
                             </form>
                         </>
                     )}
                 </div>
+
+                <LegalLinks className="mt-6" />
             </div>
         </div>
     )
