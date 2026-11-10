@@ -13,6 +13,12 @@
 </p>
 
 <p align="center">
+  🌐 <a href="https://mura.novadev-studio.fr">mura.novadev-studio.fr</a>
+  &nbsp;·&nbsp;
+  <strong>English</strong> | <a href="README.fr.md">Français</a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/license-Mura%201.0-blue.svg" alt="License: Mura 1.0">
   <img src="https://img.shields.io/badge/backend-Spring%20Boot-green.svg" alt="Backend: Spring Boot">
   <img src="https://img.shields.io/badge/frontend-React-61DAFB.svg" alt="Frontend: React">
@@ -38,7 +44,7 @@ The interface is in French.
 
 ![The planning of a project as a Gantt chart, in the light theme](docs/screenshots/planning-gantt.png)
 
-Mura is made to be installed by the people who use it: there is no hosted version, and nobody else sees what you put in it. Sign-up confirms every address by e-mail, sign-ins are rate-limited, and HTTPS takes one line of configuration.
+Mura is made to be installed by the people who use it: each instance belongs to whoever runs it, and nobody else sees what is put in it. Sign-up confirms every address by e-mail, sign-ins are rate-limited, and HTTPS takes one line of configuration.
 
 ## 🚀 Getting Started
 
