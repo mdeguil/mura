@@ -3,7 +3,6 @@ export const fr = {
     language: {
         fr: 'Français',
         en: 'English',
-        switchTo: 'Passer en français',
         choose: 'Langue',
     },
     nav: {
@@ -36,7 +35,6 @@ export const en: typeof fr = {
     language: {
         fr: 'Français',
         en: 'English',
-        switchTo: 'Switch to English',
         choose: 'Language',
     },
     nav: {

@@ -25,8 +25,8 @@ async function choose(language: Language) {
  * Switches the interface between French and English. The choice is kept on
  * this device, like the theme, and on the account of whoever is signed in.
  *
- * Two looks: `compact`, one button in the top bar that shows the language a
- * click leads to (as the theme switch shows the theme it leads to); and
+ * Two looks: `compact`, a switch in the top bar whose coloured thumb sits
+ * under the language in use, so where you are is plain at a glance; and
  * `list`, every language side by side in the footer, the current one marked.
  *
  * @param props which look to use
@@ -41,19 +41,35 @@ export default function LanguageSwitch({
     const current = currentLanguage()
 
     if (variant === 'compact') {
-        const next: Language = current === 'fr' ? 'en' : 'fr'
-        const label = t('language.switchTo', { lng: next })
         return (
-            <button
-                type="button"
-                onClick={() => void choose(next)}
-                title={label}
-                aria-label={label}
-                lang={next}
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-semibold text-slate-500 hover:bg-surface-muted transition"
+            <div
+                role="group"
+                aria-label={t('language.choose')}
+                className="relative grid grid-cols-2 h-8 w-[4.5rem] rounded-full bg-surface-muted border border-border p-0.5"
             >
-                {next.toUpperCase()}
-            </button>
+                <span
+                    aria-hidden="true"
+                    className={`absolute top-0.5 bottom-0.5 left-0.5 w-[calc(50%-2px)] rounded-full bg-brand-500 shadow-sm transition-transform duration-200 ${
+                        current === 'en' ? 'translate-x-full' : ''
+                    }`}
+                />
+                {LANGUAGES.map((language) => (
+                    <button
+                        key={language}
+                        type="button"
+                        lang={language}
+                        title={t(`language.${language}`)}
+                        aria-label={t(`language.${language}`)}
+                        aria-pressed={language === current}
+                        onClick={() => void choose(language)}
+                        className={`relative rounded-full text-[11px] font-semibold transition-colors ${
+                            language === current ? 'text-ink' : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                    >
+                        {language.toUpperCase()}
+                    </button>
+                ))}
+            </div>
         )
     }
 

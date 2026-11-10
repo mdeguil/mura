@@ -51,14 +51,19 @@ describe('languages', () => {
         expect(link).toHaveAttribute('rel', 'noopener noreferrer')
     })
 
-    it('names the language a click on the top-bar button leads to, in that language', async () => {
+    it('shows on the top-bar switch which language is in use', async () => {
         render(<LanguageSwitch variant="compact" />)
 
-        const button = screen.getByRole('button', { name: 'Switch to English' })
-        expect(button).toHaveTextContent('EN')
+        const french = screen.getByRole('button', { name: 'Français' })
+        const english = screen.getByRole('button', { name: 'English' })
+        expect(french).toHaveTextContent('FR')
+        expect(french).toHaveAttribute('aria-pressed', 'true')
+        expect(english).toHaveAttribute('aria-pressed', 'false')
 
-        await userEvent.click(button)
-        expect(screen.getByRole('button', { name: 'Passer en français' })).toHaveTextContent('FR')
+        await userEvent.click(english)
+        expect(screen.getByRole('button', { name: 'English' })).toHaveAttribute('aria-pressed', 'true')
+        expect(screen.getByRole('button', { name: 'Français' })).toHaveAttribute('aria-pressed', 'false')
+        expect(screen.getByRole('group', { name: 'Language' })).toBeInTheDocument()
     })
 
     it('opens in the language saved on this device, then follows the browser', () => {
@@ -72,11 +77,11 @@ describe('languages', () => {
 
     it('tells the signed-in account, so its mails follow, and nobody else', async () => {
         render(<LanguageSwitch variant="compact" />)
-        await userEvent.click(screen.getByRole('button', { name: 'Switch to English' }))
+        await userEvent.click(screen.getByRole('button', { name: 'English' }))
         expect(api.put).not.toHaveBeenCalled()
 
         useAuthStore.getState().setAuth('jwt', account('alice'))
-        await userEvent.click(screen.getByRole('button', { name: 'Passer en français' }))
+        await userEvent.click(screen.getByRole('button', { name: 'Français' }))
         expect(api.put).toHaveBeenCalledWith('/auth/me/language', { language: 'fr' })
         useAuthStore.getState().logout()
     })
