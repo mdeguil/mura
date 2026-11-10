@@ -157,19 +157,19 @@ public class AdminGroupService {
         if (groupRepository.deleteGroupById(groupId) != 1) {
             throw new ApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Ce groupe n'a pas pu être supprimé."
+                    "error.adminGroup.deleteFailed"
             );
         }
     }
 
     private UserGroup require(UUID groupId) {
         return groupRepository.findById(groupId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Ce groupe n'existe pas."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.adminGroup.notFound"));
     }
 
     private User requireUser(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(
-                        HttpStatus.NOT_FOUND, "Ce compte n'existe pas.", "managerId"));
+                        HttpStatus.NOT_FOUND, "error.account.notFound", "managerId"));
     }
 }

@@ -1,5 +1,6 @@
 package io.mura.mail;
 
+import io.mura.common.i18n.Texts;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -13,9 +14,12 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 /**
- * Writes and sends Mura's mails, in French, as HTML. Every mail waits for
+ * Writes and sends Mura's mails, as HTML, in the recipient's language: a
+ * mail goes to someone who did not necessarily cause it, so it is written in
+ * the language of their account, not of the request. Every mail waits for
  * the transaction that asked for it to commit, then leaves off the request
  * thread; a mail that fails to leave is logged, never thrown. What people
  * typed -- names, project names, messages -- is escaped before it goes into
@@ -42,15 +46,15 @@ public class MailService {
      * @param to the address to confirm
      * @param username who to greet
      * @param code the six digits
+     * @param locale the language to write in
      */
-    public void sendVerificationCode(String to, String username, String code) {
-        deliver(to, "Ton code de vérification Mura", body(
-                "Bienvenue, " + escape(username) + " 👋",
-                "<p>Voici le code qui confirme ton adresse :</p>"
+    public void sendVerificationCode(String to, String username, String code, Locale locale) {
+        deliver(to, Texts.get(locale, "mail.code.subject"), body(
+                Texts.get(locale, "mail.code.heading", escape(username)),
+                "<p>" + Texts.get(locale, "mail.code.intro") + "</p>"
                         + "<p style=\"font-size:28px;font-weight:700;letter-spacing:6px;"
                         + "margin:24px 0;color:#1e293b\">" + escape(code) + "</p>"
-                        + "<p style=\"color:#64748b\">Il est valable 15 minutes. "
-                        + "Si tu n'as pas créé de compte Mura, ignore ce message.</p>"
+                        + "<p style=\"color:#64748b\">" + Texts.get(locale, "mail.code.outro") + "</p>"
         ));
     }
 
@@ -61,17 +65,16 @@ public class MailService {
      * @param to the account's address
      * @param username who to greet
      * @param token the value the link carries
+     * @param locale the language to write in
      */
-    public void sendPasswordReset(String to, String username, String token) {
+    public void sendPasswordReset(String to, String username, String token, Locale locale) {
         String link = link("/reset-password?token=" + token);
-        deliver(to, "Réinitialiser ton mot de passe Mura", body(
-                "Mot de passe oublié ?",
-                "<p>Bonjour " + escape(username) + ",</p>"
-                        + "<p>Clique sur le bouton pour choisir un nouveau mot de passe :</p>"
-                        + button(link, "Choisir un nouveau mot de passe")
-                        + "<p style=\"color:#64748b\">Le lien est valable 1 heure et ne sert qu'une "
-                        + "fois. Si tu n'as rien demandé, il n'y a rien à faire : ton mot de passe "
-                        + "actuel reste valable.</p>"
+        deliver(to, Texts.get(locale, "mail.reset.subject"), body(
+                Texts.get(locale, "mail.reset.heading"),
+                "<p>" + Texts.get(locale, "mail.greeting", escape(username)) + "</p>"
+                        + "<p>" + Texts.get(locale, "mail.reset.intro") + "</p>"
+                        + button(link, Texts.get(locale, "mail.reset.button"))
+                        + "<p style=\"color:#64748b\">" + Texts.get(locale, "mail.reset.outro") + "</p>"
                         + "<p style=\"color:#94a3b8;font-size:12px;word-break:break-all\">"
                         + escape(link) + "</p>"
         ));
@@ -92,6 +95,8 @@ public class MailService {
      * @param linkPath where in the app the button leads, such as
      *        {@code /projets}
      * @param linkLabel what the button says
+     * @param locale the language the rest of the mail is written in, the
+     *        same as the texts above
      */
     public void sendNotification(
             String to,
@@ -101,7 +106,8 @@ public class MailService {
             String sentence,
             String message,
             String linkPath,
-            String linkLabel
+            String linkLabel,
+            Locale locale
     ) {
         String note = message == null || message.isBlank()
                 ? ""
@@ -111,7 +117,7 @@ public class MailService {
 
         deliver(to, subject, body(
                 heading,
-                "<p>Bonjour " + escape(username) + ",</p>"
+                "<p>" + Texts.get(locale, "mail.greeting", escape(username)) + "</p>"
                         + "<p>" + escape(sentence) + "</p>"
                         + note
                         + button(link(linkPath), linkLabel)
@@ -125,16 +131,15 @@ public class MailService {
      * @param username who to greet
      * @param inviter the username of whoever sent it
      * @param project the project's name
+     * @param locale the language to write in
      */
-    public void sendProjectInvitation(String to, String username, String inviter, String project) {
-        deliver(to, inviter + " t'invite sur " + project, body(
-                "Une invitation t'attend",
-                "<p>Bonjour " + escape(username) + ",</p>"
-                        + "<p><strong>" + escape(inviter) + "</strong> t'invite à rejoindre le projet "
-                        + "<strong>" + escape(project) + "</strong> sur Mura.</p>"
-                        + button(link("/projets"), "Voir l'invitation")
-                        + "<p style=\"color:#64748b\">Tu la retrouveras aussi dans tes notifications. "
-                        + "Elle expire dans 14 jours.</p>"
+    public void sendProjectInvitation(String to, String username, String inviter, String project, Locale locale) {
+        deliver(to, Texts.get(locale, "mail.invitation.subject", inviter, project), body(
+                Texts.get(locale, "mail.invitation.heading"),
+                "<p>" + Texts.get(locale, "mail.greeting", escape(username)) + "</p>"
+                        + "<p>" + Texts.get(locale, "mail.invitation.body", escape(inviter), escape(project)) + "</p>"
+                        + button(link("/projets"), Texts.get(locale, "mail.invitation.button"))
+                        + "<p style=\"color:#64748b\">" + Texts.get(locale, "mail.invitation.outro") + "</p>"
         ));
     }
 

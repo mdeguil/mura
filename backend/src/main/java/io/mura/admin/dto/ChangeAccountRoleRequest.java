@@ -9,6 +9,6 @@ import jakarta.validation.constraints.NotNull;
  * @param accountRole ADMIN or USER
  */
 public record ChangeAccountRoleRequest(
-        @NotNull(message = "Le rôle est requis.")
+        @NotNull(message = "{validation.role.required}")
         AccountRole accountRole
 ) {}

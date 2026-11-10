@@ -9,8 +9,8 @@ import jakarta.validation.constraints.NotBlank;
  * @param email the account's address, trimmed
  */
 public record ForgotPasswordRequest(
-        @NotBlank(message = "L'email est requis.")
-        @Email(message = "L'email n'est pas valide.")
+        @NotBlank(message = "{validation.email.required}")
+        @Email(message = "{validation.email.invalid}")
         String email
 ) {
     /** Trims the address before the constraints judge it. */

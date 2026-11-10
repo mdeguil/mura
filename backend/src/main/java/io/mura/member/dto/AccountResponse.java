@@ -22,6 +22,7 @@ import java.util.UUID;
  *        the code screen and nothing else until it is
  * @param suspendedAt when it was suspended, or null
  * @param createdAt when it was registered
+ * @param language the language it reads Mura in, {@code fr} or {@code en}
  */
 public record AccountResponse(
         UUID id,
@@ -32,7 +33,8 @@ public record AccountResponse(
         boolean suspended,
         boolean emailVerified,
         Instant suspendedAt,
-        Instant createdAt
+        Instant createdAt,
+        String language
 ) {
     /**
      * Reads an account as the client sees it.
@@ -50,7 +52,8 @@ public record AccountResponse(
                 user.isSuspended(),
                 user.isEmailVerified(),
                 user.getSuspendedAt(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getLanguage()
         );
     }
 }

@@ -1,6 +1,7 @@
 package io.mura.mail;
 
 import io.mura.common.exception.ApiException;
+import io.mura.common.i18n.Texts;
 import io.mura.common.security.WindowCounter;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -84,7 +85,7 @@ public class MailThrottle {
         if (until != null) {
             throw new ApiException(
                     HttpStatus.TOO_MANY_REQUESTS,
-                    "Trop d'e-mails envoyés à cette adresse. " + sends.retryIn(until)
+                    Texts.get("error.mail.tooManyToAddress", sends.retryIn(until))
             );
         }
         sends.hit(recipientKey(recipient));
@@ -103,7 +104,7 @@ public class MailThrottle {
         if (until != null) {
             throw new ApiException(
                     HttpStatus.TOO_MANY_REQUESTS,
-                    "Trop de demandes. " + sends.retryIn(until)
+                    Texts.get("error.mail.tooManyRequests", sends.retryIn(until))
             );
         }
         sends.hit(key);

@@ -123,11 +123,11 @@ public class TaskService {
         Task task = requireTaskInProject(projectId, taskId);
 
         if (!ALLOWED_STATUS_TRANSITIONS.get(task.getStatus()).contains(request.status())) {
-            throw new ApiException(HttpStatus.CONFLICT, "Cette tâche ne peut pas passer à ce statut.");
+            throw new ApiException(HttpStatus.CONFLICT, "error.task.badStatus");
         }
 
         if (request.status() == TaskStatus.TERMINE && task.getSubtasks().stream().anyMatch(s -> !s.isDone())) {
-            throw new ApiException(HttpStatus.CONFLICT, "Toutes les sous-tâches doivent être terminées avant de valider cette tâche.");
+            throw new ApiException(HttpStatus.CONFLICT, "error.task.subtasksFirst");
         }
 
         if (request.status() != task.getStatus()) {
@@ -197,7 +197,7 @@ public class TaskService {
         Task task = requireTaskInProject(projectId, taskId);
 
         if (!task.isArchived()) {
-            throw new ApiException(HttpStatus.CONFLICT, "La tâche doit être archivée avant d'être supprimée.");
+            throw new ApiException(HttpStatus.CONFLICT, "error.task.archiveFirst");
         }
 
         taskRepository.delete(task);
@@ -223,12 +223,12 @@ public class TaskService {
         if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, assigneeId)) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "On ne peut assigner une tâche qu'à un membre du projet."
+                    "error.task.assigneeNotMember"
             );
         }
 
         return userRepository.findById(assigneeId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Utilisateur introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.directory.userNotFound"));
     }
 
     private TaskStatusChange statusChange(Task task, TaskStatus from, TaskStatus to) {
@@ -242,10 +242,10 @@ public class TaskService {
 
     private Task requireTaskInProject(UUID projectId, UUID taskId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Tâche introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.task.notFound"));
 
         if (!task.getProject().getId().equals(projectId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Tâche introuvable.");
+            throw new ApiException(HttpStatus.NOT_FOUND, "error.task.notFound");
         }
 
         return task;

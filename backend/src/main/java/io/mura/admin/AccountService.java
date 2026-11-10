@@ -3,6 +3,7 @@ package io.mura.admin;
 import io.mura.admin.dto.AccountDeletionPreview;
 import io.mura.admin.dto.ChangeAccountRoleRequest;
 import io.mura.common.exception.ApiException;
+import io.mura.common.i18n.Texts;
 import io.mura.group.UserGroup;
 import io.mura.group.UserGroupRepository;
 import io.mura.member.AccountRole;
@@ -113,7 +114,7 @@ public class AccountService {
     public AccountResponse setSuspended(UUID actorId, UUID targetId, boolean suspended) {
         requireAdmin(actorId);
         User target = requireAccount(targetId);
-        refuseActingOnSelf(actorId, targetId, "Tu ne peux pas suspendre ton propre compte.");
+        refuseActingOnSelf(actorId, targetId, "error.account.cannotSuspendSelf");
 
         if (suspended == target.isSuspended()) {
             return AccountResponse.from(target);
@@ -164,13 +165,13 @@ public class AccountService {
      */
     public void requireAdmin(UUID actorId) {
         if (!requireAccount(actorId).getAccountRole().administers()) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Cette page est réservée aux administrateurs.");
+            throw new ApiException(HttpStatus.FORBIDDEN, "error.admin.only");
         }
     }
 
     private User requireAccount(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Ce compte n'existe pas."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.account.notFound"));
     }
 
     private void refuseActingOnSelf(UUID actorId, UUID targetId, String message) {
@@ -188,7 +189,7 @@ public class AccountService {
         if (remaining == 0) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "C'est le dernier administrateur actif. Nomme quelqu'un d'autre avant."
+                    "error.account.lastAdmin"
             );
         }
     }
@@ -263,12 +264,12 @@ public class AccountService {
     public void delete(UUID actorId, UUID targetId) {
         requireAdmin(actorId);
         User target = requireAccount(targetId);
-        refuseActingOnSelf(actorId, targetId, "Tu ne peux pas supprimer ton propre compte.");
+        refuseActingOnSelf(actorId, targetId, "error.account.cannotDeleteSelf");
 
         if (!target.isSuspended()) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Suspends d'abord ce compte. La suppression est définitive."
+                    "error.account.suspendFirst"
             );
         }
 
@@ -293,7 +294,7 @@ public class AccountService {
         User target = requireAccount(userId);
 
         if (!passwordEncoder.matches(password, target.getPassword())) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Mot de passe incorrect.", "password");
+            throw new ApiException(HttpStatus.FORBIDDEN, "error.account.wrongPassword", "password");
         }
         refuseLosingTheLastAdmin(target);
 
@@ -315,7 +316,7 @@ public class AccountService {
                         NotificationType.MEMBER_DELETED,
                         project,
                         target,
-                        "Tu es maintenant propriétaire de ce projet."
+                        Texts.get(successor.getUser().getLocale(), "notification.ownershipTransferred")
                 );
             });
         }

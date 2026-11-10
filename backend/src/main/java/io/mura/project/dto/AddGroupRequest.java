@@ -11,6 +11,6 @@ import java.util.UUID;
  * @param groupId the group, which the caller must belong to
  */
 public record AddGroupRequest(
-        @NotNull(message = "Choisis un groupe.")
+        @NotNull(message = "{validation.group.required}")
         UUID groupId
 ) {}

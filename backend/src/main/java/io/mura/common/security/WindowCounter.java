@@ -1,5 +1,7 @@
 package io.mura.common.security;
 
+import io.mura.common.i18n.Texts;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -81,12 +83,13 @@ public final class WindowCounter {
      * rounded up and never less than one.
      *
      * @param until when the key may act again, from {@link #heldUntil}
-     * @return for example {@code "Réessaie dans 15 minutes."}
+     * @return for example {@code "Réessaie dans 15 minutes."}, in the
+     *         language of the request
      */
     public String retryIn(Instant until) {
         long seconds = Duration.between(clock.instant(), until).toSeconds();
         long minutes = Math.max(1, (seconds + 59) / 60);
-        return "Réessaie dans " + minutes + (minutes == 1 ? " minute." : " minutes.");
+        return Texts.get(minutes == 1 ? "error.retry.minute" : "error.retry.minutes", minutes);
     }
 
     /**

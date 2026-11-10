@@ -3,6 +3,7 @@ package io.mura.auth;
 import io.mura.admin.AccountService;
 import io.mura.admin.dto.AccountDeletionPreview;
 import io.mura.auth.dto.AuthResponse;
+import io.mura.auth.dto.ChangeLanguageRequest;
 import io.mura.auth.dto.DataExport;
 import io.mura.auth.dto.DeleteOwnAccountRequest;
 import io.mura.auth.dto.ForgotPasswordRequest;
@@ -23,6 +24,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -98,6 +100,25 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<AccountResponse> me(@AuthenticationPrincipal UUID userId) {
         return ResponseEntity.ok(authService.me(userId));
+    }
+
+    /**
+     * {@code PUT /api/auth/me/language}: changes the language the account
+     * reads Mura in, when the person switches it on screen. Reachable before
+     * the address is confirmed, so a code asked for again comes in the
+     * language chosen on the code screen.
+     *
+     * @param userId the signed-in account
+     * @param request {@code fr} or {@code en}
+     * @return 200 with the account
+     * @see AuthService#changeLanguage(UUID, String)
+     */
+    @PutMapping("/me/language")
+    public ResponseEntity<AccountResponse> changeLanguage(
+            @AuthenticationPrincipal UUID userId,
+            @Valid @RequestBody ChangeLanguageRequest request
+    ) {
+        return ResponseEntity.ok(authService.changeLanguage(userId, request.language()));
     }
 
     /**

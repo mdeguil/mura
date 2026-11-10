@@ -1,6 +1,7 @@
 package io.mura.project;
 
 import io.mura.common.exception.ApiException;
+import io.mura.common.i18n.Texts;
 import io.mura.mail.MailService;
 import io.mura.member.User;
 import io.mura.member.UserRepository;
@@ -88,7 +89,7 @@ public class InvitationService {
                 ));
 
         if (projectMemberRepository.existsByProjectIdAndUserId(projectId, user.getId())) {
-            throw new ApiException(HttpStatus.CONFLICT, user.getUsername() + " fait déjà partie du projet.");
+            throw new ApiException(HttpStatus.CONFLICT, Texts.get("error.invitation.alreadyMember", user.getUsername()));
         }
 
         expireStale(invitationRepository.findAllByProjectIdAndInvitedUserIdAndStatus(
@@ -98,7 +99,7 @@ public class InvitationService {
                 projectId, user.getId(), InvitationStatus.PENDING)) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    user.getUsername() + " a déjà une invitation en attente pour ce projet."
+                    Texts.get("error.invitation.alreadyPending", user.getUsername())
             );
         }
 
@@ -117,7 +118,7 @@ public class InvitationService {
         invitationRepository.save(invitation);
         mailService.sendProjectInvitation(
                 user.getEmail(), user.getUsername(),
-                inviter.getUsername(), project.getName());
+                inviter.getUsername(), project.getName(), user.getLocale());
 
         return toResponse(invitation);
     }
@@ -151,7 +152,7 @@ public class InvitationService {
                     if (email.equalsIgnoreCase(owner.getEmail())) {
                         throw new ApiException(
                                 HttpStatus.CONFLICT,
-                                "Tu n'as pas besoin de t'inviter toi-même."
+                                "error.invitation.notYourself"
                         );
                     }
 
@@ -175,7 +176,7 @@ public class InvitationService {
 
                     mailService.sendProjectInvitation(
                             user.getEmail(), user.getUsername(),
-                            owner.getUsername(), project.getName());
+                            owner.getUsername(), project.getName(), user.getLocale());
 
                     return toResponse(invitation);
                 })
@@ -234,7 +235,7 @@ public class InvitationService {
         ProjectInvitation invitation = requirePendingInvitation(invitationId);
 
         if (!invitation.getProject().getId().equals(projectId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Invitation introuvable.");
+            throw new ApiException(HttpStatus.NOT_FOUND, "error.invitation.notFound");
         }
 
         invitationRepository.delete(invitation);
@@ -365,10 +366,10 @@ public class InvitationService {
     }
     private ProjectInvitation requireAddressedTo(UUID userId, UUID invitationId) {
         ProjectInvitation invitation = invitationRepository.findById(invitationId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invitation introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.invitation.notFound"));
 
         if (!invitation.getInvitedUser().getId().equals(userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Cette invitation ne t'est pas adressée.");
+            throw new ApiException(HttpStatus.FORBIDDEN, "error.invitation.notYours");
         }
 
         return invitation;
@@ -378,7 +379,7 @@ public class InvitationService {
         ProjectInvitation invitation = requirePendingInvitation(invitationId);
 
         if (!invitation.getInvitedUser().getId().equals(userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Cette invitation ne t'est pas adressée.");
+            throw new ApiException(HttpStatus.FORBIDDEN, "error.invitation.notYours");
         }
 
         return invitation;
@@ -386,17 +387,17 @@ public class InvitationService {
 
     private ProjectInvitation requirePendingInvitation(UUID invitationId) {
         ProjectInvitation invitation = expireStale(invitationRepository.findById(invitationId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invitation introuvable.")));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.invitation.notFound")));
 
         if (invitation.getStatus() == InvitationStatus.EXPIRED) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Cette invitation a expiré. Demande à l'équipe de t'inviter à nouveau."
+                    "error.invitation.expired"
             );
         }
 
         if (invitation.getStatus() != InvitationStatus.PENDING) {
-            throw new ApiException(HttpStatus.CONFLICT, "Cette invitation a déjà reçu une réponse.");
+            throw new ApiException(HttpStatus.CONFLICT, "error.invitation.answered");
         }
 
         return invitation;

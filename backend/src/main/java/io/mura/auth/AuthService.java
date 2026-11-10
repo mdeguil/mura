@@ -5,6 +5,7 @@ import io.mura.auth.dto.AuthResponse;
 import io.mura.auth.dto.LoginRequest;
 import io.mura.auth.dto.RegisterRequest;
 import io.mura.common.exception.ApiException;
+import io.mura.common.i18n.Texts;
 import io.mura.auth.dto.ForgotPasswordRequest;
 import io.mura.auth.dto.ResetPasswordRequest;
 import io.mura.auth.dto.VerifyEmailRequest;
@@ -57,15 +58,15 @@ public class AuthService {
         String password = request.password();
 
         if (userRepository.existsByEmailIgnoreCase(email)) {
-            throw new ApiException(HttpStatus.CONFLICT, "Cet email est déjà utilisé.", "email");
+            throw new ApiException(HttpStatus.CONFLICT, "error.auth.emailTaken", "email");
         }
         if (userRepository.existsByUsernameIgnoreCase(username)) {
-            throw new ApiException(HttpStatus.CONFLICT, "Ce nom d'utilisateur est déjà pris.", "username");
+            throw new ApiException(HttpStatus.CONFLICT, "error.auth.usernameTaken", "username");
         }
         if (password.equalsIgnoreCase(email) || password.equalsIgnoreCase(username)) {
             throw new ApiException(
                     HttpStatus.BAD_REQUEST,
-                    "Le mot de passe ne peut pas être ton email ou ton nom d'utilisateur.",
+                    "error.auth.passwordGivesAway",
                     "password"
             );
         }
@@ -74,20 +75,21 @@ public class AuthService {
         user.setEmail(email);
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
+        user.setLanguage(Texts.code(Texts.current()));
 
         try {
             userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException ex) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Cet email ou ce nom d'utilisateur vient d'être pris. Réessaie.",
+                    "error.auth.justTaken",
                     null
             );
         }
 
         if (mailThrottle.trySend(user.getEmail())) {
             var issued = emailTokenService.issueCode(user);
-            mailService.sendVerificationCode(user.getEmail(), user.getUsername(), issued.secret());
+            mailService.sendVerificationCode(user.getEmail(), user.getUsername(), issued.secret(), user.getLocale());
         }
 
         String token = jwtService.generateToken(user);
@@ -142,7 +144,7 @@ public class AuthService {
         }
         mailThrottle.sendOrRefuse(user.getEmail());
         var issued = emailTokenService.issueCode(user);
-        mailService.sendVerificationCode(user.getEmail(), user.getUsername(), issued.secret());
+        mailService.sendVerificationCode(user.getEmail(), user.getUsername(), issued.secret(), user.getLocale());
     }
 
     /**
@@ -163,7 +165,7 @@ public class AuthService {
                 .ifPresent(user -> {
                     var issued = emailTokenService.issueResetLink(user);
                     mailService.sendPasswordReset(
-                            user.getEmail(), user.getUsername(), issued.secret());
+                            user.getEmail(), user.getUsername(), issued.secret(), user.getLocale());
                 });
     }
 
@@ -182,7 +184,7 @@ public class AuthService {
         if (passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new ApiException(
                     HttpStatus.BAD_REQUEST,
-                    "Choisis un mot de passe différent de l'ancien.",
+                    "error.auth.samePassword",
                     "password"
             );
         }
@@ -196,7 +198,7 @@ public class AuthService {
 
     private User requireUser(UUID userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Ce compte n'existe plus."));
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "error.auth.accountGone"));
     }
 
     /**
@@ -204,6 +206,8 @@ public class AuthService {
      * token then reaches only the verification routes. An account that
      * existed before its address was named in {@code MURA_ADMIN_EMAIL}
      * becomes the first administrator here (see {@link FirstAdministrator}).
+     * The account takes the language the sign-in page was in: it is the one
+     * the person reads Mura in now, and their mails follow it.
      *
      * @param request the address, in any case, and the password
      * @return a new token and the account
@@ -212,17 +216,23 @@ public class AuthService {
      */
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmailIgnoreCase(request.email())
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect."));
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "error.auth.badCredentials"));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Email ou mot de passe incorrect.");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "error.auth.badCredentials");
         }
 
         if (user.isSuspended()) {
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
-                    "Ce compte a été suspendu. Contacte un administrateur."
+                    "error.auth.suspended"
             );
+        }
+
+        String language = Texts.code(Texts.current());
+        if (!language.equals(user.getLanguage())) {
+            user.setLanguage(language);
+            userRepository.save(user);
         }
 
         firstAdministrator.promoteIfDesignated(user);
@@ -230,12 +240,28 @@ public class AuthService {
         return new AuthResponse(token, AccountResponse.from(user));
     }
 
+    /**
+     * Changes the language the account reads Mura in, when the person
+     * switches it on screen: their mails and notifications follow.
+     *
+     * @param userId the signed-in account
+     * @param language {@code fr} or {@code en}
+     * @return the account, in its new language
+     * @throws ApiException 401 if the account no longer exists
+     */
+    @Transactional
+    public AccountResponse changeLanguage(UUID userId, String language) {
+        User user = requireUser(userId);
+        user.setLanguage(Texts.code(Texts.language(language)));
+        return AccountResponse.from(user);
+    }
+
     private void refusePasswordThatGivesItselfAway(String password, User user) {
         if (password.equalsIgnoreCase(user.getEmail())
                 || password.equalsIgnoreCase(user.getUsername())) {
             throw new ApiException(
                     HttpStatus.BAD_REQUEST,
-                    "Le mot de passe ne peut pas être ton email ou ton nom d'utilisateur.",
+                    "error.auth.passwordGivesAway",
                     "password"
             );
         }
@@ -251,7 +277,7 @@ public class AuthService {
      */
     public AccountResponse me(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Ce compte n'existe plus."));
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "error.auth.accountGone"));
         return AccountResponse.from(user);
     }
 }

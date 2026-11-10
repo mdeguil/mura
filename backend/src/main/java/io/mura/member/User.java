@@ -1,5 +1,6 @@
 package io.mura.member;
 
+import io.mura.common.i18n.Texts;
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Entity;
@@ -14,6 +15,7 @@ import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Instant;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -59,6 +61,24 @@ public class User {
      */
     public boolean isSuspended() {
         return suspendedAt != null;
+    }
+
+    /**
+     * The language the account reads Mura in, {@code fr} or {@code en}: its
+     * mails and notifications are written in it, whoever caused them. It
+     * follows the interface: set at sign-up and sign-in from the language
+     * on screen, and each time the person switches.
+     */
+    @Column(nullable = false, length = 2)
+    private String language = "fr";
+
+    /**
+     * The account's language as a locale, for writing to it.
+     *
+     * @return French or English
+     */
+    public Locale getLocale() {
+        return Texts.language(language);
     }
 
     @Column(name = "email_verified_at")

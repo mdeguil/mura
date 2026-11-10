@@ -19,20 +19,20 @@ import java.util.Locale;
  *        {@link StrongPassword}
  */
 public record RegisterRequest(
-        @NotBlank(message = "Le nom d'utilisateur est requis.")
-        @Size(min = 3, max = 50, message = "Le nom d'utilisateur doit contenir entre 3 et 50 caractères.")
+        @NotBlank(message = "{validation.username.required}")
+        @Size(min = 3, max = 50, message = "{validation.username.size}")
         @Pattern(
                 regexp = "^[\\p{L}\\p{N}][\\p{L}\\p{N}._-]*$",
-                message = "Le nom d'utilisateur accepte les lettres, chiffres, point, tiret et underscore, sans espace."
+                message = "{validation.username.pattern}"
         )
         String username,
 
-        @NotBlank(message = "L'email est requis.")
-        @Email(message = "L'email n'est pas valide.")
-        @Size(max = 255, message = "L'email ne peut pas dépasser 255 caractères.")
+        @NotBlank(message = "{validation.email.required}")
+        @Email(message = "{validation.email.invalid}")
+        @Size(max = 255, message = "{validation.email.tooLong}")
         String email,
 
-        @NotBlank(message = "Le mot de passe est requis.")
+        @NotBlank(message = "{validation.password.required}")
         @StrongPassword
         String password
 ) {

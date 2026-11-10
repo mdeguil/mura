@@ -24,10 +24,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,9 +88,42 @@ class AuthServiceTest {
         assertThat(saved.getValue().getEmail()).isEqualTo("alice@mura.test");
         assertThat(saved.getValue().getUsername()).isEqualTo("alice");
         assertThat(saved.getValue().getPassword()).isEqualTo("$hash");
-        verify(mailService).sendVerificationCode("alice@mura.test", "alice", "042913");
+        verify(mailService).sendVerificationCode("alice@mura.test", "alice", "042913", Locale.FRENCH);
         assertThat(response.token()).isEqualTo("jwt");
         assertThat(response.user().emailVerified()).isFalse();
+    }
+
+    @Test
+    void anAccountReadsMuraInTheLanguageItSignedUpAndSignedInWith() {
+        when(userRepository.existsByEmailIgnoreCase("alice@mura.test")).thenReturn(false);
+        when(userRepository.existsByUsernameIgnoreCase("alice")).thenReturn(false);
+        when(passwordEncoder.encode("Secret-123!")).thenReturn("$hash");
+        when(emailTokenService.issueCode(any(User.class))).thenReturn(new EmailTokenService.Issued(new EmailToken(), "042913"));
+        LocaleContextHolder.setLocale(Locale.ENGLISH);
+        try {
+            service.register(registration("Secret-123!"));
+
+            ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
+            verify(userRepository).saveAndFlush(saved.capture());
+            assertThat(saved.getValue().getLanguage()).isEqualTo("en");
+            verify(mailService).sendVerificationCode("alice@mura.test", "alice", "042913", Locale.ENGLISH);
+
+            when(userRepository.findByEmailIgnoreCase("alice@mura.test")).thenReturn(Optional.of(alice));
+            when(passwordEncoder.matches("Secret-123!", alice.getPassword())).thenReturn(true);
+            service.login(new LoginRequest("alice@mura.test", "Secret-123!"));
+            assertThat(alice.getLanguage()).isEqualTo("en");
+            verify(userRepository).save(alice);
+        } finally {
+            LocaleContextHolder.resetLocaleContext();
+        }
+    }
+
+    @Test
+    void theLanguageCanBeChangedAndAnythingUnknownMeansFrench() {
+        when(userRepository.findById(alice.getId())).thenReturn(Optional.of(alice));
+
+        assertThat(service.changeLanguage(alice.getId(), "en").language()).isEqualTo("en");
+        assertThat(service.changeLanguage(alice.getId(), "de").language()).isEqualTo("fr");
     }
 
     @Test
@@ -218,7 +253,7 @@ class AuthServiceTest {
         when(userRepository.findByEmailIgnoreCase("alice@mura.test")).thenReturn(Optional.of(alice));
         when(emailTokenService.issueResetLink(alice)).thenReturn(new EmailTokenService.Issued(new EmailToken(), "id.secret"));
         service.forgotPassword(new ForgotPasswordRequest("alice@mura.test"));
-        verify(mailService).sendPasswordReset("alice@mura.test", "alice", "id.secret");
+        verify(mailService).sendPasswordReset("alice@mura.test", "alice", "id.secret", Locale.FRENCH);
     }
 
     @Test
@@ -230,7 +265,7 @@ class AuthServiceTest {
             service.forgotPassword(new ForgotPasswordRequest("alice@mura.test"));
         }
 
-        verify(mailService, times(MailThrottle.MAX_PER_RECIPIENT)).sendPasswordReset("alice@mura.test", "alice", "id.secret");
+        verify(mailService, times(MailThrottle.MAX_PER_RECIPIENT)).sendPasswordReset("alice@mura.test", "alice", "id.secret", Locale.FRENCH);
         verify(emailTokenService, times(MailThrottle.MAX_PER_RECIPIENT)).issueResetLink(alice);
     }
 
@@ -248,7 +283,7 @@ class AuthServiceTest {
                 .isInstanceOfSatisfying(ApiException.class,
                         e -> assertThat(e.getStatus()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS))
                 .hasMessageStartingWith("Trop d'e-mails envoyés à cette adresse.");
-        verify(mailService, times(MailThrottle.MAX_PER_RECIPIENT)).sendVerificationCode("alice@mura.test", "alice", "042913");
+        verify(mailService, times(MailThrottle.MAX_PER_RECIPIENT)).sendVerificationCode("alice@mura.test", "alice", "042913", Locale.FRENCH);
     }
 
     @Test

@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -94,7 +95,7 @@ class InvitationServiceTest {
         assertThat(response.status()).isEqualTo(InvitationStatus.PENDING);
         assertThat(response.expiresAt()).isEqualTo(response.createdAt().plus(Duration.ofDays(LIFETIME_DAYS)));
         verify(invitationRepository).save(any(ProjectInvitation.class));
-        verify(mailService).sendProjectInvitation("bob@mura.test", "bob", "alice", "Refonte");
+        verify(mailService).sendProjectInvitation("bob@mura.test", "bob", "alice", "Refonte", Locale.FRENCH);
     }
 
     @Test
@@ -108,7 +109,7 @@ class InvitationServiceTest {
         ArgumentCaptor<ProjectInvitation> saved = ArgumentCaptor.forClass(ProjectInvitation.class);
         verify(invitationRepository).save(saved.capture());
         assertThat(saved.getValue().getInvitedBy()).isSameAs(carol);
-        verify(mailService).sendProjectInvitation("bob@mura.test", "bob", "carol", "Refonte");
+        verify(mailService).sendProjectInvitation("bob@mura.test", "bob", "carol", "Refonte", Locale.FRENCH);
     }
 
     @Test
@@ -202,8 +203,8 @@ class InvitationServiceTest {
 
         assertThat(sent).hasSize(2);
         verify(invitationRepository, times(2)).save(any(ProjectInvitation.class));
-        verify(mailService).sendProjectInvitation("bob@mura.test", "bob", "alice", "Refonte");
-        verify(mailService).sendProjectInvitation("carol@mura.test", "carol", "alice", "Refonte");
+        verify(mailService).sendProjectInvitation("bob@mura.test", "bob", "alice", "Refonte", Locale.FRENCH);
+        verify(mailService).sendProjectInvitation("carol@mura.test", "carol", "alice", "Refonte", Locale.FRENCH);
     }
 
     @Test
@@ -327,6 +328,6 @@ class InvitationServiceTest {
 
         assertThatThrownBy(() -> service.markRead(alice.getId(), invitation.getId()))
                 .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.getStatus()).isEqualTo(HttpStatus.FORBIDDEN));
-        verify(mailService, never()).sendProjectInvitation(anyString(), anyString(), anyString(), anyString());
+        verify(mailService, never()).sendProjectInvitation(anyString(), anyString(), anyString(), anyString(), any());
     }
 }

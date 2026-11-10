@@ -1,6 +1,7 @@
 package io.mura.mail;
 
 import io.mura.common.exception.ApiException;
+import io.mura.common.i18n.Texts;
 import io.mura.member.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -119,14 +120,14 @@ public class EmailTokenService {
                 .findFirst()
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.GONE,
-                        "Ce code a expiré. Demandes-en un nouveau."
+                        "error.code.expired"
                 ));
 
         if (token.getAttempts() >= MAX_ATTEMPTS) {
             token.setConsumedAt(Instant.now());
             throw new ApiException(
                     HttpStatus.TOO_MANY_REQUESTS,
-                    "Trop d'essais. Demande un nouveau code."
+                    "error.code.tooMany"
             );
         }
 
@@ -135,9 +136,11 @@ public class EmailTokenService {
             int left = MAX_ATTEMPTS - token.getAttempts();
             throw new ApiException(
                     HttpStatus.BAD_REQUEST,
-                    left > 0
-                            ? "Code incorrect. Il te reste " + left + " essai" + (left > 1 ? "s" : "") + "."
-                            : "Code incorrect. Demande un nouveau code."
+                    left > 1
+                            ? Texts.get("error.code.wrong.many", left)
+                            : left == 1
+                                    ? Texts.get("error.code.wrong.one", left)
+                                    : Texts.get("error.code.wrong.none")
             );
         }
 
@@ -184,7 +187,7 @@ public class EmailTokenService {
     private ApiException invalidLink() {
         return new ApiException(
                 HttpStatus.GONE,
-                "Ce lien n'est plus valable. Demande un nouvel email."
+                "error.link.invalid"
         );
     }
 }

@@ -26,23 +26,23 @@ import java.util.List;
  *        as soon as the project exists, and told so
  */
 public record CreateProjectRequest(
-        @NotBlank(message = "Le nom du projet est requis.")
-        @Size(max = 255, message = "Le nom du projet ne doit pas dépasser 255 caractères.")
+        @NotBlank(message = "{validation.project.nameRequired}")
+        @Size(max = 255, message = "{validation.project.nameTooLong}")
         String name,
 
-        @Size(max = 2000, message = "La description ne doit pas dépasser 2000 caractères.")
+        @Size(max = 2000, message = "{validation.description.tooLong}")
         String description,
 
-        @Pattern(regexp = "^#[0-9a-fA-F]{6}$", message = "La couleur doit être un code hexadécimal (ex: #14b8a6).")
+        @Pattern(regexp = "^#[0-9a-fA-F]{6}$", message = "{validation.color.pattern}")
         String color,
 
-        @NotNull(message = "Le type de projet est requis.")
+        @NotNull(message = "{validation.project.typeRequired}")
         UUID typeId,
 
         LocalDate startDate,
 
-        @Size(max = 20, message = "Pas plus de 20 personnes à inviter à la création.")
-        List<@Email(message = "Un des emails n'est pas valide.") String> invitedEmails,
+        @Size(max = 20, message = "{validation.invites.tooMany}")
+        List<@Email(message = "{validation.invites.badEmail}") String> invitedEmails,
 
         UUID groupId
 ) {}

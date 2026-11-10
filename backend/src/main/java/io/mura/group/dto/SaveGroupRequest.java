@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
  * @param name the new name, up to 100 characters
  */
 public record SaveGroupRequest(
-        @NotBlank(message = "Le nom du groupe est requis.")
-        @Size(max = 100, message = "Le nom du groupe ne doit pas dépasser 100 caractères.")
+        @NotBlank(message = "{validation.group.nameRequired}")
+        @Size(max = 100, message = "{validation.group.nameTooLong}")
         String name
 ) {}

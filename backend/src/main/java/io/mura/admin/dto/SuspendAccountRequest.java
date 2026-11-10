@@ -9,6 +9,6 @@ import jakarta.validation.constraints.NotNull;
  * @param suspended true to suspend, false to restore
  */
 public record SuspendAccountRequest(
-        @NotNull(message = "Indique si le compte doit être suspendu.")
+        @NotNull(message = "{validation.account.suspendedRequired}")
         Boolean suspended
 ) {}

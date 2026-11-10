@@ -21,20 +21,20 @@ import java.util.UUID;
  *        checks they are on the project's team
  */
 public record UpdateTaskRequest(
-        @NotBlank(message = "Le nom de la tâche est requis.")
-        @Size(max = 255, message = "Le nom de la tâche ne doit pas dépasser 255 caractères.")
+        @NotBlank(message = "{validation.task.nameRequired}")
+        @Size(max = 255, message = "{validation.task.nameTooLong}")
         String name,
 
-        @Size(max = 2000, message = "La description ne doit pas dépasser 2000 caractères.")
+        @Size(max = 2000, message = "{validation.description.tooLong}")
         String description,
 
-        @NotNull(message = "Le statut est requis.")
+        @NotNull(message = "{validation.status.required}")
         TaskStatus status,
 
-        @NotNull(message = "La date de début est requise.")
+        @NotNull(message = "{validation.task.startRequired}")
         LocalDate startDate,
 
-        @NotNull(message = "La date de fin est requise.")
+        @NotNull(message = "{validation.task.endRequired}")
         LocalDate endDate,
 
         UUID assigneeId

@@ -1,6 +1,7 @@
 package io.mura.member;
 
 import io.mura.common.exception.ApiException;
+import io.mura.common.i18n.Texts;
 import io.mura.member.dto.AddContactRequest;
 import io.mura.member.dto.FavouriteRequest;
 import io.mura.member.dto.KnownUserResponse;
@@ -129,7 +130,7 @@ public class DirectoryService {
         String email = request.email().trim();
 
         User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "error.directory.userNotFound"));
 
         User person = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new ApiException(
@@ -138,7 +139,7 @@ public class DirectoryService {
                 ));
 
         if (person.getId().equals(ownerId)) {
-            throw new ApiException(HttpStatus.CONFLICT, "Tu n'as pas besoin de t'ajouter toi-même.");
+            throw new ApiException(HttpStatus.CONFLICT, "error.directory.notYourself");
         }
 
         Contact existing = contactRepository.findByOwnerIdAndPersonId(ownerId, person.getId())
@@ -147,13 +148,13 @@ public class DirectoryService {
         if (existing != null && existing.getStatus() == ContactStatus.ACCEPTED) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    person.getUsername() + " est déjà dans ton carnet."
+                    Texts.get("error.directory.alreadySaved", person.getUsername())
             );
         }
         if (existing != null && existing.getStatus() == ContactStatus.PENDING) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    person.getUsername() + " n'a pas encore répondu à ta demande."
+                    Texts.get("error.directory.pending", person.getUsername())
             );
         }
 
@@ -198,10 +199,10 @@ public class DirectoryService {
     @Transactional
     public void removeContact(UUID ownerId, UUID personId) {
         User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "error.directory.userNotFound"));
 
         User person = userRepository.findById(personId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Personne introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.directory.personNotFound"));
 
         Contact contact = contactRepository.findByOwnerIdAndPersonId(ownerId, personId)
                 .orElseGet(() -> new Contact(owner, person));
@@ -226,10 +227,10 @@ public class DirectoryService {
     @Transactional
     public KnownUserResponse setFavourite(UUID ownerId, UUID personId, boolean favourite) {
         User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "error.directory.userNotFound"));
 
         User person = userRepository.findById(personId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Personne introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.directory.personNotFound"));
 
         Contact contact = contactRepository.findByOwnerIdAndPersonId(ownerId, personId)
                 .orElseGet(() -> new Contact(owner, person));
@@ -346,7 +347,7 @@ public class DirectoryService {
                 .filter(c -> c.getStatus() == ContactStatus.PENDING)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
-                        "Cette demande de contact n'existe plus."
+                        "error.directory.requestGone"
                 ));
     }
 

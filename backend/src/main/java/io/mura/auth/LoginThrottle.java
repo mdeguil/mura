@@ -1,6 +1,7 @@
 package io.mura.auth;
 
 import io.mura.common.exception.ApiException;
+import io.mura.common.i18n.Texts;
 import io.mura.common.security.WindowCounter;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -72,7 +73,7 @@ public class LoginThrottle {
         if (until != null) {
             throw new ApiException(
                     HttpStatus.TOO_MANY_REQUESTS,
-                    "Trop de tentatives de connexion. " + failures.retryIn(until)
+                    Texts.get("error.login.tooMany", failures.retryIn(until))
             );
         }
     }

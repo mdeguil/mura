@@ -10,10 +10,10 @@ import jakarta.validation.constraints.NotBlank;
  * @param password the new password; see {@link StrongPassword}
  */
 public record ResetPasswordRequest(
-        @NotBlank(message = "Le lien est incomplet.")
+        @NotBlank(message = "{validation.link.incomplete}")
         String token,
 
-        @NotBlank(message = "Le mot de passe est requis.")
+        @NotBlank(message = "{validation.password.required}")
         @StrongPassword
         String password
 ) {}

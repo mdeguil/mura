@@ -10,6 +10,6 @@ import jakarta.validation.constraints.Size;
  *        Optional: an empty message sends the event alone
  */
 public record RemoveMemberRequest(
-        @Size(max = 500, message = "Le message ne doit pas dépasser 500 caractères.")
+        @Size(max = 500, message = "{validation.message.tooLong}")
         String message
 ) {}

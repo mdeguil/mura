@@ -75,7 +75,7 @@ public class GroupController {
      */
     @PostMapping
     public ResponseEntity<Void> create() {
-        throw new ApiException(HttpStatus.FORBIDDEN, "Seul un administrateur peut créer un groupe.");
+        throw new ApiException(HttpStatus.FORBIDDEN, "error.group.adminOnly");
     }
 
     /**

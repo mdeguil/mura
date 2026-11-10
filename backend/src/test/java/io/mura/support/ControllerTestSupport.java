@@ -3,9 +3,11 @@ package io.mura.support;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.mura.common.config.LocaleConfig;
 import io.mura.common.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +15,7 @@ import org.springframework.security.web.method.annotation.AuthenticationPrincipa
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +24,9 @@ import java.util.UUID;
  * A controller mounted on its own over mocked services: the routing, the
  * status codes, the validation of what comes in and the error format are
  * real, and the caller is {@link #ME}, as if the JWT filter had let them in.
+ * The request's language is resolved as the application resolves it, and
+ * validation messages come from the same {@code messages.properties}: French
+ * unless a test sends {@code Accept-Language}.
  */
 public abstract class ControllerTestSupport {
 
@@ -33,7 +39,20 @@ public abstract class ControllerTestSupport {
         mvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
+                .setLocaleResolver(new LocaleConfig().localeResolver())
+                .setValidator(validator())
                 .build();
+    }
+
+    private static LocalValidatorFactoryBean validator() {
+        ResourceBundleMessageSource messages = new ResourceBundleMessageSource();
+        messages.setBasename("messages");
+        messages.setDefaultEncoding("UTF-8");
+        messages.setFallbackToSystemLocale(false);
+        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
+        validator.setValidationMessageSource(messages);
+        validator.afterPropertiesSet();
+        return validator;
     }
 
     @BeforeEach

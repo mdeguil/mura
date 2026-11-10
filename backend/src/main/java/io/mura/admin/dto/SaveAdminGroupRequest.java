@@ -13,11 +13,11 @@ import java.util.UUID;
  * @param managerId the account that runs it
  */
 public record SaveAdminGroupRequest(
-        @NotBlank(message = "Le nom du groupe est requis.")
-        @Size(max = 100, message = "Le nom ne peut pas dépasser 100 caractères.")
+        @NotBlank(message = "{validation.group.nameRequired}")
+        @Size(max = 100, message = "{validation.name.max100}")
         String name,
 
-        @NotNull(message = "Choisis un gérant.")
+        @NotNull(message = "{validation.group.managerRequired}")
         UUID managerId
 ) {
     /** Trims the name before the constraints judge it. */

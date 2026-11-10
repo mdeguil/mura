@@ -1,6 +1,7 @@
 package io.mura.group;
 
 import io.mura.common.exception.ApiException;
+import io.mura.common.i18n.Texts;
 import io.mura.group.dto.AddGroupMemberRequest;
 import io.mura.group.dto.GroupResponse;
 import io.mura.group.dto.SaveGroupRequest;
@@ -74,7 +75,7 @@ public class GroupService {
         UserGroup group = require(groupId);
 
         if (!memberRepository.existsByGroupIdAndUserId(groupId, userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Tu ne fais pas partie de ce groupe.");
+            throw new ApiException(HttpStatus.FORBIDDEN, "error.group.notMember");
         }
 
         return GroupResponse.from(group, userId, membersOf(groupId));
@@ -139,13 +140,13 @@ public class GroupService {
         User person = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
-                        "Aucun compte Mura n'utilise l'email " + email + "."
+                        Texts.get("error.group.noAccount", email)
                 ));
 
         if (memberRepository.existsByGroupIdAndUserId(groupId, person.getId())) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    person.getUsername() + " fait déjà partie de ce groupe."
+                    Texts.get("error.group.alreadyMember", person.getUsername())
             );
         }
 
@@ -175,7 +176,7 @@ public class GroupService {
         if (group.getOwner().getId().equals(memberId)) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Le propriétaire ne peut pas quitter son propre groupe. Supprime-le plutôt."
+                    "error.group.ownerCannotLeave"
             );
         }
 
@@ -187,7 +188,7 @@ public class GroupService {
         UserGroupMember membership = memberRepository.findByGroupIdAndUserId(groupId, memberId)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
-                        "Cette personne ne fait pas partie du groupe."
+                        "error.group.personNotMember"
                 ));
 
         User member = membership.getUser();
@@ -224,14 +225,14 @@ public class GroupService {
         if (group.getOwner().getId().equals(memberId)) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Le gérant ne peut pas se mettre en retrait de son propre groupe."
+                    "error.group.managerCannotHold"
             );
         }
 
         UserGroupMember membership = memberRepository.findByGroupIdAndUserId(groupId, memberId)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
-                        "Cette personne ne fait pas partie du groupe."
+                        "error.group.personNotMember"
                 ));
 
         if (membership.isOnHold() != onHold) {
@@ -251,7 +252,7 @@ public class GroupService {
         if (groupRepository.deleteGroupById(groupId) != 1) {
             throw new ApiException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Ce groupe n'a pas pu être supprimé."
+                    "error.adminGroup.deleteFailed"
             );
         }
     }
@@ -262,7 +263,7 @@ public class GroupService {
 
     private UserGroup require(UUID groupId) {
         return groupRepository.findById(groupId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Groupe introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.group.notFound"));
     }
 
     private UserGroup requireOwner(UUID userId, UUID groupId) {
@@ -271,7 +272,7 @@ public class GroupService {
         if (!group.getOwner().getId().equals(userId)) {
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
-                    "Seul le propriétaire du groupe peut le modifier."
+                    "error.group.ownerOnly"
             );
         }
 

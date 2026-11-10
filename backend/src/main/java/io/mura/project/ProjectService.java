@@ -93,7 +93,7 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse getForUser(UUID userId, UUID projectId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.project.notFound"));
 
         if (projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
             return ProjectResponse.from(
@@ -112,7 +112,7 @@ public class ProjectService {
             );
         }
 
-        throw new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet.");
+        throw new ApiException(HttpStatus.FORBIDDEN, "error.project.noAccess");
     }
 
     /**
@@ -233,7 +233,7 @@ public class ProjectService {
         if (!project.isArchived()) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Le projet doit être archivé avant d'être supprimé."
+                    "error.project.archiveFirst"
             );
         }
 
@@ -255,7 +255,7 @@ public class ProjectService {
     @Transactional
     public ProjectResponse create(UUID ownerId, CreateProjectRequest request) {
         User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "error.directory.userNotFound"));
 
         Project project = new Project();
         project.setName(request.name());
@@ -308,14 +308,14 @@ public class ProjectService {
         if (role == ProjectRole.OWNER) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Pour céder le projet, utilise le transfert de propriété."
+                    "error.project.useTransfer"
             );
         }
 
         if (project.getOwner().getId().equals(memberId)) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Le propriétaire garde son rôle tant qu'il n'a pas cédé le projet."
+                    "error.project.ownerKeepsRole"
             );
         }
 
@@ -342,7 +342,7 @@ public class ProjectService {
         Project project = access.requireOwner(actorId, projectId);
 
         if (actorId.equals(newOwnerId)) {
-            throw new ApiException(HttpStatus.CONFLICT, "Tu es déjà le propriétaire de ce projet.");
+            throw new ApiException(HttpStatus.CONFLICT, "error.project.alreadyOwner");
         }
 
         ProjectMember successor = requireMemberOf(projectId, newOwnerId);
@@ -386,7 +386,7 @@ public class ProjectService {
         if (joining.isEmpty()) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Personne à ajouter : tout le groupe est déjà dans le projet, en retrait ou suspendu."
+                    "error.project.groupEmpty"
             );
         }
         bringOn(manager.getProject(), manager.getUser(), joining);
@@ -398,10 +398,10 @@ public class ProjectService {
 
     private List<User> joinersFromGroup(UUID actorId, UUID projectId, UUID groupId) {
         if (!groupRepository.existsById(groupId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Groupe introuvable.");
+            throw new ApiException(HttpStatus.NOT_FOUND, "error.group.notFound");
         }
         if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, actorId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Tu ne fais pas partie de ce groupe.");
+            throw new ApiException(HttpStatus.FORBIDDEN, "error.group.notMember");
         }
 
         Set<UUID> onTheTeam = projectMemberRepository.findUserIdsByProjectId(projectId);
@@ -447,12 +447,12 @@ public class ProjectService {
     @Transactional
     public void removeMember(UUID actorId, UUID projectId, UUID memberId, String message) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.project.notFound"));
 
         if (project.getOwner().getId().equals(memberId)) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "Le propriétaire doit d'abord céder le projet à quelqu'un d'autre."
+                    "error.project.ownerMustTransfer"
             );
         }
 
@@ -463,7 +463,7 @@ public class ProjectService {
             if (actor.getRole() == ProjectRole.ADMIN && target.getRole() != ProjectRole.MEMBER) {
                 throw new ApiException(
                         HttpStatus.FORBIDDEN,
-                        "Un administrateur ne peut retirer que des membres."
+                        "error.project.adminRemovesMembers"
                 );
             }
         } else {
@@ -471,7 +471,7 @@ public class ProjectService {
         }
 
         User actor = userRepository.findById(actorId)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Utilisateur introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "error.directory.userNotFound"));
 
         taskService.unassignMember(projectId, memberId);
         projectMemberRepository.delete(target);
@@ -502,7 +502,7 @@ public class ProjectService {
         return projectMemberRepository.findByProjectIdAndUserId(projectId, memberId)
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
-                        "Cette personne ne fait pas partie du projet."
+                        "error.project.personNotMember"
                 ));
     }
 }

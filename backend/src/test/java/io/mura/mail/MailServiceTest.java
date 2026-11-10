@@ -15,6 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.Locale;
 import java.util.Properties;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,7 +58,7 @@ class MailServiceTest {
 
     @Test
     void theVerificationCodeGoesToTheAddressGiven() throws Exception {
-        service.sendVerificationCode("bob@mura.test", "bob", "482913");
+        service.sendVerificationCode("bob@mura.test", "bob", "482913", Locale.FRENCH);
 
         MimeMessage message = sent();
         assertThat(message.getRecipients(Message.RecipientType.TO)[0].toString()).isEqualTo("bob@mura.test");
@@ -66,8 +67,17 @@ class MailServiceTest {
     }
 
     @Test
+    void eachMailIsWrittenInTheRecipientsLanguage() throws Exception {
+        service.sendProjectInvitation("bob@mura.test", "bob", "alice", "Refonte", Locale.ENGLISH);
+
+        MimeMessage message = sent();
+        assertThat(message.getSubject()).isEqualTo("alice invites you to Refonte");
+        assertThat(html(message)).contains("Hello bob,").contains("See the invitation").doesNotContain("Bonjour");
+    }
+
+    @Test
     void theResetLinkPointsAtTheAppNotTheApi() throws Exception {
-        service.sendPasswordReset("bob@mura.test", "bob", "tok-123");
+        service.sendPasswordReset("bob@mura.test", "bob", "tok-123", Locale.FRENCH);
 
         assertThat(html(sent())).contains("https://mura.example/reset-password?token=tok-123");
     }
@@ -76,7 +86,7 @@ class MailServiceTest {
     void aTrailingSlashInTheInstanceAddressGivesNoDoubleSlash() throws Exception {
         ReflectionTestUtils.setField(service, "appUrl", "https://mura.example/");
 
-        service.sendPasswordReset("bob@mura.test", "bob", "tok-123");
+        service.sendPasswordReset("bob@mura.test", "bob", "tok-123", Locale.FRENCH);
 
         assertThat(html(sent())).contains("https://mura.example/reset-password?token=tok-123");
     }
@@ -84,7 +94,7 @@ class MailServiceTest {
     @Test
     void aNotificationCarriesItsMessageAndALinkIntoTheApp() throws Exception {
         service.sendNotification("bob@mura.test", "bob", "Sujet", "Titre", "Phrase.", "Un mot",
-                "/projets", "Voir mes projets");
+                "/projets", "Voir mes projets", Locale.FRENCH);
 
         String body = html(sent());
         assertThat(body).contains("Phrase.").contains("<blockquote").contains("Un mot")
@@ -93,14 +103,14 @@ class MailServiceTest {
 
     @Test
     void aNotificationWithoutMessageHasNoQuote() throws Exception {
-        service.sendNotification("bob@mura.test", "bob", "Sujet", "Titre", "Phrase.", "  ", "/projets", "Voir");
+        service.sendNotification("bob@mura.test", "bob", "Sujet", "Titre", "Phrase.", "  ", "/projets", "Voir", Locale.FRENCH);
 
         assertThat(html(sent())).doesNotContain("<blockquote");
     }
 
     @Test
     void whatPeopleTypedIsEscapedBeforeItReachesSomeoneElsesInbox() throws Exception {
-        service.sendProjectInvitation("bob@mura.test", "bob", "<script>alert(1)</script>", "Refonte & co");
+        service.sendProjectInvitation("bob@mura.test", "bob", "<script>alert(1)</script>", "Refonte & co", Locale.FRENCH);
 
         String body = html(sent());
         assertThat(body).doesNotContain("<script>").contains("&lt;script&gt;").contains("Refonte &amp; co");
@@ -110,7 +120,7 @@ class MailServiceTest {
     void insideATransactionTheMailWaitsForTheCommit() {
         TransactionSynchronizationManager.initSynchronization();
         try {
-            service.sendVerificationCode("bob@mura.test", "bob", "482913");
+            service.sendVerificationCode("bob@mura.test", "bob", "482913", Locale.FRENCH);
             verify(sender, never()).send(any(MimeMessage.class));
 
             TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
@@ -124,7 +134,7 @@ class MailServiceTest {
     void aRolledBackTransactionSendsNothing() {
         TransactionSynchronizationManager.initSynchronization();
         try {
-            service.sendProjectInvitation("bob@mura.test", "bob", "alice", "Refonte");
+            service.sendProjectInvitation("bob@mura.test", "bob", "alice", "Refonte", Locale.FRENCH);
 
             TransactionSynchronizationManager.getSynchronizations()
                     .forEach(sync -> sync.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
@@ -138,6 +148,6 @@ class MailServiceTest {
     void aMailServerFailureIsLoggedNotThrown() {
         doThrow(new MailSendException("serveur injoignable")).when(sender).send(any(MimeMessage.class));
 
-        assertThatCode(() -> service.sendVerificationCode("bob@mura.test", "bob", "000000")).doesNotThrowAnyException();
+        assertThatCode(() -> service.sendVerificationCode("bob@mura.test", "bob", "000000", Locale.FRENCH)).doesNotThrowAnyException();
     }
 }

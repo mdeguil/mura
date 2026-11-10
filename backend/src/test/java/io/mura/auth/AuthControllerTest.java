@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -136,6 +137,38 @@ class AuthControllerTest extends ControllerTestSupport {
     }
 
     @Test
+    void refusalsAndValidationAnswerInTheLanguageTheRequestAsksFor() throws Exception {
+        mvc.perform(withJson(post("/api/auth/verify"), Map.of("code", "12ab")).header("Accept-Language", "en-GB,en;q=0.9"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("The code is 6 digits."));
+
+        when(authService.login(any(LoginRequest.class)))
+                .thenAnswer(invocation -> {
+                    throw new ApiException(HttpStatus.UNAUTHORIZED, "error.auth.badCredentials");
+                });
+        mvc.perform(withJson(post("/api/auth/login"), Map.of("email", "alice@mura.test", "password", "faux"))
+                        .header("Accept-Language", "en"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Wrong email or password."));
+        mvc.perform(withJson(post("/api/auth/login"), Map.of("email", "alice@mura.test", "password", "faux"))
+                        .header("Accept-Language", "de"))
+                .andExpect(jsonPath("$.message").value("Email ou mot de passe incorrect."));
+    }
+
+    @Test
+    void theLanguageIsChangedForTheSignedInAccountOnly() throws Exception {
+        when(authService.changeLanguage(ME, "en")).thenReturn(account);
+
+        mvc.perform(withJson(put("/api/auth/me/language"), Map.of("language", "en")))
+                .andExpect(status().isOk());
+        verify(authService).changeLanguage(ME, "en");
+
+        mvc.perform(withJson(put("/api/auth/me/language"), Map.of("language", "de")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Langue inconnue : choisis fr ou en."));
+    }
+
+    @Test
     void oneClientAskingForTooManyResetLinksIsHeldBack() throws Exception {
         for (int i = 0; i < 10; i++) {
             mvc.perform(withJson(post("/api/auth/password/forgot"), Map.of("email", "person" + i + "@mura.test")))
@@ -163,7 +196,7 @@ class AuthControllerTest extends ControllerTestSupport {
     @Test
     void theExportIsServedAsAFileToKeep() throws Exception {
         when(dataExportService.export(ME)).thenReturn(new DataExport(Instant.parse("2026-11-03T10:00:00Z"),
-                new DataExport.Account(ME, "alice", "alice@mura.test", "USER", null, null, null),
+                new DataExport.Account(ME, "alice", "alice@mura.test", "USER", null, null, null, "fr"),
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of()));
 
         mvc.perform(get("/api/auth/me/export"))

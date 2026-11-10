@@ -21,21 +21,21 @@ import java.util.UUID;
  * @param status where its work stands
  */
 public record UpdateProjectRequest(
-        @NotBlank(message = "Le nom du projet est requis.")
-        @Size(max = 255, message = "Le nom du projet ne doit pas dépasser 255 caractères.")
+        @NotBlank(message = "{validation.project.nameRequired}")
+        @Size(max = 255, message = "{validation.project.nameTooLong}")
         String name,
 
-        @Size(max = 2000, message = "La description ne doit pas dépasser 2000 caractères.")
+        @Size(max = 2000, message = "{validation.description.tooLong}")
         String description,
 
-        @Pattern(regexp = "^#[0-9a-fA-F]{6}$", message = "La couleur doit être un code hexadécimal (ex: #14b8a6).")
+        @Pattern(regexp = "^#[0-9a-fA-F]{6}$", message = "{validation.color.pattern}")
         String color,
 
-        @NotNull(message = "Le type de projet est requis.")
+        @NotNull(message = "{validation.project.typeRequired}")
         UUID typeId,
 
         LocalDate startDate,
 
-        @NotNull(message = "Le statut est requis.")
+        @NotNull(message = "{validation.status.required}")
         ProjectStatus status
 ) {}

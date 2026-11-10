@@ -1,6 +1,7 @@
 package io.mura.project;
 
 import io.mura.common.exception.ApiException;
+import io.mura.common.i18n.Texts;
 import io.mura.project.dto.ProjectTypeResponse;
 import io.mura.project.dto.SaveProjectTypeRequest;
 import lombok.RequiredArgsConstructor;
@@ -84,7 +85,7 @@ public class ProjectTypeService {
     @Transactional
     public ProjectTypeResponse update(UUID id, SaveProjectTypeRequest request) {
         ProjectType type = require(id);
-        refuseTouchingTheFallback(type, "modifié");
+        refuseTouchingTheFallback(type, "error.type.fallbackLocked.edit");
         refuseDuplicate(request.label(), id);
         apply(type, request);
         return ProjectTypeResponse.of(type, projectRepository.countByTypeId(id));
@@ -102,24 +103,23 @@ public class ProjectTypeService {
     public void delete(UUID id) {
         ProjectType type = require(id);
 
-        refuseTouchingTheFallback(type, "supprimé");
+        refuseTouchingTheFallback(type, "error.type.fallbackLocked.delete");
 
         ProjectType fallback = typeRepository.findByFallbackTrue()
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.CONFLICT,
-                        "Aucun type de repli n'est défini."
+                        "error.type.noFallback"
                 ));
 
         projectRepository.reassignType(id, fallback.getId());
         typeRepository.delete(type);
     }
 
-    private void refuseTouchingTheFallback(ProjectType type, String verb) {
+    private void refuseTouchingTheFallback(ProjectType type, String refusal) {
         if (type.isFallback()) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
-                    "« " + type.getLabel() + " » est le type de repli : les projets des types "
-                            + "supprimés y sont déplacés, donc il ne peut pas être " + verb + "."
+                    Texts.get(refusal, type.getLabel())
             );
         }
     }
@@ -133,7 +133,7 @@ public class ProjectTypeService {
      */
     ProjectType require(UUID id) {
         return typeRepository.findById(id)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Ce type de projet n'existe pas."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.type.notFound"));
     }
 
     private void apply(ProjectType type, SaveProjectTypeRequest request) {
@@ -147,7 +147,7 @@ public class ProjectTypeService {
                 .ifPresent(existing -> {
                     throw new ApiException(
                             HttpStatus.CONFLICT,
-                            "Un type « " + existing.getLabel() + " » existe déjà.",
+                            Texts.get("error.type.duplicate", existing.getLabel()),
                             "label"
                     );
                 });

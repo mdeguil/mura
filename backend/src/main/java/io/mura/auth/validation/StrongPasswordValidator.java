@@ -1,5 +1,6 @@
 package io.mura.auth.validation;
 
+import io.mura.common.i18n.Texts;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
@@ -43,22 +44,22 @@ public class StrongPasswordValidator implements ConstraintValidator<StrongPasswo
 
     private String firstProblem(String password) {
         if (password.length() < MIN_LENGTH) {
-            return "Le mot de passe doit contenir au moins " + MIN_LENGTH + " caractères.";
+            return Texts.get("validation.password.tooShort", MIN_LENGTH);
         }
         if (password.length() > MAX_LENGTH) {
-            return "Le mot de passe ne peut pas dépasser " + MAX_LENGTH + " caractères.";
+            return Texts.get("validation.password.tooLong", MAX_LENGTH);
         }
         if (password.chars().noneMatch(Character::isUpperCase)) {
-            return "Le mot de passe doit contenir au moins une majuscule.";
+            return Texts.get("validation.password.upper");
         }
         if (password.chars().noneMatch(Character::isLowerCase)) {
-            return "Le mot de passe doit contenir au moins une minuscule.";
+            return Texts.get("validation.password.lower");
         }
         if (password.chars().noneMatch(Character::isDigit)) {
-            return "Le mot de passe doit contenir au moins un chiffre.";
+            return Texts.get("validation.password.digit");
         }
         if (password.chars().noneMatch(c -> !Character.isLetterOrDigit(c) && !Character.isWhitespace(c))) {
-            return "Le mot de passe doit contenir au moins un caractère spécial.";
+            return Texts.get("validation.password.special");
         }
         return null;
     }

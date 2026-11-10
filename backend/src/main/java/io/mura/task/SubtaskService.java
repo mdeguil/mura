@@ -88,10 +88,10 @@ public class SubtaskService {
         access.requireMembership(userId, projectId);
 
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Tâche introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.task.notFound"));
 
         if (!task.getProject().getId().equals(projectId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Tâche introuvable.");
+            throw new ApiException(HttpStatus.NOT_FOUND, "error.task.notFound");
         }
 
         return task;

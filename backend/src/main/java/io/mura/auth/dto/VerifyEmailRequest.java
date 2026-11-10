@@ -9,8 +9,8 @@ import jakarta.validation.constraints.Pattern;
  * @param code the six digits that were mailed, trimmed
  */
 public record VerifyEmailRequest(
-        @NotBlank(message = "Le code est requis.")
-        @Pattern(regexp = "^\\d{6}$", message = "Le code fait 6 chiffres.")
+        @NotBlank(message = "{validation.code.required}")
+        @Pattern(regexp = "^\\d{6}$", message = "{validation.code.pattern}")
         String code
 ) {
     /** Trims the code before the constraints judge it. */

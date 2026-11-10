@@ -10,6 +10,6 @@ import jakarta.validation.constraints.NotNull;
  * @param onHold true to set them aside, false to bring them back
  */
 public record HoldGroupMemberRequest(
-        @NotNull(message = "Précise si la personne est mise en retrait.")
+        @NotNull(message = "{validation.hold.required}")
         Boolean onHold
 ) {}

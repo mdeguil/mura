@@ -30,11 +30,11 @@ public class ProjectAccessGuard {
      */
     public ProjectMember requireMembership(UUID userId, UUID projectId) {
         if (!projectRepository.existsById(projectId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable.");
+            throw new ApiException(HttpStatus.NOT_FOUND, "error.project.notFound");
         }
 
         return memberRepository.findByProjectIdAndUserId(projectId, userId)
-                .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "Tu n'as pas accès à ce projet."));
+                .orElseThrow(() -> new ApiException(HttpStatus.FORBIDDEN, "error.project.noAccess"));
     }
 
     /**
@@ -52,7 +52,7 @@ public class ProjectAccessGuard {
         if (!membership.getRole().manages()) {
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
-                    "Il faut être propriétaire ou administrateur de ce projet."
+                    "error.project.managersOnly"
             );
         }
 
@@ -70,12 +70,12 @@ public class ProjectAccessGuard {
      */
     public Project requireOwner(UUID userId, UUID projectId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Projet introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.project.notFound"));
 
         if (!project.getOwner().getId().equals(userId)) {
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
-                    "Seul le propriétaire du projet peut faire cela."
+                    "error.project.ownerOnly"
             );
         }
 

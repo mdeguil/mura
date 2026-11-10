@@ -1,6 +1,7 @@
 package io.mura.common.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.mura.common.i18n.Texts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -57,7 +58,7 @@ public class GlobalExceptionHandler {
         FieldError first = ex.getBindingResult().getFieldErrors().stream()
                 .min(Comparator.comparingInt(error -> position(ex.getTarget(), error.getField())))
                 .orElse(null);
-        String message = first == null ? "Requête invalide." : first.getDefaultMessage();
+        String message = first == null ? Texts.get("error.request.invalid") : first.getDefaultMessage();
         String field = first == null ? null : first.getField();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(message, field));
     }
@@ -84,7 +85,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("L'adresse contient une valeur invalide (" + ex.getName() + ").", null));
+                .body(new ErrorResponse(Texts.get("error.request.badValue", ex.getName()), null));
     }
 
     /**
@@ -96,7 +97,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("Le contenu de la requête est illisible.", null));
+                .body(new ErrorResponse(Texts.get("error.request.unreadable"), null));
     }
 
     /**
@@ -108,7 +109,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoRoute(NoResourceFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ErrorResponse("Cette adresse n'existe pas.", null));
+                .body(new ErrorResponse(Texts.get("error.request.notFound"), null));
     }
 
     /**
@@ -124,7 +125,7 @@ public class GlobalExceptionHandler {
             headers.setAllow(ex.getSupportedHttpMethods());
         }
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).headers(headers)
-                .body(new ErrorResponse("Cette action n'est pas possible à cette adresse.", null));
+                .body(new ErrorResponse(Texts.get("error.request.badMethod"), null));
     }
 
     /**
@@ -140,7 +141,7 @@ public class GlobalExceptionHandler {
                 .map(Object::toString)
                 .collect(Collectors.joining(", "));
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
-                .body(new ErrorResponse("Format de requête non pris en charge (attendu : " + accepted + ").", null));
+                .body(new ErrorResponse(Texts.get("error.request.badMediaType", accepted), null));
     }
 
     /**
@@ -154,7 +155,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("Une erreur inattendue est survenue.", null));
+                .body(new ErrorResponse(Texts.get("error.request.unexpected"), null));
     }
 
     /**

@@ -2,6 +2,10 @@ spring:
   application:
     name: mura-backend
 
+  messages:
+    basename: messages
+    fallback-to-system-locale: false
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/mura}
     username: ${SPRING_DATASOURCE_USERNAME:mura}

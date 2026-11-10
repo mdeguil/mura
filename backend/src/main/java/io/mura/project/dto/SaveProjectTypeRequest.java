@@ -12,12 +12,12 @@ import jakarta.validation.constraints.Size;
  *        counting characters would refuse emoji that render as one; trimmed
  */
 public record SaveProjectTypeRequest(
-        @NotBlank(message = "Le nom du type est requis.")
-        @Size(max = 50, message = "Le nom ne peut pas dépasser 50 caractères.")
+        @NotBlank(message = "{validation.type.nameRequired}")
+        @Size(max = 50, message = "{validation.name.max50}")
         String label,
 
-        @NotBlank(message = "Choisis un emoji.")
-        @Size(max = 16, message = "Un seul emoji.")
+        @NotBlank(message = "{validation.emoji.required}")
+        @Size(max = 16, message = "{validation.emoji.single}")
         String emoji
 ) {
     /** Trims both fields before the constraints judge them. */

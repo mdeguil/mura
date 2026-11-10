@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
 import java.time.Instant;
+import java.util.Locale;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,7 +71,7 @@ class NotificationServiceTest {
         assertThat(notification.getMessage()).isEqualTo("Bienvenue");
         assertThat(notification.getCreatedAt()).isNotNull();
         verify(mailService).sendNotification(eq("bob@mura.test"), eq("bob"), eq("alice t'a ajouté à Refonte"),
-                anyString(), anyString(), eq("Bienvenue"), eq("/project/" + project.getId()), eq("Ouvrir le projet"));
+                anyString(), anyString(), eq("Bienvenue"), eq("/project/" + project.getId()), eq("Ouvrir le projet"), any());
     }
 
     @Test
@@ -79,7 +80,7 @@ class NotificationServiceTest {
 
         assertThat(saved().getMessage()).isNull();
         verify(mailService).sendNotification(anyString(), anyString(), anyString(), anyString(), anyString(),
-                isNull(), anyString(), anyString());
+                isNull(), anyString(), anyString(), any());
     }
 
     @Test
@@ -113,7 +114,7 @@ class NotificationServiceTest {
         assertThat(notification.getGroup()).isNull();
         assertThat(notification.getGroupName()).isEqualTo("Design");
         verify(mailService).sendNotification(anyString(), anyString(), anyString(), anyString(), anyString(),
-                isNull(), eq("/carnet"), anyString());
+                isNull(), eq("/carnet"), anyString(), any());
     }
 
     @Test

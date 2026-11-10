@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
  * @param email the address of their account
  */
 public record AddContactRequest(
-        @NotBlank(message = "Indique l'email de la personne à ajouter.")
-        @Email(message = "Cet email n'est pas valide.")
+        @NotBlank(message = "{validation.member.emailRequired}")
+        @Email(message = "{validation.email.thisInvalid}")
         String email
 ) {}

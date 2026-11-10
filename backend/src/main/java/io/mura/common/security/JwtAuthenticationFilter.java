@@ -30,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Set<String> ALLOWED_WHILE_UNVERIFIED = Set.of(
             "/api/auth/me",
+            "/api/auth/me/language",
             "/api/auth/verify",
             "/api/auth/verify/resend"
     );

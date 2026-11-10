@@ -44,6 +44,7 @@ public record DataExport(
      * @param createdAt when it was registered
      * @param emailVerifiedAt when its address was confirmed, or null
      * @param suspendedAt when it was suspended, or null
+     * @param language the language it reads Mura in, {@code fr} or {@code en}
      */
     public record Account(
             UUID id,
@@ -52,7 +53,8 @@ public record DataExport(
             String accountRole,
             Instant createdAt,
             Instant emailVerifiedAt,
-            Instant suspendedAt
+            Instant suspendedAt,
+            String language
     ) {}
 
     /**

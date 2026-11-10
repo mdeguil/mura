@@ -123,7 +123,7 @@ public class NotificationService {
             return;
         }
 
-        NotificationWording.Lines lines = NotificationWording.of(notification);
+        NotificationWording.Lines lines = NotificationWording.of(notification, recipient.getLocale());
         mailService.sendNotification(
                 recipient.getEmail(),
                 recipient.getUsername(),
@@ -132,7 +132,8 @@ public class NotificationService {
                 lines.sentence(),
                 notification.getMessage(),
                 lines.linkPath(),
-                lines.linkLabel()
+                lines.linkLabel(),
+                recipient.getLocale()
         );
     }
 
@@ -171,10 +172,10 @@ public class NotificationService {
 
     private Notification requireOwn(UUID userId, UUID notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Notification introuvable."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.notification.notFound"));
 
         if (!notification.getUser().getId().equals(userId)) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Cette notification ne t'est pas adressée.");
+            throw new ApiException(HttpStatus.FORBIDDEN, "error.notification.notYours");
         }
 
         return notification;

@@ -10,6 +10,6 @@ import jakarta.validation.constraints.NotNull;
  * @param role ADMIN or MEMBER
  */
 public record ChangeRoleRequest(
-        @NotNull(message = "Le rôle est requis.")
+        @NotNull(message = "{validation.role.required}")
         ProjectRole role
 ) {}

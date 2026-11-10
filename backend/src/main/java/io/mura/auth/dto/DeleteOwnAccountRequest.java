@@ -10,6 +10,6 @@ import jakarta.validation.constraints.NotBlank;
  * @param password the account's current password
  */
 public record DeleteOwnAccountRequest(
-        @NotBlank(message = "Saisis ton mot de passe pour confirmer.")
+        @NotBlank(message = "{validation.password.confirm}")
         String password
 ) {}

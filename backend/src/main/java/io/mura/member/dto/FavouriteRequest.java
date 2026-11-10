@@ -8,6 +8,6 @@ import jakarta.validation.constraints.NotNull;
  * @param favourite true to star them, false to take the star away
  */
 public record FavouriteRequest(
-        @NotNull(message = "Indique si la personne est en favori.")
+        @NotNull(message = "{validation.favourite.required}")
         Boolean favourite
 ) {}

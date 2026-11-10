@@ -10,11 +10,11 @@ import jakarta.validation.constraints.NotBlank;
  * @param password the password, exactly as typed
  */
 public record LoginRequest(
-        @NotBlank(message = "L'email est requis.")
-        @Email(message = "L'email n'est pas valide.")
+        @NotBlank(message = "{validation.email.required}")
+        @Email(message = "{validation.email.invalid}")
         String email,
 
-        @NotBlank(message = "Le mot de passe est requis.")
+        @NotBlank(message = "{validation.password.required}")
         String password
 ) {
     /**

@@ -47,7 +47,7 @@ public class DataExportService {
     @Transactional(readOnly = true)
     public DataExport export(UUID userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Ce compte n'existe pas."));
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "error.account.notFound"));
 
         return new DataExport(
                 Instant.now(),
@@ -58,7 +58,8 @@ public class DataExportService {
                         user.getAccountRole().name(),
                         user.getCreatedAt(),
                         user.getEmailVerifiedAt(),
-                        user.getSuspendedAt()
+                        user.getSuspendedAt(),
+                        user.getLanguage()
                 ),
                 projectMemberRepository.findAllForUser(userId).stream()
                         .map(m -> new DataExport.ProjectEntry(
