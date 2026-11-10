@@ -29,6 +29,8 @@
 
 ## ✨ Fonctionnalités
 
+L'interface, les messages d'erreur, les e-mails et les notifications existent en français et en anglais. Chacun choisit la sienne avec l'interrupteur de la barre du haut ; elle est retenue sur son compte, donc les e-mails qu'il reçoit la suivent.
+
 - 📁 **Projets** — un type, une couleur, une date de début et un statut (*à venir*, *en cours*, *achevé*). Un projet terminé s'archive, puis passe par une corbeille avant d'être supprimé.
 - ✅ **Tâches** — classées par statut, chacune avec ses dates, un responsable, des sous-tâches et l'historique de ses changements de statut.
 - 📅 **Planning** — toutes les tâches sur un calendrier mensuel ou sur un diagramme de Gantt.

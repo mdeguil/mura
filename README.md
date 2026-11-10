@@ -29,13 +29,13 @@
 
 ## ✨ Features
 
-The interface is in French.
+The interface, the error messages, the e-mails and the notifications come in French and in English. Each person picks theirs with the switch in the top bar; it is remembered on their account, so the mails they receive follow.
 
-- 📁 **Projects** — a type, a colour, a start date and a status (*à venir*, *en cours*, *achevé*). Finished work is archived, then goes to a bin before it is deleted.
+- 📁 **Projects** — a type, a colour, a start date and a status (*upcoming*, *in progress*, *finished*). Finished work is archived, then goes to a bin before it is deleted.
 - ✅ **Tasks** — sorted by status, each with its dates, a person in charge, subtasks and the history of its status changes.
 - 📅 **Planning** — every task on a month calendar or on a Gantt chart.
 - 👥 **Teams** — people join a project by invitation, which expires after 14 days. Each member is owner, administrator or member; ownership can be handed over.
-- 🧑‍🤝‍🧑 **Groups** — teams of people run by a *gérant*, brought into a project in one go.
+- 🧑‍🤝‍🧑 **Groups** — teams of people run by a *manager*, brought into a project in one go.
 - 📇 **Carnet** — an address book of the people you work with: favourites, contact requests, and suggestions as you type when inviting.
 - 🔔 **Notifications** — in the bell and by e-mail: someone joins or leaves your projects and groups, asks to be in your carnet, or has their account suspended or deleted. Invitations arrive by e-mail too.
 - 🛠️ **Administration** — accounts (roles, suspension, deletion), the project types on offer, and every group.
