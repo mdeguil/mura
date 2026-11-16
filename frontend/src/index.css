@@ -4,7 +4,7 @@
 
 /*
  * Mura's charte graphique, as colours the whole app reads from. The full
- * charte -- roles, values, rules of use -- is in docs/charte-graphique.md.
+ * charte -- roles, values, rules of use -- is in docs/design-guide.md.
  *
  * Every colour class (bg-slate-50, text-brand-700, border-red-200, ...) is
  * a variable here rather than a fixed value, so a screen written once reads

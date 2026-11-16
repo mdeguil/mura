@@ -2,7 +2,7 @@ import defaultTheme from 'tailwindcss/defaultTheme'
 
 // Every colour is read from a CSS variable set in src/index.css, once for the
 // light theme and once for the dark one. The values themselves -- and the
-// charte they come from -- live there and in docs/charte-graphique.md.
+// charte they come from -- live there and in docs/design-guide.md.
 const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900]
 
 const themed = (name) => `rgb(var(--c-${name}) / <alpha-value>)`

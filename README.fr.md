@@ -85,9 +85,9 @@ Si le log affiche `password authentication failed for user "mura"`, la base de d
 
 Ensuite :
 
-- **Le HTTPS**, indispensable dès que d'autres personnes utilisent l'instance : [docs/https.md](docs/https.md)
-- **Les sauvegardes et les mises à jour** : [docs/sauvegarde.md](docs/sauvegarde.md)
-- **Tous les réglages, et travailler sur Mura lui-même** : [docs/setup.md](docs/setup.md) (en anglais)
+- **Le HTTPS**, indispensable dès que d'autres personnes utilisent l'instance : [docs/https.fr.md](docs/https.fr.md)
+- **Les sauvegardes et les mises à jour** : [docs/backup.fr.md](docs/backup.fr.md)
+- **Tous les réglages, et travailler sur Mura lui-même** : [docs/setup.fr.md](docs/setup.fr.md)
 
 ## 🏗️ Architecture
 
@@ -98,7 +98,7 @@ Ensuite :
 | Interface | React 18, TypeScript strict, Vite, Tailwind CSS, Zustand, servie par nginx | `frontend/` |
 | HTTPS | Caddy, facultatif, devant le frontend | `caddy/`, `docker-compose.https.yml` |
 
-Le navigateur ne parle qu'au frontend : nginx transmet `/api` au backend, qui n'est jamais exposé seul. [docs/guide-du-code.md](docs/guide-du-code.md) explique comment le code est organisé et les règles qu'il suit.
+Le navigateur ne parle qu'au frontend : nginx transmet `/api` au backend, qui n'est jamais exposé seul. [docs/code-guide.fr.md](docs/code-guide.fr.md) explique comment le code est organisé et les règles qu'il suit.
 
 ## 🤝 Contribuer
 

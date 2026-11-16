@@ -86,7 +86,7 @@ If the log says `password authentication failed for user "mura"`, the database w
 Then:
 
 - **HTTPS**, needed as soon as other people use the instance: [docs/https.md](docs/https.md)
-- **Backups and updates**: [docs/sauvegarde.md](docs/sauvegarde.md)
+- **Backups and updates**: [docs/backup.md](docs/backup.md)
 - **Every setting, and working on Mura itself**: [docs/setup.md](docs/setup.md)
 
 ## 🏗️ Architecture
@@ -98,7 +98,7 @@ Then:
 | Interface | React 18, strict TypeScript, Vite, Tailwind CSS, Zustand, served by nginx | `frontend/` |
 | HTTPS | Caddy, optional, in front of the frontend | `caddy/`, `docker-compose.https.yml` |
 
-The browser only ever talks to the frontend: nginx forwards `/api` to the backend, which is not exposed on its own. [docs/guide-du-code.md](docs/guide-du-code.md) (in French) explains how the code is organised and the conventions it follows.
+The browser only ever talks to the frontend: nginx forwards `/api` to the backend, which is not exposed on its own. [docs/code-guide.md](docs/code-guide.md) explains how the code is organised and the conventions it follows.
 
 ## 🤝 Contributing
 

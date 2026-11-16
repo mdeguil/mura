@@ -1,93 +1,95 @@
-# Mettre Mura en HTTPS
+# Putting Mura behind HTTPS
 
-Sans HTTPS, tout ce qui passe entre le navigateur et Mura circule en clair : les mots de passe à la connexion, le jeton qui garde la session ouverte, et le contenu des projets. N'importe qui sur le même réseau Wi-Fi, ou entre le serveur et la personne, peut les lire. Dès qu'une instance est ouverte à d'autres personnes que toi, sur ta propre machine, elle doit être en HTTPS.
+**English** | [Français](https.fr.md)
 
-Mura fournit de quoi le faire en une commande : [Caddy](https://caddyserver.com), placé devant l'application, obtient un certificat gratuit auprès de Let's Encrypt, le renouvelle tout seul et redirige le HTTP vers le HTTPS.
+Without HTTPS, everything that passes between the browser and Mura travels in the clear: passwords at sign-in, the token that keeps the session open, and the content of projects. Anyone on the same Wi-Fi network, or between the server and the person, can read it. As soon as an instance is open to people other than you, on your own machine, it must be on HTTPS.
 
-## Ce qu'il te faut
+Mura comes with what it takes to do this in one command: [Caddy](https://caddyserver.com), placed in front of the application, gets a free certificate from Let's Encrypt, renews it by itself and redirects HTTP to HTTPS.
 
-- **Un serveur** joignable depuis Internet, avec Docker et Docker Compose (version 2.24 ou plus récente).
-- **Un nom de domaine**, par exemple `mura.example.org`, dont l'enregistrement DNS `A` (et `AAAA` si le serveur a une adresse IPv6) pointe vers l'adresse IP du serveur. Ça se règle chez le registraire du domaine ; la propagation peut prendre de quelques minutes à quelques heures.
-- **Les ports 80 et 443 ouverts** sur le pare-feu du serveur et, s'il y en a une, de la box ou de l'hébergeur. Let's Encrypt passe par le port 80 pour vérifier que le domaine est bien à toi.
-- **Aucun autre service** qui occupe déjà les ports 80 ou 443 sur le serveur (un Apache ou un nginx installé par défaut, par exemple). Si c'est le cas, voir [Si tu as déjà un reverse proxy](#si-tu-as-déjà-un-reverse-proxy).
+## What you need
 
-## Mise en place
+- **A server** reachable from the Internet, with Docker and Docker Compose (version 2.24 or later).
+- **A domain name**, for example `mura.example.org`, whose `A` DNS record (and `AAAA` if the server has an IPv6 address) points to the server's IP address. This is set at the domain's registrar; propagation can take from a few minutes to a few hours.
+- **Ports 80 and 443 open** on the server's firewall and, if there is one, on the router or the host. Let's Encrypt uses port 80 to check that the domain really is yours.
+- **No other service** already using ports 80 or 443 on the server (an Apache or an nginx installed by default, for example). If there is one, see [If you already have a reverse proxy](#if-you-already-have-a-reverse-proxy).
 
-1. **Dans `.env`, donne l'adresse de l'instance**, en `https://`, sans rien après le domaine :
+## Setting it up
+
+1. **In `.env`, give the instance's address**, with `https://` and nothing after the domain:
 
    ```
    MURA_URL=https://mura.example.org
    ```
 
-   C'est la même variable que celle des liens dans les e-mails : elle sert aux deux.
+   It is the same variable as the one for the links in e-mails: it serves both.
 
-2. **Toujours dans `.env`, ajoute le fichier HTTPS** à ceux que Docker Compose lit :
+2. **Still in `.env`, add the HTTPS file** to the ones Docker Compose reads:
 
    ```
    COMPOSE_FILE=docker-compose.yml:docker-compose.https.yml
    ```
 
-   Sur un serveur Windows, le séparateur est `;` au lieu de `:`.
+   On a Windows server, the separator is `;` instead of `:`.
 
-3. **Lance ou relance Mura** :
+3. **Start or restart Mura**:
 
    ```bash
    docker compose up -d --build
    ```
 
-4. **Regarde Caddy obtenir le certificat** :
+4. **Watch Caddy get the certificate**:
 
    ```bash
    docker compose logs -f caddy
    ```
 
-   Au bout de quelques secondes, la ligne `certificate obtained successfully` apparaît. `Ctrl+C` pour quitter les logs ; Caddy continue de tourner.
+   After a few seconds, the line `certificate obtained successfully` appears. `Ctrl+C` leaves the logs; Caddy keeps running.
 
-5. **Ouvre `https://mura.example.org`** : le cadenas s'affiche, et `http://mura.example.org` redirige vers la version HTTPS.
+5. **Open `https://mura.example.org`**: the padlock shows, and `http://mura.example.org` redirects to the HTTPS version.
 
-Une fois Caddy en place, le frontend n'est plus publié sur `FRONTEND_PORT` : tout passe par les ports 80 et 443.
+Once Caddy is in place, the frontend is no longer published on `FRONTEND_PORT`: everything goes through ports 80 and 443.
 
-## Ce que fait la configuration
+## What the configuration does
 
-- [`docker-compose.https.yml`](../docker-compose.https.yml) ajoute le service `caddy` sur les ports 80 et 443, et retire le port du frontend. Les certificats sont gardés dans le volume `caddy_data` : ils survivent aux redémarrages, et Caddy les renouvelle avant leur expiration.
-- [`caddy/Caddyfile`](../caddy/Caddyfile) dit à Caddy de servir le domaine de `MURA_URL`, de compresser les réponses, d'envoyer l'en-tête HSTS (le navigateur retient qu'il ne doit plus jamais venir en HTTP pendant un an) et de tout transmettre au frontend, qui transmet à son tour `/api` au backend.
-- L'adresse réelle des personnes est transmise jusqu'au backend, qui s'en sert pour limiter les tentatives de connexion et les demandes de mot de passe oublié. Caddy ignore celle qu'un client prétendrait avoir.
+- [`docker-compose.https.yml`](../docker-compose.https.yml) adds the `caddy` service on ports 80 and 443, and removes the frontend's port. Certificates are kept in the `caddy_data` volume: they survive restarts, and Caddy renews them before they expire.
+- [`caddy/Caddyfile`](../caddy/Caddyfile) tells Caddy to serve the domain of `MURA_URL`, to compress responses, to send the HSTS header (the browser remembers that it must never come over HTTP again for a year) and to pass everything to the frontend, which in turn passes `/api` to the backend.
+- People's real address is passed all the way to the backend, which uses it to limit sign-in attempts and forgotten-password requests. Caddy ignores the one a client claims to have.
 
-## Vérifier que tout va bien
+## Checking that all is well
 
-- **Le certificat** : clique sur le cadenas du navigateur ; l'émetteur doit être Let's Encrypt.
-- **Les e-mails** : demande un lien « Mot de passe oublié » ; il doit commencer par `https://mura.example.org/`.
-- **La note du site** : [SSL Labs](https://www.ssllabs.com/ssltest/) teste la configuration HTTPS d'un domaine public. Caddy obtient un A sans réglage.
+- **The certificate**: click the browser's padlock; the issuer must be Let's Encrypt.
+- **The e-mails**: ask for a "Forgot password" link; it must start with `https://mura.example.org/`.
+- **The site's grade**: [SSL Labs](https://www.ssllabs.com/ssltest/) tests the HTTPS configuration of a public domain. Caddy gets an A without any tuning.
 
-## En cas de problème
+## If something goes wrong
 
-**`certificate obtained successfully` n'apparaît jamais, ou les logs parlent d'`ACME` et de `challenge failed`.**
-Let's Encrypt n'arrive pas à joindre ton serveur. Vérifie, dans cet ordre :
-- que le domaine pointe bien vers le serveur : `nslookup mura.example.org` doit donner son adresse IP ;
-- que les ports 80 et 443 sont ouverts de l'extérieur (pare-feu du serveur, de l'hébergeur, redirection de ports de la box) ;
-- qu'aucun autre service n'occupe ces ports : `docker compose logs caddy` dit alors `address already in use`.
+**`certificate obtained successfully` never appears, or the logs mention `ACME` and `challenge failed`.**
+Let's Encrypt cannot reach your server. Check, in this order:
+- that the domain really points to the server: `nslookup mura.example.org` must give its IP address;
+- that ports 80 and 443 are open from outside (the server's firewall, the host's, the router's port forwarding);
+- that no other service is using these ports: `docker compose logs caddy` then says `address already in use`.
 
-Après trop d'échecs, Let's Encrypt fait patienter une heure ; Caddy réessaie tout seul.
+After too many failures, Let's Encrypt makes you wait an hour; Caddy tries again by itself.
 
-**`required variable MURA_URL is missing a value` au lancement.**
-`MURA_URL` est vide dans `.env`. Le fichier HTTPS en a besoin pour savoir quel domaine servir.
+**`required variable MURA_URL is missing a value` at startup.**
+`MURA_URL` is empty in `.env`. The HTTPS file needs it to know which domain to serve.
 
-**Le navigateur affiche « Trop de redirections ».**
-Un autre proxy devant Caddy (Cloudflare en mode « Flexible », par exemple) parle en HTTP à Caddy, qui redirige vers HTTPS, et ainsi de suite. Passe ce proxy en mode « Full (strict) », ou retire-le.
+**The browser shows "Too many redirects".**
+Another proxy in front of Caddy (Cloudflare in "Flexible" mode, for example) talks HTTP to Caddy, which redirects to HTTPS, and so on. Switch that proxy to "Full (strict)" mode, or remove it.
 
-**Les liens des e-mails pointent encore vers `localhost`.**
-Le backend n'a pas été relancé après le changement de `MURA_URL` : `docker compose up -d` le recrée avec la nouvelle valeur.
+**The links in e-mails still point to `localhost`.**
+The backend was not restarted after `MURA_URL` changed: `docker compose up -d` recreates it with the new value.
 
-## Si tu as déjà un reverse proxy
+## If you already have a reverse proxy
 
-Si le serveur fait déjà tourner nginx, Traefik ou Apache pour d'autres sites, n'utilise pas `docker-compose.https.yml` : laisse ton proxy gérer le certificat et fais-le transmettre à Mura.
+If the server already runs nginx, Traefik or Apache for other sites, do not use `docker-compose.https.yml`: let your proxy handle the certificate and have it pass requests to Mura.
 
-- Garde `MURA_URL=https://mura.example.org` dans `.env`, sans la ligne `COMPOSE_FILE`.
-- Fais pointer ton proxy vers `http://127.0.0.1:5173` (ou le port choisi dans `FRONTEND_PORT`).
-- Transmets l'adresse réelle des personnes dans l'en-tête `X-Forwarded-For`, sans quoi les limites de connexion compteraient tout le monde comme une seule personne.
-- Ferme le port `FRONTEND_PORT` au reste d'Internet avec le pare-feu du serveur : seul ton proxy doit pouvoir l'atteindre.
+- Keep `MURA_URL=https://mura.example.org` in `.env`, without the `COMPOSE_FILE` line.
+- Point your proxy at `http://127.0.0.1:5173` (or the port chosen in `FRONTEND_PORT`).
+- Pass people's real address in the `X-Forwarded-For` header, without which the sign-in limits would count everyone as a single person.
+- Close the `FRONTEND_PORT` port to the rest of the Internet with the server's firewall: only your proxy should be able to reach it.
 
-Par exemple, avec nginx et un certificat obtenu par Certbot :
+For example, with nginx and a certificate obtained by Certbot:
 
 ```nginx
 server {

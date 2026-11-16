@@ -1,7 +1,8 @@
 # ─── Environment ────────────────────────────────────────
 .env
 
-# ─── Database backups (docs/sauvegarde.md) ──────────────
+# ─── Database backups (docs/backup.md) ──────────────────
+backups/
 sauvegardes/
 
 # ─── Java / Spring Boot ─────────────────────────────────

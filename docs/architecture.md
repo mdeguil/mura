@@ -1,5 +1,7 @@
 # Architecture
 
+**English** | [Français](architecture.fr.md)
+
 ## Overview
 
 Mura follows a classic client/server architecture with a decoupled frontend and backend.

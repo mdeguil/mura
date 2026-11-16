@@ -1,5 +1,7 @@
 # Sauvegarder et mettre à jour Mura
 
+[English](backup.md) | **Français**
+
 Tout ce que les gens font dans Mura — comptes, projets, tâches, groupes, carnet — vit dans la base PostgreSQL, rangée dans le volume Docker `postgres_data`. Si le disque du serveur lâche, si quelqu'un lance `docker compose down -v` par erreur ou si une mise à jour tourne mal, sans sauvegarde, tout est perdu. Ce guide explique comment en faire, comment les restaurer, et comment mettre Mura à jour sans risque.
 
 Les commandes se lancent depuis le dossier de Mura, celui qui contient `docker-compose.yml`.

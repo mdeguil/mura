@@ -1,16 +1,18 @@
 # Contributing to Mura
 
+**English** | [Français](CONTRIBUTING.fr.md)
+
 Thank you for your interest in contributing to Mura! 🎉
 
 ## How to contribute
 
 ### Reporting bugs
 
-Please use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.md) when opening an issue.
+Please use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.yml) when opening an issue.
 
 ### Suggesting features
 
-Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md) to suggest new ideas.
+Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.yml) to suggest new ideas.
 
 ### Submitting a Pull Request
 

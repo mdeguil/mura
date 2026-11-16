@@ -1,5 +1,7 @@
 # Setup Guide
 
+**English** | [Français](setup.fr.md)
+
 Mura runs as four Docker containers: PostgreSQL, the Spring Boot backend, the React frontend served by nginx, and, for development only, Mailpit. People reach the frontend; nginx forwards `/api` to the backend, which is never exposed on its own.
 
 ## Prerequisites
@@ -61,12 +63,12 @@ It should show `Started MuraApplication` and `Mail server … answered; Mura can
 
 ### 4. Create the administrator
 
-Open `MURA_URL`, choose *Créer un compte* and register with the address in `MURA_ADMIN_EMAIL`. Enter the code you receive by e-mail: the account is now the administrator, and the *Administration* page appears in the top bar. Other administrators are named from there.
+Open `MURA_URL`, choose *Create an account* (*Créer un compte* if the interface is in French) and register with the address in `MURA_ADMIN_EMAIL`. Enter the code you receive by e-mail: the account is now the administrator, and the *Administration* page appears in the top bar. Other administrators are named from there.
 
 ### 5. HTTPS, backups
 
 - An instance other people use must be served over HTTPS: [https.md](https.md) sets it up with one line in `.env`.
-- Set up daily backups before anyone relies on the instance: [sauvegarde.md](sauvegarde.md), which also explains updates.
+- Set up daily backups before anyone relies on the instance: [backup.md](backup.md), which also explains updates.
 
 ---
 

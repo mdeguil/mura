@@ -1,60 +1,62 @@
 # Mura V1
 
-## Schéma de donnée
+**English** | [Français](mura_v1_schema.fr.md)
 
-### Entités
+## Data schema
 
-| Entité | Attributs |
+### Entities
+
+| Entity | Attributes |
 |--------|-----------|
-| **Utilisateur** | nom: String; email: String; mdp: String |
-| **Equipe** | nom: String; #idListeUtilisateur: int |
-| **ListeUtilisateur** | #idListeUtilisateur: int; #idEquipe: int |
+| **User** | name: String; email: String; password: String |
+| **Team** | name: String; #userListId: int |
+| **UserList** | #userListId: int; #teamId: int |
 | **Importance** | status: String |
-| **Tâche** | nom: String; #idImportance: int; duree: int; note: String |
-| **Projet** | nom: String; description: String; #idListeTache: int; #idEquipe: int |
-| **ListeTache** | #idTache: int; #idProjet: int |
+| **Task** | name: String; #importanceId: int; duration: int; note: String |
+| **Project** | name: String; description: String; #taskListId: int; #teamId: int |
+| **TaskList** | #taskId: int; #projectId: int |
 
 ---
 
 ### Relations
 
-- **Utilisateur** `n` ——— `n` **Equipe** *(via ListeUtilisateur)*
-- **Equipe** `1` ——— `n` **Projet**
-- **Projet** `n` ——— `n` **Tâche** *(via ListeTache)*
-- **Tâche** `n` ——— `1` **Importance**
+- **User** `n` ——— `n` **Team** *(via UserList)*
+- **Team** `1` ——— `n` **Project**
+- **Project** `n` ——— `n` **Task** *(via TaskList)*
+- **Task** `n` ——— `1` **Importance**
 
 ---
 
-### Détail des entités
+### Entity details
 
-#### Utilisateur
-- nom : String
-- email : String
-- mdp : String
+#### User
+- name: String
+- email: String
+- password: String
 
-#### Equipe
-- nom : String
-- \#idListeUtilisateur : int
+#### Team
+- name: String
+- \#userListId: int
 
-#### ListeUtilisateur *(table de jonction)*
-- \#idListeUtilisateur : int
-- \#idEquipe : int
+#### UserList *(junction table)*
+- \#userListId: int
+- \#teamId: int
 
 #### Importance
-- status : String
+- status: String
 
-#### Tâche
-- nom : String
-- \#idImportance : int
-- duree : int
-- note : String
+#### Task
+- name: String
+- \#importanceId: int
+- duration: int
+- note: String
 
-#### Projet
-- nom : String
-- description : String
-- \#idListeTache : int
-- \#idEquipe : int
+#### Project
+- name: String
+- description: String
+- \#taskListId: int
+- \#teamId: int
 
-#### ListeTache *(table de jonction)*
-- \#idTache : int
-- \#idProjet : int
+#### TaskList *(junction table)*
+- \#taskId: int
+- \#projectId: int
