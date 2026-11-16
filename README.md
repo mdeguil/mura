@@ -53,7 +53,7 @@ Mura runs with Docker, on your own machine or on a server.
 ### Prerequisites
 
 - [Docker](https://www.docker.com/) with Docker Compose 2.24 or later
-- A mail account that can send through SMTP: sign-up confirms every address with a code sent by e-mail. [docs/smtp.md](docs/smtp.md) (in French) explains how to get one
+- A mail account that can send through SMTP: sign-up confirms every address with a code sent by e-mail. [docs/smtp.md](docs/smtp.md) explains how to get one
 - For an instance other people use: a domain name pointing at the server, for HTTPS
 
 ### Install

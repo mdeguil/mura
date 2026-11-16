@@ -1,133 +1,135 @@
-# Créer un service SMTP pour Mura
+# Getting an SMTP service for Mura
 
-Mura envoie des e-mails : le code qui confirme chaque inscription, le lien d'un mot de passe oublié, les invitations et les notifications. Sans serveur d'envoi, personne ne peut créer de compte, toi non plus. Ce guide explique ce qu'est un service SMTP, comment en obtenir un et quoi mettre dans `.env`.
+**English** | [Français](smtp.fr.md)
 
-## En deux mots
+Mura sends e-mails: the code that confirms every sign-up, the link for a forgotten password, invitations and notifications. Without a mail-sending server nobody can create an account, you included. This guide explains what an SMTP service is, how to get one and what to put in `.env`.
 
-**SMTP** est le protocole d'envoi des e-mails. Mura ne sait pas envoyer un mail tout seul jusqu'à la boîte de quelqu'un : il le confie à un serveur SMTP, celui d'un fournisseur, qui se charge de la livraison. Ce serveur te demande de t'identifier avec un identifiant et un mot de passe, et n'accepte que les adresses d'expéditeur qui t'appartiennent.
+## In a nutshell
 
-Il te faut donc **un compte chez un fournisseur qui propose l'envoi SMTP**. Il y a trois façons d'en avoir un.
+**SMTP** is the protocol for sending e-mail. Mura cannot deliver a message to someone's mailbox by itself: it hands it to an SMTP server, your provider's, which takes care of the delivery. That server asks you to sign in with a username and a password, and only accepts sender addresses that belong to you.
 
-| Solution | Pour qui | À savoir |
+So you need **an account with a provider that offers SMTP sending**. There are three ways to get one.
+
+| Option | Who it suits | Good to know |
 |---|---|---|
-| **Un service d'envoi** (Brevo, Mailjet, Resend…) | Une instance ouverte à d'autres personnes | Gratuit jusqu'à un certain volume. C'est son métier : les mails arrivent bien dans les boîtes. Demande un domaine. |
-| **La boîte mail de ton nom de domaine** (chez OVH, Infomaniak, Gandi…) | Tu as déjà un domaine avec des adresses mail | Rien de plus à ouvrir : tu réutilises une adresse existante. |
-| **Gmail** | Un essai, ou un petit groupe de proches | Le plus rapide, mais limité à environ 500 mails par jour, et l'expéditeur reste ton adresse Gmail. |
+| **A sending service** (Brevo, Mailjet, Resend…) | An instance other people use | Free up to a certain volume. Delivering mail is their job: messages reach the inbox. Needs a domain. |
+| **The mailbox of your own domain** (at OVH, Infomaniak, Gandi…) | You already have a domain with mail addresses | Nothing more to open: you reuse an existing address. |
+| **Gmail** | A trial, or a small group of people you know | The quickest, but limited to about 500 mails a day, and the sender stays your Gmail address. |
 
-Dans les trois cas, tu finis avec les mêmes cinq informations : un **serveur**, un **port**, un **identifiant**, un **mot de passe** et une **adresse d'expéditeur**.
+In all three cases you end up with the same five pieces of information: a **server**, a **port**, a **username**, a **password** and a **sender address**.
 
-## Ce qu'il faut mettre dans `.env`
+## What to put in `.env`
 
-| Variable | Valeur |
+| Variable | Value |
 |---|---|
-| `MAIL_HOST` | Le serveur SMTP du fournisseur, par exemple `smtp.gmail.com` |
-| `MAIL_PORT` | `587` la plupart du temps, ou `465` |
-| `MAIL_STARTTLS` | `true` avec le port 587, `false` avec le 465 |
-| `MAIL_SSL` | `true` avec le port 465, `false` avec le 587 |
-| `MAIL_USERNAME` | L'identifiant SMTP, souvent l'adresse mail complète |
-| `MAIL_PASSWORD` | Le mot de passe SMTP, voir ci-dessous : ce n'est pas toujours celui du compte |
-| `MURA_MAIL_FROM` | L'expéditeur que les gens voient, par exemple `Mura <mura@example.org>` |
+| `MAIL_HOST` | The provider's SMTP server, for example `smtp.gmail.com` |
+| `MAIL_PORT` | `587` most of the time, or `465` |
+| `MAIL_STARTTLS` | `true` with port 587, `false` with 465 |
+| `MAIL_SSL` | `true` with port 465, `false` with 587 |
+| `MAIL_USERNAME` | The SMTP username, often the full e-mail address |
+| `MAIL_PASSWORD` | The SMTP password, see below: it is not always the account's |
+| `MURA_MAIL_FROM` | The sender people see, for example `Mura <mura@example.org>` |
 
-Le script `scripts/configurer_env.py` pose ces questions et choisit seul `STARTTLS` ou `SSL` d'après le port. Tu peux aussi remplir `.env` à la main.
+The `scripts/configurer_env.py` script asks for these and picks `STARTTLS` or `SSL` from the port. You can also fill `.env` in by hand.
 
-Le fichier `.env` contient ton mot de passe SMTP : il n'est jamais envoyé sur GitHub (`.gitignore` l'exclut), ne le partage pas.
+`.env` holds your SMTP password: it is never sent to GitHub (`.gitignore` leaves it out), so do not share it.
 
-## Option 1 : un service d'envoi (Brevo)
+## Option 1: a sending service (Brevo)
 
-Brevo (ex-Sendinblue) a une offre gratuite limitée à quelques centaines de mails par jour, largement suffisante pour une équipe. Les autres services (Mailjet, Resend, Scaleway…) fonctionnent de la même façon : seuls les noms changent. Vérifie les limites actuelles sur leur site.
+Brevo (formerly Sendinblue) has a free plan limited to a few hundred mails a day, plenty for a team. The other services (Mailjet, Resend, Scaleway…) work the same way: only the names change. Check their current limits on their website.
 
-1. **Crée un compte** sur brevo.com.
-2. **Déclare ton expéditeur.** Dans les réglages d'expéditeurs et de domaines, ajoute ton nom de domaine et valide-le en ajoutant chez ton registraire les enregistrements DNS que Brevo affiche. Sans cela, les mails partent mais finissent en spam, voir [Pour que les mails arrivent](#pour-que-les-mails-arrivent).
-3. **Génère une clé SMTP.** Dans *SMTP et API*, onglet *SMTP*, crée une clé. Brevo affiche alors tout ce qu'il te faut.
-4. **Reporte-le dans `.env` :**
+1. **Create an account** on brevo.com.
+2. **Declare your sender.** In the senders and domains settings, add your domain name and validate it by adding the DNS records Brevo shows you at your registrar. Without it, mails go out but end up as spam, see [Getting mails delivered](#getting-mails-delivered).
+3. **Generate an SMTP key.** Under *SMTP & API*, *SMTP* tab, create a key. Brevo then shows everything you need.
+4. **Copy it into `.env`:**
 
    ```
    MAIL_HOST=smtp-relay.brevo.com
    MAIL_PORT=587
    MAIL_STARTTLS=true
    MAIL_SSL=false
-   MAIL_USERNAME=<l'identifiant SMTP affiché par Brevo>
-   MAIL_PASSWORD=<la clé SMTP>
-   MURA_MAIL_FROM=Mura <mura@ton-domaine.fr>
+   MAIL_USERNAME=<the SMTP login Brevo shows>
+   MAIL_PASSWORD=<the SMTP key>
+   MURA_MAIL_FROM=Mura <mura@your-domain.com>
    ```
 
-   L'identifiant SMTP de Brevo n'est pas forcément ton adresse mail : copie celui qui s'affiche sur la page. Le mot de passe est la clé SMTP générée, pas le mot de passe de ton compte Brevo.
+   Brevo's SMTP login is not necessarily your e-mail address: copy the one shown on the page. The password is the SMTP key you generated, not your Brevo account password.
 
-## Option 2 : la boîte mail de ton domaine
+## Option 2: the mailbox of your domain
 
-Si ton domaine est chez un hébergeur qui fournit des boîtes mail, tu peux envoyer depuis l'une d'elles.
+If your domain is with a host that provides mailboxes, you can send from one of them.
 
-1. **Crée une adresse dédiée**, par exemple `mura@ton-domaine.fr`, dans l'espace client de l'hébergeur. Une adresse à part évite de mélanger tes mails et ceux de Mura.
-2. **Cherche dans l'aide de l'hébergeur** la page « paramètres SMTP » ou « configurer un client de messagerie » : elle donne le serveur et le port.
-3. **Reporte-les dans `.env`.** L'identifiant est presque toujours l'adresse complète, et le mot de passe celui de cette boîte. `MURA_MAIL_FROM` reprend la même adresse :
+1. **Create a dedicated address**, for example `mura@your-domain.com`, in the host's customer area. A separate address keeps your own mail and Mura's apart.
+2. **Look in the host's help** for the "SMTP settings" or "configure a mail client" page: it gives the server and the port.
+3. **Copy them into `.env`.** The username is almost always the full address, and the password that of this mailbox. `MURA_MAIL_FROM` reuses the same address:
 
    ```
-   MAIL_HOST=<le serveur SMTP de l'hébergeur>
+   MAIL_HOST=<the host's SMTP server>
    MAIL_PORT=465
    MAIL_STARTTLS=false
    MAIL_SSL=true
-   MAIL_USERNAME=mura@ton-domaine.fr
-   MAIL_PASSWORD=<le mot de passe de la boîte>
-   MURA_MAIL_FROM=Mura <mura@ton-domaine.fr>
+   MAIL_USERNAME=mura@your-domain.com
+   MAIL_PASSWORD=<the mailbox password>
+   MURA_MAIL_FROM=Mura <mura@your-domain.com>
    ```
 
-   Utilise `587` avec `MAIL_STARTTLS=true` si l'hébergeur le propose plutôt que le 465.
+   Use `587` with `MAIL_STARTTLS=true` if the host offers it rather than 465.
 
-## Option 3 : Gmail, pour un essai
+## Option 3: Gmail, for a trial
 
-Gmail n'accepte pas ton mot de passe habituel pour l'envoi par un programme. Il faut un **mot de passe d'application**, et pour en créer un, la validation en deux étapes doit être activée sur le compte.
+Gmail does not accept your usual password for sending from a program. You need an **app password**, and to create one, 2-step verification must be turned on for the account.
 
-1. **Active la validation en deux étapes** sur ton compte Google (myaccount.google.com, rubrique *Sécurité*).
-2. **Crée un mot de passe d'application** à l'adresse myaccount.google.com/apppasswords. Donne-lui un nom, par exemple « Mura ». Google affiche un code de 16 lettres, **une seule fois**. Un compte Google Workspace peut avoir cette option désactivée par son administrateur.
-3. **Reporte-le dans `.env`**, sans les espaces du code :
+1. **Turn on 2-step verification** on your Google account (myaccount.google.com, *Security*).
+2. **Create an app password** at myaccount.google.com/apppasswords. Give it a name, for example "Mura". Google shows a 16-letter code, **once**. A Google Workspace account may have this option turned off by its administrator.
+3. **Copy it into `.env`**, without the spaces of the code:
 
    ```
    MAIL_HOST=smtp.gmail.com
    MAIL_PORT=587
    MAIL_STARTTLS=true
    MAIL_SSL=false
-   MAIL_USERNAME=ton.adresse@gmail.com
-   MAIL_PASSWORD=<le mot de passe d'application>
-   MURA_MAIL_FROM=Mura <ton.adresse@gmail.com>
+   MAIL_USERNAME=your.address@gmail.com
+   MAIL_PASSWORD=<the app password>
+   MURA_MAIL_FROM=Mura <your.address@gmail.com>
    ```
 
-Deux précautions :
+Two precautions:
 
-- **Utilise une adresse Gmail créée pour Mura**, pas ton adresse personnelle : les invitations et les notifications partent de là.
-- **Ne partage jamais le mot de passe d'application**, ni dans un message, ni dans un ticket, ni sur GitHub. S'il a fuité, supprime-le sur la page des mots de passe d'application : il cesse de fonctionner immédiatement, et tu en crées un autre.
+- **Use a Gmail address created for Mura**, not your personal one: invitations and notifications are sent from it.
+- **Never share the app password**, not in a message, a ticket or on GitHub. If it leaks, delete it on the app passwords page: it stops working at once, and you create another.
 
-## Pour que les mails arrivent
+## Getting mails delivered
 
-Un fournisseur qui accepte tes mails ne garantit pas qu'ils arrivent dans la boîte de réception. Avec un domaine à toi (options 1 et 2), trois enregistrements DNS prouvent aux destinataires que l'expéditeur est légitime :
+A provider that accepts your mails does not guarantee they reach the inbox. With a domain of your own (options 1 and 2), three DNS records prove to recipients that the sender is legitimate:
 
-- **SPF** : la liste des serveurs autorisés à envoyer pour ton domaine ;
-- **DKIM** : une signature ajoutée à chaque mail ;
-- **DMARC** : ce que le destinataire doit faire d'un mail qui ne passe pas les deux premiers contrôles.
+- **SPF**: the list of servers allowed to send for your domain;
+- **DKIM**: a signature added to every mail;
+- **DMARC**: what the recipient should do with a mail that fails the first two checks.
 
-Le fournisseur te donne les valeurs exactes à ajouter chez ton registraire ; il suffit de les copier. Pour vérifier le résultat, envoie-toi un mail depuis Mura puis regarde son score sur mail-tester.com.
+The provider gives you the exact values to add at your registrar; copying them is enough. To check the result, send yourself a mail from Mura and look at its score on mail-tester.com.
 
-Avec Gmail, rien à régler : Google signe lui-même ses mails.
+With Gmail there is nothing to set up: Google signs its own mails.
 
-## Vérifier que Mura arrive à envoyer
+## Checking that Mura can send
 
-Après avoir rempli `.env`, redémarre :
+Once `.env` is filled in, restart:
 
 ```
 docker compose up -d
 docker compose logs backend
 ```
 
-Le log doit dire `Mail server … answered; Mura can send its mails.` Sinon, la ligne `Mura cannot reach the mail server` nomme le serveur et la raison :
+The log should say `Mail server … answered; Mura can send its mails.` If not, the `Mura cannot reach the mail server` line names the server and the reason:
 
-| Raison | Piste |
+| Reason | What to try |
 |---|---|
-| `Authentication failed` ou `535` | Identifiant ou mot de passe faux. Chez Gmail et Brevo, le mot de passe n'est pas celui du compte, c'est le mot de passe d'application ou la clé SMTP. |
-| `Connection timed out` | Mauvais serveur, ou port bloqué. Essaie l'autre port (587 ou 465), et vérifie que ton hébergeur ou ta box ne bloque pas les connexions sortantes. |
-| `SSL` / `handshake` / `StartTLS` | La combinaison est fausse : 587 va avec `MAIL_STARTTLS=true`, 465 avec `MAIL_SSL=true`, jamais les deux. |
-| `Sender address rejected` (n'apparaît pas au démarrage, mais au premier envoi, dans le même log) | L'expéditeur de `MURA_MAIL_FROM` n'est pas une adresse du compte ou du domaine validé chez le fournisseur. |
+| `Authentication failed` or `535` | Wrong username or password. With Gmail and Brevo the password is not the account's, it is the app password or the SMTP key. |
+| `Connection timed out` | Wrong server, or a blocked port. Try the other port (587 or 465), and check that your host or router does not block outgoing connections. |
+| `SSL` / `handshake` / `StartTLS` | The combination is wrong: 587 goes with `MAIL_STARTTLS=true`, 465 with `MAIL_SSL=true`, never both. |
+| `Sender address rejected` (does not appear at startup but at the first send, in the same log) | The sender in `MURA_MAIL_FROM` is not an address of the account, or of the domain validated with the provider. |
 
-Le test final : crée un compte avec l'adresse de `MURA_ADMIN_EMAIL`. Le code doit arriver dans la minute. S'il n'est pas dans la boîte de réception, regarde les courriers indésirables, puis la section précédente.
+The final test: create an account with the address in `MURA_ADMIN_EMAIL`. The code should arrive within a minute. If it is not in the inbox, look in the junk folder, then at the previous section.
 
-## Pour un essai sur ta machine
+## For a trial on your own machine
 
-Pour développer ou essayer Mura sans fournisseur, Mailpit intercepte les mails au lieu de les envoyer et les montre sur http://localhost:8025. Il se règle avec `SPRING_PROFILES_ACTIVE=dev` et `COMPOSE_PROFILES=dev` et en laissant les réglages `MAIL_` vides, comme l'explique [setup.md](setup.md) (en anglais). Il ne convient pas à une instance que d'autres utilisent, puisque rien n'arrive jamais dans une vraie boîte.
+To develop or try Mura without a provider, Mailpit catches the mails instead of sending them and shows them at http://localhost:8025. It is set with `SPRING_PROFILES_ACTIVE=dev` and `COMPOSE_PROFILES=dev`, leaving the `MAIL_` settings empty, as [setup.md](setup.md) explains. It does not suit an instance other people use, since nothing ever reaches a real mailbox.
