@@ -1,6 +1,6 @@
 # Mura V1
 
-[English](mura_v1_schema.md) | **Français**
+[English](../en/mura_v1_schema.md) | **Français**
 
 ## Schéma de donnée
 

@@ -1,10 +1,10 @@
 # Guide du code de Mura
 
-[English](code-guide.md) | **Français**
+[English](../en/code-guide.md) | **Français**
 
-Ce guide explique comment le code est rangé et les quelques règles maison qu'il suit, pour pouvoir y ajouter une fonctionnalité sans tout relire. Pour installer et lancer l'application, voir [setup.fr.md](setup.fr.md). Pour les couleurs et les composants visuels, voir [design-guide.fr.md](design-guide.fr.md).
+Ce guide explique comment le code est rangé et les quelques règles maison qu'il suit, pour pouvoir y ajouter une fonctionnalité sans tout relire. Pour installer et lancer l'application, voir [setup.md](setup.md). Pour les couleurs et les composants visuels, voir [design-guide.md](design-guide.md).
 
-> `architecture.fr.md` décrit le premier échafaudage du projet (tableaux, listes, cartes). Le code a beaucoup changé depuis : quand les deux ne disent pas la même chose, c'est le code et ce guide qui font foi.
+> `architecture.md` décrit le premier échafaudage du projet (tableaux, listes, cartes). Le code a beaucoup changé depuis : quand les deux ne disent pas la même chose, c'est le code et ce guide qui font foi.
 
 ## Vue d'ensemble
 

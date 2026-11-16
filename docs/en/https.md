@@ -1,6 +1,6 @@
 # Putting Mura behind HTTPS
 
-**English** | [Français](https.fr.md)
+**English** | [Français](../fr/https.md)
 
 Without HTTPS, everything that passes between the browser and Mura travels in the clear: passwords at sign-in, the token that keeps the session open, and the content of projects. Anyone on the same Wi-Fi network, or between the server and the person, can read it. As soon as an instance is open to people other than you, on your own machine, it must be on HTTPS.
 
@@ -51,8 +51,8 @@ Once Caddy is in place, the frontend is no longer published on `FRONTEND_PORT`: 
 
 ## What the configuration does
 
-- [`docker-compose.https.yml`](../docker-compose.https.yml) adds the `caddy` service on ports 80 and 443, and removes the frontend's port. Certificates are kept in the `caddy_data` volume: they survive restarts, and Caddy renews them before they expire.
-- [`caddy/Caddyfile`](../caddy/Caddyfile) tells Caddy to serve the domain of `MURA_URL`, to compress responses, to send the HSTS header (the browser remembers that it must never come over HTTP again for a year) and to pass everything to the frontend, which in turn passes `/api` to the backend.
+- [`docker-compose.https.yml`](../../docker-compose.https.yml) adds the `caddy` service on ports 80 and 443, and removes the frontend's port. Certificates are kept in the `caddy_data` volume: they survive restarts, and Caddy renews them before they expire.
+- [`caddy/Caddyfile`](../../caddy/Caddyfile) tells Caddy to serve the domain of `MURA_URL`, to compress responses, to send the HSTS header (the browser remembers that it must never come over HTTP again for a year) and to pass everything to the frontend, which in turn passes `/api` to the backend.
 - People's real address is passed all the way to the backend, which uses it to limit sign-in attempts and forgotten-password requests. Caddy ignores the one a client claims to have.
 
 ## Checking that all is well

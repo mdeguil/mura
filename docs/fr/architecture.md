@@ -1,6 +1,6 @@
 # Architecture
 
-[English](architecture.md) | **Français**
+[English](../en/architecture.md) | **Français**
 
 ## Vue d'ensemble
 

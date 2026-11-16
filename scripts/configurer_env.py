@@ -43,7 +43,7 @@ TEXTS = {
         "C'est l'adresse que les gens tapent dans leur navigateur. Elle sert dans les liens des e-mails "
         "que Mura envoie (confirmer une adresse, changer un mot de passe, invitations), et c'est la seule "
         "adresse dont l'API accepte les requêtes. Pour un essai sur cette machine, garde la proposition. "
-        "Pour une instance que d'autres utilisent, donne ton propre domaine en https:// : docs/https.fr.md explique comment."
+        "Pour une instance que d'autres utilisent, donne ton propre domaine en https:// : docs/fr/https.md explique comment."
     ),
     "q_admin": "Quelle est ton adresse e-mail ?",
     "why_admin": (
@@ -57,7 +57,7 @@ TEXTS = {
         "oublié, les invitations et les notifications. Sans serveur d'e-mails, personne ne peut créer de "
         "compte, toi non plus. Mura ne livre pas les mails lui-même : il les confie à un serveur SMTP, celui "
         "de ton fournisseur. Il te faut donc un compte chez l'un d'eux. Si tu n'en as pas encore, "
-        "docs/smtp.fr.md explique comment en obtenir un en quelques minutes."
+        "docs/fr/smtp.md explique comment en obtenir un en quelques minutes."
     ),
     "provider_question": "Quel type de fournisseur utilises-tu ?",
     "provider_gmail": "Gmail   le plus rapide, pour un essai ou quelques personnes",
@@ -133,7 +133,7 @@ TEXTS = {
         "connexion : quiconque le connaît pourrait se connecter sous n'importe quel compte, d'où le refus "
         "de Mura de démarrer sans une valeur longue. Le mot de passe de la base protège tout ce que les gens "
         "mettent dans Mura. Les deux ne vivent que dans .env : garde ce fichier privé, et garde-en une "
-        "copie avec tes sauvegardes (docs/backup.fr.md)."
+        "copie avec tes sauvegardes (docs/fr/backup.md)."
     ),
     "row_url": "Adresse",
     "row_admin": "Administrateur",
@@ -152,8 +152,8 @@ TEXTS = {
     "next_logs": "Regarde le log du backend. Il doit dire que le serveur d'e-mails a répondu :",
     "next_register": "Ouvre {url}, choisis « Créer un compte » et inscris-toi avec {email}. Saisis le code reçu : tu es l'administrateur.",
     "next_more": (
-        "Pour une instance que d'autres utilisent, mets aussi en place le HTTPS (docs/https.fr.md) et "
-        "les sauvegardes (docs/backup.fr.md), et renseigne les réglages VITE_LEGAL_* de .env, dont les pages légales ont besoin."
+        "Pour une instance que d'autres utilisent, mets aussi en place le HTTPS (docs/fr/https.md) et "
+        "les sauvegardes (docs/fr/backup.md), et renseigne les réglages VITE_LEGAL_* de .env, dont les pages légales ont besoin."
     ),
     "exists": "{path} existe déjà.",
     "overwrite_ask": "Le remplacer ? Le mot de passe de la base va changer, ce qui casse une base déjà créée.",

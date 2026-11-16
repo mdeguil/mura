@@ -1,6 +1,6 @@
 # Guide d'installation
 
-[English](setup.md) | **Français**
+[English](../en/setup.md) | **Français**
 
 Mura tourne dans quatre conteneurs Docker : PostgreSQL, le backend Spring Boot, le frontend React servi par nginx et, pour le développement seulement, Mailpit. Les gens atteignent le frontend ; nginx transmet `/api` au backend, qui n'est jamais exposé seul.
 
@@ -8,7 +8,7 @@ Mura tourne dans quatre conteneurs Docker : PostgreSQL, le backend Spring Boot, 
 
 - [Git](https://git-scm.com/)
 - [Docker](https://www.docker.com/) avec Docker Compose 2.24 ou plus récent
-- Un compte SMTP pour envoyer les e-mails (ton fournisseur de messagerie, ou un service d'envoi) ; [smtp.fr.md](smtp.fr.md) explique comment en obtenir un
+- Un compte SMTP pour envoyer les e-mails (ton fournisseur de messagerie, ou un service d'envoi) ; [smtp.md](smtp.md) explique comment en obtenir un
 
 Pour travailler sur le code sans Docker : Java 21, Maven 3.9, Node.js 20 et PostgreSQL 15.
 
@@ -69,8 +69,8 @@ Ouvre `MURA_URL`, choisis *Créer un compte* (*Create an account* si l'interface
 
 ### 5. HTTPS, sauvegardes
 
-- Une instance que d'autres personnes utilisent doit être servie en HTTPS : [https.fr.md](https.fr.md) le met en place avec une ligne dans `.env`.
-- Mets en place des sauvegardes quotidiennes avant que quiconque compte sur l'instance : [backup.fr.md](backup.fr.md), qui explique aussi les mises à jour.
+- Une instance que d'autres personnes utilisent doit être servie en HTTPS : [https.md](https.md) le met en place avec une ligne dans `.env`.
+- Mets en place des sauvegardes quotidiennes avant que quiconque compte sur l'instance : [backup.md](backup.md), qui explique aussi les mises à jour.
 
 ---
 

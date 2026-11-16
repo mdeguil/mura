@@ -1,6 +1,6 @@
 # Mura design guide
 
-**English** | [Français](design-guide.fr.md)
+**English** | [Français](../fr/design-guide.md)
 
 Mura's visual identity starts from its logo: a dark theme, and two bright colours — **sea green** and **ocean blue** — that answer each other. Dark is the default theme; a light theme stays available from the top bar.
 

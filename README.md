@@ -53,7 +53,7 @@ Mura runs with Docker, on your own machine or on a server.
 ### Prerequisites
 
 - [Docker](https://www.docker.com/) with Docker Compose 2.24 or later
-- A mail account that can send through SMTP: sign-up confirms every address with a code sent by e-mail. [docs/smtp.md](docs/smtp.md) explains how to get one
+- A mail account that can send through SMTP: sign-up confirms every address with a code sent by e-mail. [docs/en/smtp.md](docs/en/smtp.md) explains how to get one
 - For an instance other people use: a domain name pointing at the server, for HTTPS
 
 ### Install
@@ -81,13 +81,13 @@ docker compose logs backend
 
 The log should say `Mail server … answered`. Open `MURA_URL` (http://localhost:5173 if left empty), create your account with `MURA_ADMIN_EMAIL` and enter the code you receive: you are the administrator.
 
-If the log says `password authentication failed for user "mura"`, the database was created at an earlier start, with another password. On a new install that holds nothing yet, start it over with `docker compose down -v` then `docker compose up -d` — `-v` erases the database. On an instance in use, change the password instead, as [docs/setup.md](docs/setup.md#useful-commands) shows.
+If the log says `password authentication failed for user "mura"`, the database was created at an earlier start, with another password. On a new install that holds nothing yet, start it over with `docker compose down -v` then `docker compose up -d` — `-v` erases the database. On an instance in use, change the password instead, as [docs/en/setup.md](docs/en/setup.md#useful-commands) shows.
 
 Then:
 
-- **HTTPS**, needed as soon as other people use the instance: [docs/https.md](docs/https.md)
-- **Backups and updates**: [docs/backup.md](docs/backup.md)
-- **Every setting, and working on Mura itself**: [docs/setup.md](docs/setup.md)
+- **HTTPS**, needed as soon as other people use the instance: [docs/en/https.md](docs/en/https.md)
+- **Backups and updates**: [docs/en/backup.md](docs/en/backup.md)
+- **Every setting, and working on Mura itself**: [docs/en/setup.md](docs/en/setup.md)
 
 ## 🏗️ Architecture
 
@@ -98,7 +98,7 @@ Then:
 | Interface | React 18, strict TypeScript, Vite, Tailwind CSS, Zustand, served by nginx | `frontend/` |
 | HTTPS | Caddy, optional, in front of the frontend | `caddy/`, `docker-compose.https.yml` |
 
-The browser only ever talks to the frontend: nginx forwards `/api` to the backend, which is not exposed on its own. [docs/code-guide.md](docs/code-guide.md) explains how the code is organised and the conventions it follows.
+The browser only ever talks to the frontend: nginx forwards `/api` to the backend, which is not exposed on its own. [docs/en/code-guide.md](docs/en/code-guide.md) explains how the code is organised and the conventions it follows.
 
 ## 🤝 Contributing
 

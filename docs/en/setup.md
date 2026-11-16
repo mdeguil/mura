@@ -1,6 +1,6 @@
 # Setup Guide
 
-**English** | [Français](setup.fr.md)
+**English** | [Français](../fr/setup.md)
 
 Mura runs as four Docker containers: PostgreSQL, the Spring Boot backend, the React frontend served by nginx, and, for development only, Mailpit. People reach the frontend; nginx forwards `/api` to the backend, which is never exposed on its own.
 

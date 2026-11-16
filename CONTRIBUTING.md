@@ -39,7 +39,7 @@ Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.yml) t
 
 ## Development setup
 
-See [docs/setup.md](docs/setup.md) for detailed instructions.
+See [docs/en/setup.md](docs/en/setup.md) for detailed instructions.
 
 ## Licence of contributions
 

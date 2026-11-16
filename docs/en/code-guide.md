@@ -1,6 +1,6 @@
 # Mura code guide
 
-**English** | [Français](code-guide.fr.md)
+**English** | [Français](../fr/code-guide.md)
 
 This guide explains how the code is laid out and the few house rules it follows, so that you can add a feature without reading everything. To install and run the application, see [setup.md](setup.md). For colours and visual components, see [design-guide.md](design-guide.md).
 

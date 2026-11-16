@@ -1,6 +1,6 @@
 # Créer un service SMTP pour Mura
 
-[English](smtp.md) | **Français**
+[English](../en/smtp.md) | **Français**
 
 Mura envoie des e-mails : le code qui confirme chaque inscription, le lien d'un mot de passe oublié, les invitations et les notifications. Sans serveur d'envoi, personne ne peut créer de compte, toi non plus. Ce guide explique ce qu'est un service SMTP, comment en obtenir un et quoi mettre dans `.env`.
 
@@ -132,4 +132,4 @@ Le test final : crée un compte avec l'adresse de `MURA_ADMIN_EMAIL`. Le code do
 
 ## Pour un essai sur ta machine
 
-Pour développer ou essayer Mura sans fournisseur, Mailpit intercepte les mails au lieu de les envoyer et les montre sur http://localhost:8025. Il se règle avec `SPRING_PROFILES_ACTIVE=dev` et `COMPOSE_PROFILES=dev` et en laissant les réglages `MAIL_` vides, comme l'explique [setup.fr.md](setup.fr.md). Il ne convient pas à une instance que d'autres utilisent, puisque rien n'arrive jamais dans une vraie boîte.
+Pour développer ou essayer Mura sans fournisseur, Mailpit intercepte les mails au lieu de les envoyer et les montre sur http://localhost:8025. Il se règle avec `SPRING_PROFILES_ACTIVE=dev` et `COMPOSE_PROFILES=dev` et en laissant les réglages `MAIL_` vides, comme l'explique [setup.md](setup.md). Il ne convient pas à une instance que d'autres utilisent, puisque rien n'arrive jamais dans une vraie boîte.

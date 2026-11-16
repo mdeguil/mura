@@ -1,7 +1,7 @@
 # ─── Environment ────────────────────────────────────────
 .env
 
-# ─── Database backups (docs/backup.md) ──────────────────
+# ─── Database backups (docs/en/backup.md) ──────────────────
 backups/
 sauvegardes/
 

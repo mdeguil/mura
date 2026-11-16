@@ -1,6 +1,6 @@
 # Backing up and updating Mura
 
-**English** | [Français](backup.fr.md)
+**English** | [Français](../fr/backup.md)
 
 Everything people do in Mura — accounts, projects, tasks, groups, contacts — lives in the PostgreSQL database, kept in the Docker volume `postgres_data`. If the server's disk fails, if someone runs `docker compose down -v` by mistake or if an update goes wrong, without a backup everything is lost. This guide explains how to make backups, how to restore them, and how to update Mura safely.
 

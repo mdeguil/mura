@@ -1,6 +1,6 @@
 # Getting an SMTP service for Mura
 
-**English** | [Français](smtp.fr.md)
+**English** | [Français](../fr/smtp.md)
 
 Mura sends e-mails: the code that confirms every sign-up, the link for a forgotten password, invitations and notifications. Without a mail-sending server nobody can create an account, you included. This guide explains what an SMTP service is, how to get one and what to put in `.env`.
 

@@ -1,6 +1,6 @@
 # Architecture
 
-**English** | [Français](architecture.fr.md)
+**English** | [Français](../fr/architecture.md)
 
 ## Overview
 

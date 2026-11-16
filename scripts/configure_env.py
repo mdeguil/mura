@@ -43,7 +43,7 @@ TEXTS = {
         "This is the address people type in their browser. It goes into the links of the e-mails "
         "Mura sends (confirming an address, resetting a password, invitations), and it is the only "
         "address the API accepts requests from. For a trial on this machine, keep the suggestion. "
-        "For an instance other people use, give your own https:// domain: docs/https.md explains how."
+        "For an instance other people use, give your own https:// domain: docs/en/https.md explains how."
     ),
     "q_admin": "What is your e-mail address?",
     "why_admin": (
@@ -55,7 +55,7 @@ TEXTS = {
         "Mura sends e-mails: the code that confirms every sign-up, the link for a forgotten password, "
         "invitations and notifications. Without a mail server nobody can create an account, you included. "
         "Mura does not deliver mail itself: it hands it to an SMTP server, the one of your mail provider. "
-        "You need an account with one. If you have none yet, docs/smtp.md explains how to get one in a "
+        "You need an account with one. If you have none yet, docs/en/smtp.md explains how to get one in a "
         "few minutes."
     ),
     "provider_question": "Which kind of provider do you use?",
@@ -130,7 +130,7 @@ TEXTS = {
         "Two secrets are generated now, random and never displayed. JWT_SECRET signs every sign-in: "
         "whoever knows it could sign in as anyone, which is why Mura refuses to start without a long "
         "one. The database password protects everything people put in Mura. Both live only in .env: "
-        "keep that file private, and keep a copy of it with your backups (docs/backup.md)."
+        "keep that file private, and keep a copy of it with your backups (docs/en/backup.md)."
     ),
     "row_url": "Address",
     "row_admin": "Administrator",
@@ -149,8 +149,8 @@ TEXTS = {
     "next_logs": "Check the backend's log. It should say that the mail server answered:",
     "next_register": "Open {url}, choose \"Create an account\" and register with {email}. Enter the code you receive: you are the administrator.",
     "next_more": (
-        "For an instance other people use, also set up HTTPS (docs/https.md) and backups "
-        "(docs/backup.md), and fill in the VITE_LEGAL_* settings of .env, which the legal pages need."
+        "For an instance other people use, also set up HTTPS (docs/en/https.md) and backups "
+        "(docs/en/backup.md), and fill in the VITE_LEGAL_* settings of .env, which the legal pages need."
     ),
     "exists": "{path} already exists.",
     "overwrite_ask": "Replace it? The database password will change, which breaks a database already created.",

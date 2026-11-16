@@ -1,6 +1,6 @@
 # Charte graphique de Mura
 
-[English](design-guide.md) | **Français**
+[English](../en/design-guide.md) | **Français**
 
 L'identité visuelle de Mura part de son logo : un thème sombre, et deux couleurs vives — le **vert d'eau** et le **bleu océan** — qui se répondent. Le sombre est le thème par défaut ; un thème clair reste disponible depuis la barre du haut.
 

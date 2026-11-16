@@ -53,7 +53,7 @@ Mura tourne avec Docker, sur votre propre machine ou sur un serveur.
 ### Prérequis
 
 - [Docker](https://www.docker.com/) avec Docker Compose 2.24 ou plus récent
-- Un compte e-mail capable d'envoyer par SMTP : l'inscription vérifie chaque adresse avec un code envoyé par e-mail. [docs/smtp.fr.md](docs/smtp.fr.md) explique comment en obtenir un
+- Un compte e-mail capable d'envoyer par SMTP : l'inscription vérifie chaque adresse avec un code envoyé par e-mail. [docs/fr/smtp.md](docs/fr/smtp.md) explique comment en obtenir un
 - Pour une instance utilisée par d'autres personnes : un nom de domaine qui pointe vers le serveur, pour le HTTPS
 
 ### Installer
@@ -81,13 +81,13 @@ docker compose logs backend
 
 Le log doit afficher `Mail server … answered`. Ouvrez `MURA_URL` (http://localhost:5173 si vous l'avez laissée vide), créez votre compte avec `MURA_ADMIN_EMAIL` et saisissez le code reçu : vous êtes l'administrateur.
 
-Si le log affiche `password authentication failed for user "mura"`, la base de données a été créée lors d'un lancement précédent, avec un autre mot de passe. Sur une installation neuve qui ne contient encore rien, repartez de zéro avec `docker compose down -v` puis `docker compose up -d` — `-v` efface la base. Sur une instance déjà utilisée, changez plutôt le mot de passe, comme l'indique [docs/setup.md](docs/setup.md#useful-commands).
+Si le log affiche `password authentication failed for user "mura"`, la base de données a été créée lors d'un lancement précédent, avec un autre mot de passe. Sur une installation neuve qui ne contient encore rien, repartez de zéro avec `docker compose down -v` puis `docker compose up -d` — `-v` efface la base. Sur une instance déjà utilisée, changez plutôt le mot de passe, comme l'indique [docs/fr/setup.md](docs/fr/setup.md#commandes-utiles).
 
 Ensuite :
 
-- **Le HTTPS**, indispensable dès que d'autres personnes utilisent l'instance : [docs/https.fr.md](docs/https.fr.md)
-- **Les sauvegardes et les mises à jour** : [docs/backup.fr.md](docs/backup.fr.md)
-- **Tous les réglages, et travailler sur Mura lui-même** : [docs/setup.fr.md](docs/setup.fr.md)
+- **Le HTTPS**, indispensable dès que d'autres personnes utilisent l'instance : [docs/fr/https.md](docs/fr/https.md)
+- **Les sauvegardes et les mises à jour** : [docs/fr/backup.md](docs/fr/backup.md)
+- **Tous les réglages, et travailler sur Mura lui-même** : [docs/fr/setup.md](docs/fr/setup.md)
 
 ## 🏗️ Architecture
 
@@ -98,7 +98,7 @@ Ensuite :
 | Interface | React 18, TypeScript strict, Vite, Tailwind CSS, Zustand, servie par nginx | `frontend/` |
 | HTTPS | Caddy, facultatif, devant le frontend | `caddy/`, `docker-compose.https.yml` |
 
-Le navigateur ne parle qu'au frontend : nginx transmet `/api` au backend, qui n'est jamais exposé seul. [docs/code-guide.fr.md](docs/code-guide.fr.md) explique comment le code est organisé et les règles qu'il suit.
+Le navigateur ne parle qu'au frontend : nginx transmet `/api` au backend, qui n'est jamais exposé seul. [docs/fr/code-guide.md](docs/fr/code-guide.md) explique comment le code est organisé et les règles qu'il suit.
 
 ## 🤝 Contribuer
 

@@ -39,7 +39,7 @@ Utilise le [modèle de demande de fonctionnalité](.github/ISSUE_TEMPLATE/featur
 
 ## Mise en place pour développer
 
-Voir [docs/setup.fr.md](docs/setup.fr.md) pour les instructions détaillées.
+Voir [docs/fr/setup.md](docs/fr/setup.md) pour les instructions détaillées.
 
 ## Licence des contributions
 

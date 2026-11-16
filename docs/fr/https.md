@@ -1,6 +1,6 @@
 # Mettre Mura en HTTPS
 
-[English](https.md) | **Français**
+[English](../en/https.md) | **Français**
 
 Sans HTTPS, tout ce qui passe entre le navigateur et Mura circule en clair : les mots de passe à la connexion, le jeton qui garde la session ouverte, et le contenu des projets. N'importe qui sur le même réseau Wi-Fi, ou entre le serveur et la personne, peut les lire. Dès qu'une instance est ouverte à d'autres personnes que toi, sur ta propre machine, elle doit être en HTTPS.
 
@@ -51,8 +51,8 @@ Une fois Caddy en place, le frontend n'est plus publié sur `FRONTEND_PORT` : to
 
 ## Ce que fait la configuration
 
-- [`docker-compose.https.yml`](../docker-compose.https.yml) ajoute le service `caddy` sur les ports 80 et 443, et retire le port du frontend. Les certificats sont gardés dans le volume `caddy_data` : ils survivent aux redémarrages, et Caddy les renouvelle avant leur expiration.
-- [`caddy/Caddyfile`](../caddy/Caddyfile) dit à Caddy de servir le domaine de `MURA_URL`, de compresser les réponses, d'envoyer l'en-tête HSTS (le navigateur retient qu'il ne doit plus jamais venir en HTTP pendant un an) et de tout transmettre au frontend, qui transmet à son tour `/api` au backend.
+- [`docker-compose.https.yml`](../../docker-compose.https.yml) ajoute le service `caddy` sur les ports 80 et 443, et retire le port du frontend. Les certificats sont gardés dans le volume `caddy_data` : ils survivent aux redémarrages, et Caddy les renouvelle avant leur expiration.
+- [`caddy/Caddyfile`](../../caddy/Caddyfile) dit à Caddy de servir le domaine de `MURA_URL`, de compresser les réponses, d'envoyer l'en-tête HSTS (le navigateur retient qu'il ne doit plus jamais venir en HTTP pendant un an) et de tout transmettre au frontend, qui transmet à son tour `/api` au backend.
 - L'adresse réelle des personnes est transmise jusqu'au backend, qui s'en sert pour limiter les tentatives de connexion et les demandes de mot de passe oublié. Caddy ignore celle qu'un client prétendrait avoir.
 
 ## Vérifier que tout va bien
