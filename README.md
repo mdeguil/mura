@@ -64,7 +64,7 @@ cd mura
 cp .env.example .env
 ```
 
-Then fill in `.env` **before the first start** — each setting is explained there:
+The quickest way is to let an assistant do it instead of the `cp` above: `python3 scripts/configure_env.py` (`py` on Windows; `configurer_env.py` for the French version) asks a few questions, says why each one is needed, generates the secrets and can test your mail server. Or fill in `.env` by hand **before the first start** — each setting is explained there:
 
 - `JWT_SECRET`: a random value, for example from `openssl rand -base64 48`. The backend refuses to start without one.
 - `POSTGRES_PASSWORD` and `SPRING_DATASOURCE_PASSWORD`: the same new password, in place of `changeme`. The database keeps the password it was created with, at the first start.

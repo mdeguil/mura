@@ -30,7 +30,7 @@ Dans les trois cas, tu finis avec les mêmes cinq informations : un **serveur**,
 | `MAIL_PASSWORD` | Le mot de passe SMTP, voir ci-dessous : ce n'est pas toujours celui du compte |
 | `MURA_MAIL_FROM` | L'expéditeur que les gens voient, par exemple `Mura <mura@example.org>` |
 
-Le script `scripts/configurer_env.py` pose ces questions et choisit seul `STARTTLS` ou `SSL` d'après le port. Tu peux aussi remplir `.env` à la main.
+Le script `scripts/configurer_env.py` (`scripts/configure_env.py` en anglais) pose ces questions, explique à quoi sert chaque réponse, choisit seul `STARTTLS` ou `SSL` d'après le port et peut tester la connexion au serveur d'e-mails avant d'écrire quoi que ce soit. Tu peux aussi remplir `.env` à la main.
 
 Le fichier `.env` contient ton mot de passe SMTP : il n'est jamais envoyé sur GitHub (`.gitignore` l'exclut), ne le partage pas.
 

@@ -26,6 +26,8 @@ cp .env.example .env
 
 ### 2. Remplir `.env`
 
+Le plus simple est `python3 scripts/configurer_env.py` (`py` sous Windows ; `scripts/configure_env.py` est la version anglaise) : il demande ce qui suit, explique à quoi sert chaque réponse, génère les secrets et peut tester le serveur d'e-mails. Le tableau ci-dessous sert à remplir le fichier à la main, ou à vérifier ce que l'assistant a écrit.
+
 À faire avant le premier `docker compose up` : la base est créée au premier démarrage, avec le mot de passe que `.env` contient à ce moment-là. Chaque réglage est décrit dans `.env.example` ; voici ceux dont une instance a besoin.
 
 | Réglage | Quoi mettre |
