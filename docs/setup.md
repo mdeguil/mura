@@ -6,7 +6,7 @@ Mura runs as four Docker containers: PostgreSQL, the Spring Boot backend, the Re
 
 - [Git](https://git-scm.com/)
 - [Docker](https://www.docker.com/) with Docker Compose 2.24 or later
-- An SMTP account to send mail from (your mail provider, or a transactional service)
+- An SMTP account to send mail from (your mail provider, or a transactional service); [smtp.md](smtp.md), in French, explains how to get one
 
 To work on the code without Docker: Java 21, Maven 3.9, Node.js 20 and PostgreSQL 15.
 
